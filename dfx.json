@@ -1,0 +1,33 @@
+{
+    "version": 1,
+    "canisters": {
+        "data_0": {
+            "type": "custom",
+            "candid": "src/bigmap_data.did",
+            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+        },
+        "data_1": {
+            "type": "custom",
+            "candid": "src/bigmap_data.did",
+            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+        },
+        "data_2": {
+            "type": "custom",
+            "candid": "src/bigmap_data.did",
+            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+        }
+    },
+    "defaults": {
+        "build": {
+            "output": "canisters/"
+        },
+        "start": {
+            "address": "127.0.0.1",
+            "port": 8000,
+            "serve_root": "canisters/eeoo/assets"
+        }
+    }
+}
