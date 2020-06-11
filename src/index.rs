@@ -15,8 +15,8 @@ pub type DetHashSet<K> = HashSet<K, BuildHasherDefault<WyHash>>;
 bitflags::bitflags! {
     #[derive(Default)]
     struct Flags: u8 {
-        const USAGE_ACCURATE = 0b00000001;
-        const REBALANCING = 0b00000010;
+        const USAGE_ACCURATE = 0b0000_0001;
+        const REBALANCING = 0b0000_0010;
         // const C = 0b00000100;
         // const ABC = Self::A.bits | Self::B.bits | Self::C.bits;
     }
@@ -60,7 +60,7 @@ impl BigmapIdx {
         self.idx[can_ptr.0 as usize].clone()
     }
 
-    pub fn add_canisters(&mut self, can_ids: Vec<CanisterId>) -> Result<(), String> {
+    pub fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
         // let mut new_can_util_vec = Vec::new();
 
         for can_id in can_ids {
@@ -109,31 +109,33 @@ impl BigmapIdx {
         }
 
         self.utilization_heap.clear(); // we need fresh data
-
-        Ok(())
     }
 
-    // Returns the CanisterIds which may hold the provided key
-    // Multiple CanisterIds are returned if BigMap is rebalancing
-    // in which case it's unclear in which CanisterId the data item currently is.
-    // The CanisterIds are returned in the order of priority, the search should be
-    // performed in the order of canisters returned
-    pub fn lookup(&self, key: &Key) -> Result<Vec<CanisterId>, String> {
+    // Returns the CanisterIds which holds the key
+    // If multiple canisters can hold the data due to rebalancing, we will
+    // query all candidates and return the correct CanisterId
+    pub fn lookup(&self, key: &Key) -> CanisterId {
         let (ring_idx, ring_node) = self.can_ring.get_idx_node(key).unwrap();
-        let mut res = Vec::new();
 
-        res.push(self.can_ptr_to_canister_id(ring_node));
+        let xcq_holds_key = self
+            .xcq_holds_key
+            .as_ref()
+            .expect("xcq_holds_key is not set");
+
+        println!("BM index lookup for key {}", String::from_utf8_lossy(key));
+        let can_id = self.can_ptr_to_canister_id(ring_node);
+        if xcq_holds_key(can_id.clone(), key) {
+            return can_id;
+        }
         if self.can_rebalancing.contains(&ring_node) {
             if let Some((_, ring_node_next)) = self.can_ring.get_next_key_node_at_idx(ring_idx) {
-                res.push(self.can_ptr_to_canister_id(ring_node_next));
+                let can_id = self.can_ptr_to_canister_id(ring_node_next);
+                if xcq_holds_key(can_id.clone(), key) {
+                    return can_id;
+                }
             }
         }
-        // println!(
-        //     "BigMap Index: lookup {} => CanId {:?}",
-        //     String::from_utf8_lossy(key),
-        //     res
-        // );
-        Ok(res)
+        Default::default()
     }
 
     pub fn rebalance(&mut self) -> Result<u8, String> {
