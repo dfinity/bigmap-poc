@@ -1,6 +1,5 @@
 use ::bigmap::data::DataBucket;
 use ::bigmap::{println, CanisterId, Key, Val};
-// use dfn_json::call_json;
 use ic_cdk_macros::*;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
@@ -23,7 +22,7 @@ async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
 
 #[update]
 #[allow(dead_code)]
-async fn put(key: Key, value: Val) -> () {
+async fn put(key: Key, value: Val) {
     let mut bm_data = match (&*BM_DATA).lock() {
         Ok(v) => v,
         Err(err) => {
@@ -34,6 +33,20 @@ async fn put(key: Key, value: Val) -> () {
 
     println!("BigMap data: insert key {}", String::from_utf8_lossy(&key));
     bm_data.insert(key, value);
+}
+
+#[update]
+#[allow(dead_code)]
+async fn reset() {
+    let bm_data = match (&*BM_DATA).lock() {
+        Ok(v) => v,
+        Err(err) => {
+            println!("Failed to lock the BD Bucket, due to err: {}", err);
+            return;
+        }
+    };
+
+    println!("BigMap data: reset FIXME: implement");
 }
 
 #[query]
