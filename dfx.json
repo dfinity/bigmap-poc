@@ -7,19 +7,19 @@
             "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
             "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
         },
-        "data_0": {
+        "bigmap_data_0": {
             "type": "custom",
             "candid": "src/bigmap_data.did",
             "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
             "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
         },
-        "data_1": {
+        "bigmap_data_1": {
             "type": "custom",
             "candid": "src/bigmap_data.did",
             "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
             "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
         },
-        "data_2": {
+        "bigmap_data_2": {
             "type": "custom",
             "candid": "src/bigmap_data.did",
             "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
