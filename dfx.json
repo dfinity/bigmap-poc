@@ -1,6 +1,12 @@
 {
     "version": 1,
     "canisters": {
+        "bigmap_index": {
+            "type": "custom",
+            "candid": "src/bigmap_index.did",
+            "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
+            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+        },
         "data_0": {
             "type": "custom",
             "candid": "src/bigmap_data.did",
