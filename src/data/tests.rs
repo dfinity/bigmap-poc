@@ -1,14 +1,14 @@
 use super::{calc_sha256, CanisterId, DataBucket};
 
 #[test]
-fn bm_data_insert_get() {
+fn bm_data_put_get() {
     // Insert key&value pairs and then get the value, and verify the correctness
     let mut d = DataBucket::new(CanisterId::from(42));
     for i in 0..100 as u8 {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![i; 200_000];
 
-        d.insert(key, value);
+        d.put(key, value);
         assert!(d.used_bytes() >= i as usize * 200_000);
     }
 
@@ -32,7 +32,7 @@ fn bm_data_hash_range_get() {
         let value = vec![i; 200_000];
 
         key_hashes.push(calc_sha256(&key));
-        d.insert(key, value);
+        d.put(key, value);
     }
 
     key_hashes.sort();

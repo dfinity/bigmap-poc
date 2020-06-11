@@ -29,9 +29,9 @@ impl DataBucket {
         self.index_canister = idx_can_id
     }
 
-    pub fn insert(&mut self, key: Key, value: Val) {
+    pub fn put(&mut self, key: Key, value: Val) {
         println!(
-            "DataBucket {} insert {}",
+            "DataBucket {} put {}",
             self.id,
             String::from_utf8_lossy(&key)
         );

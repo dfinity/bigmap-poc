@@ -20,7 +20,7 @@ fn needs_data_buckets() -> u32 {
 
 #[update]
 #[allow(dead_code)]
-fn add_data_buckets(can_vec: Vec<CanisterId>) -> () {
+fn add_data_buckets(can_vec: Vec<CanisterId>) {
     let mut bigmap_idx = match (&*BM_IDX).lock() {
         Ok(v) => v,
         Err(err) => {
@@ -34,7 +34,7 @@ fn add_data_buckets(can_vec: Vec<CanisterId>) -> () {
 
 #[query]
 #[allow(dead_code)]
-async fn key_to_data_bucket(key: Key) -> CanisterId {
+async fn lookup_data_bucket_for_put(key: Key) -> CanisterId {
     let bigmap_idx = match (&*BM_IDX).lock() {
         Ok(v) => v,
         Err(err) => {
@@ -43,7 +43,21 @@ async fn key_to_data_bucket(key: Key) -> CanisterId {
         }
     };
 
-    bigmap_idx.lookup(&key)
+    bigmap_idx.lookup_put(&key)
+}
+
+#[query]
+#[allow(dead_code)]
+async fn lookup_data_bucket_for_get(key: Key) -> CanisterId {
+    let bigmap_idx = match (&*BM_IDX).lock() {
+        Ok(v) => v,
+        Err(err) => {
+            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
+            return Default::default();
+        }
+    };
+
+    bigmap_idx.lookup_get(&key)
 }
 
 #[init]
