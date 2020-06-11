@@ -65,7 +65,7 @@ impl BigmapIdx {
         // let mut new_can_util_vec = Vec::new();
 
         for can_id in can_ids {
-            // println!("BigMap Index: add data canister_id={}", can_id);
+            println!("BigMap Index: add data CanisterId {}", can_id);
 
             let ptr_new = CanisterPtr {
                 0: self.idx.len() as u32,
@@ -115,8 +115,11 @@ impl BigmapIdx {
     // Returns the CanisterIds which holds the key
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
-    pub fn lookup_get(&self, key: &Key) -> CanisterId {
-        let (ring_idx, ring_node) = self.can_ring.get_idx_node(key).unwrap();
+    pub fn lookup_get(&self, key: &Key) -> Option<CanisterId> {
+        let (ring_idx, ring_node) = match self.can_ring.get_idx_node(key) {
+            Some(v) => v,
+            None => return None,
+        };
 
         let xcq_holds_key = self
             .xcq_holds_key
@@ -125,27 +128,30 @@ impl BigmapIdx {
 
         let can_id = self.can_ptr_to_canister_id(ring_node);
         if xcq_holds_key(can_id.clone(), key) {
-            return can_id;
+            return Some(can_id);
         }
         if self.can_rebalancing.contains(&ring_node) {
             if let Some((_, ring_node_next)) = self.can_ring.get_next_key_node_at_idx(ring_idx) {
                 let can_id = self.can_ptr_to_canister_id(ring_node_next);
                 if xcq_holds_key(can_id.clone(), key) {
-                    return can_id;
+                    return Some(can_id);
                 }
             }
         }
-        Default::default()
+        None
     }
 
     // Returns the CanisterIds which holds the key
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
-    pub fn lookup_put(&self, key: &Key) -> CanisterId {
-        let (_, ring_node) = self.can_ring.get_idx_node(key).unwrap();
+    pub fn lookup_put(&self, key: &Key) -> Option<CanisterId> {
+        let (_, ring_node) = match self.can_ring.get_idx_node(key) {
+            Some(v) => v,
+            None => return None,
+        };
 
         // println!("BM index lookup_put @key {}", String::from_utf8_lossy(key));
-        self.can_ptr_to_canister_id(ring_node)
+        Some(self.can_ptr_to_canister_id(ring_node))
     }
 
     pub fn rebalance(&mut self) -> Result<u8, String> {
