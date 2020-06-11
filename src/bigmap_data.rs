@@ -31,14 +31,14 @@ async fn put(key: Key, value: Val) {
         }
     };
 
-    println!("BigMap data: insert key {}", String::from_utf8_lossy(&key));
-    bm_data.insert(key, value);
+    println!("BigMap data: put key {}", String::from_utf8_lossy(&key));
+    bm_data.put(key, value);
 }
 
 #[update]
 #[allow(dead_code)]
 async fn reset() {
-    let bm_data = match (&*BM_DATA).lock() {
+    let _bm_data = match (&*BM_DATA).lock() {
         Ok(v) => v,
         Err(err) => {
             println!("Failed to lock the BD Bucket, due to err: {}", err);

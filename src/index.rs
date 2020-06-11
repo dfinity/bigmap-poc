@@ -1,5 +1,4 @@
 use crate::{hashring, println, CanisterId, Key};
-use bitflags;
 use min_max_heap::MinMaxHeap;
 use std::cmp::Ordering;
 use std::collections::HashSet;
@@ -114,7 +113,7 @@ impl BigmapIdx {
     // Returns the CanisterIds which holds the key
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
-    pub fn lookup(&self, key: &Key) -> CanisterId {
+    pub fn lookup_get(&self, key: &Key) -> CanisterId {
         let (ring_idx, ring_node) = self.can_ring.get_idx_node(key).unwrap();
 
         let xcq_holds_key = self
@@ -122,7 +121,6 @@ impl BigmapIdx {
             .as_ref()
             .expect("xcq_holds_key is not set");
 
-        println!("BM index lookup for key {}", String::from_utf8_lossy(key));
         let can_id = self.can_ptr_to_canister_id(ring_node);
         if xcq_holds_key(can_id.clone(), key) {
             return can_id;
@@ -136,6 +134,16 @@ impl BigmapIdx {
             }
         }
         Default::default()
+    }
+
+    // Returns the CanisterIds which holds the key
+    // If multiple canisters can hold the data due to rebalancing, we will
+    // query all candidates and return the correct CanisterId
+    pub fn lookup_put(&self, key: &Key) -> CanisterId {
+        let (_, ring_node) = self.can_ring.get_idx_node(key).unwrap();
+
+        // println!("BM index lookup_put @key {}", String::from_utf8_lossy(key));
+        self.can_ptr_to_canister_id(ring_node)
     }
 
     pub fn rebalance(&mut self) -> Result<u8, String> {
