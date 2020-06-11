@@ -1,4 +1,4 @@
-use crate::{calc_sha256, CanisterId, Key, Sha256Digest, Val};
+use crate::{calc_sha256, println, CanisterId, Key, Sha256Digest, Val};
 use std::collections::BTreeMap;
 // use std::hash::{BuildHasherDefault, Hash, Hasher};
 // use wyhash::WyHash;

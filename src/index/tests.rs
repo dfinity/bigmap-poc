@@ -14,12 +14,10 @@ fn bigmap_insert_get() {
     for i in 0..11 {
         let can_id = CanisterId::from(i);
         Arc::get_mut(&mut db_map)
-            .expect("db_map unwrap failed")
+            .unwrap()
             .insert(can_id.clone(), DataBucket::new(can_id));
     }
-    bm_idx
-        .add_canisters(db_map.keys().map(|v| v.clone()).collect())
-        .unwrap();
+    bm_idx.add_canisters(db_map.keys().cloned().collect());
 
     /*
             let bigmap_maintenance = || {
@@ -38,16 +36,13 @@ fn bigmap_insert_get() {
             };
     */
 
-    let xcq_used_bytes = |can_id: CanisterId| {
-        let can_data = db_map.borrow().get(&can_id).unwrap();
-        can_data.used_bytes()
-    };
+    let db_map_ref1 = db_map.clone();
+    let xcq_used_bytes = move |can_id: CanisterId| db_map_ref1.get(&can_id).unwrap().used_bytes();
     bm_idx.set_fn_xcq_used_bytes(Box::new(xcq_used_bytes));
 
-    let xcq_holds_key_fn = move |can_id: CanisterId, key: &Key| {
-        let can_data = db_map.get(&can_id).unwrap();
-        can_data.holds_key(key)
-    };
+    let db_map_ref2 = db_map.clone();
+    let xcq_holds_key_fn =
+        move |can_id: CanisterId, key: &Key| db_map_ref2.get(&can_id).unwrap().holds_key(key);
     bm_idx.set_fn_xcq_holds_key(Box::new(xcq_holds_key_fn));
 
     bm_idx.rebalance().unwrap();
@@ -56,12 +51,14 @@ fn bigmap_insert_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup(&key).unwrap();
-        assert_eq!(can_data_id.len(), 1);
-        let can_data = db_map.get_mut(&can_data_id[0]).unwrap();
-
-        can_data.insert(key, value);
-        assert!(can_data.used_bytes() > 0);
+        let can_data_id = bm_idx.lookup(&key);
+        assert_ne!(can_data_id, Default::default());
+        Arc::get_mut(&mut db_map)
+            .unwrap()
+            .get_mut(&can_data_id)
+            .unwrap()
+            .insert(key, value);
+        assert!(db_map.get(&can_data_id).unwrap().used_bytes() > 0);
     }
 
     bm_idx.rebalance().unwrap();
@@ -70,9 +67,9 @@ fn bigmap_insert_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup(&key).unwrap();
-        assert_eq!(can_data_id.len(), 1);
-        let can_data = db_map.get(&can_data_id[0]).unwrap();
+        let can_data_id = bm_idx.lookup(&key);
+        assert_ne!(can_data_id, Default::default());
+        let can_data = db_map.get(&can_data_id).unwrap();
 
         assert_eq!(can_data.get(key).unwrap(), value);
     }
@@ -91,17 +88,15 @@ fn bigmap_insert_rebalance_get() {
         db_map.insert(can_id.clone(), DataBucket::new(can_id));
     }
 
-    bm_idx
-        .add_canisters(db_map.keys().map(|v| v.clone()).collect())
-        .unwrap();
+    bm_idx.add_canisters(db_map.keys().cloned().collect());
 
     for i in 0..10000 {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup(&key).unwrap();
-        assert_eq!(can_data_id.len(), 1);
-        let can_data = db_map.get_mut(&can_data_id[0]).unwrap();
+        let can_data_id = bm_idx.lookup(&key);
+        assert_ne!(can_data_id, Default::default());
+        let can_data = db_map.get_mut(&can_data_id).unwrap();
 
         can_data.insert(key, value);
         assert!(can_data.used_bytes() > 0);
@@ -112,17 +107,15 @@ fn bigmap_insert_rebalance_get() {
         db_map.insert(can_id.clone(), DataBucket::new(can_id));
     }
 
-    bm_idx
-        .add_canisters(db_map.keys().map(|v| v.clone()).collect())
-        .unwrap();
+    bm_idx.add_canisters(db_map.keys().cloned().collect());
 
     for i in 0..10000 {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup(&key).unwrap();
-        assert_eq!(can_data_id.len(), 1);
-        let can_data = db_map.get(&can_data_id[0]).unwrap();
+        let can_data_id = bm_idx.lookup(&key);
+        assert_ne!(can_data_id, Default::default());
+        let can_data = db_map.get(&can_data_id).unwrap();
 
         assert_eq!(can_data.get(key).unwrap(), value);
     }

@@ -2,4 +2,6 @@ service : {
     "get": (vec nat8) -> (opt vec nat8) query;
     "put": (vec nat8, vec nat8) -> ();
     "reset": (nat) -> () oneway;
+    "needs_data_buckets": () -> (nat);
+    "add_data_buckets": 
 }
