@@ -48,7 +48,7 @@ fn bigmap_put_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup_put(&key);
+        let can_data_id = bm_idx.lookup_put(&key).unwrap();
         assert_ne!(can_data_id, Default::default());
         let d = db_map.lock();
         // println!("db_map: {:?}", d);
@@ -113,7 +113,7 @@ fn bigmap_put_rebalance_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![(i % 256) as u8; 200_000];
 
-        let can_data_id = bm_idx.lookup_put(&key);
+        let can_data_id = bm_idx.lookup_put(&key).unwrap();
         assert_ne!(can_data_id, Default::default());
         let mut can_data = db_map.lock().unwrap();
         let can_data = can_data.get_mut(&can_data_id).unwrap();
