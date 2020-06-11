@@ -29,15 +29,25 @@ rustc 1.43.0 (4fb7144ed 2020-04-20)
 ```bash
 cargo build --release
 dfx build && dfx canister install --all
+dfx canister call bigmap_index add_data_buckets "(vec { \"$(dfx canister id bigmap_data_0)\"; \"$(dfx canister id bigmap_data_1)\"; \"$(dfx canister id bigmap_data_2)\"; })"
 ```
 
 # Test
 
 ```bash
-dfx canister call data_0 get '(vec { 1; 2; 3; })'
+dfx canister call bigmap_data_0 get '(vec { 97; 98; 99; })'
 # (null)
-dfx canister call data_0 put '(vec { 1; 2; 3; }, vec { 4; 5; 6; })'
+dfx canister call bigmap_data_0 put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
 # ()
-dfx canister call data_0 get '(vec { 1; 2; 3; })'
+dfx canister call bigmap_data_0 get '(vec { 97; 98; 99; })'
+# (opt vec { 4; 5; 6; })
+```
+
+```bash
+dfx canister call bigmap_index get '(vec { 97; 98; 99; })'
+# (null)
+dfx canister call bigmap_index put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
+# ()
+dfx canister call bigmap_index get '(vec { 97; 98; 99; })'
 # (opt vec { 4; 5; 6; })
 ```
