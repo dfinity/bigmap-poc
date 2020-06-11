@@ -1,4 +1,6 @@
-use crate::{hashring, println, CanisterId, Key};
+use crate::{hashring, CanisterId, Key};
+#[cfg(target_arch = "wasm32")]
+use ic_cdk::println;
 use min_max_heap::MinMaxHeap;
 use std::cmp::Ordering;
 use std::collections::HashSet;
