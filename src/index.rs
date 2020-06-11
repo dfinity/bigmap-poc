@@ -1,4 +1,4 @@
-use crate::{hashring, CanisterId, Key};
+use crate::{calc_sha256, hashring_sha256, CanisterId, Key};
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use min_max_heap::MinMaxHeap;
@@ -34,7 +34,7 @@ bitflags::bitflags! {
 pub struct BigmapIdx {
     idx: Vec<CanisterId>, // indirection for CanisterId, to avoid many copies of CanisterIds
     flags: Vec<Flags>,
-    can_ring: hashring::HashRing<CanisterPtr>,
+    can_ring: hashring_sha256::HashRing<CanisterPtr>,
     utilization_heap: MinMaxHeap<CanisterUsedBytes>, // Canisters that can be rebalanced
     can_rebalancing: DetHashSet<CanisterPtr>,
     can_query_util: DetHashSet<CanisterPtr>,
@@ -77,12 +77,13 @@ impl BigmapIdx {
             match self.utilization_heap.pop_max() {
                 Some(v) => {
                     // This canister can be rebalanced
-                    let (e_idx, e_node_next) = self.can_ring.get_idx_node(&v.ring_key).unwrap();
+                    let (e_idx, e_node_next) =
+                        self.can_ring.get_idx_node_for_node(&v.ring_node).unwrap();
                     ptr_next = Some(e_node_next.clone());
                     let (e_key, _) = self.can_ring.get_key_node_at_idx(e_idx).unwrap();
                     let (e_key_prev, _) = self.can_ring.get_prev_key_node_at_idx(e_idx).unwrap();
-                    let e_key_new = (e_key - e_key_prev) / 2;
-                    self.can_ring.add_with_key(e_key_new, ptr_new.clone());
+                    let e_key_new = hashring_sha256::sha256_range_half(&e_key_prev, &e_key);
+                    self.can_ring.add_with_key(&e_key_new, ptr_new.clone());
                 }
                 // No known canister to be rebalanced, add at an arbitrary position
                 None => self.can_ring.add(ptr_new.clone()),
@@ -103,7 +104,7 @@ impl BigmapIdx {
                 }
             }
 
-            // self.can_ring.add_with_key(max_utilized_can.ring_key, can_id);
+            // self.can_ring.add_with_key(max_utilized_can.ring_node, can_id);
             if self.can_needed > 0 {
                 self.can_needed -= 1;
             }
@@ -116,7 +117,8 @@ impl BigmapIdx {
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
     pub fn lookup_get(&self, key: &Key) -> Option<CanisterId> {
-        let (ring_idx, ring_node) = match self.can_ring.get_idx_node(key) {
+        let key_sha256 = calc_sha256(key);
+        let (ring_idx, ring_node) = match self.can_ring.get_idx_node_for_key(&key_sha256) {
             Some(v) => v,
             None => return None,
         };
@@ -145,7 +147,8 @@ impl BigmapIdx {
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
     pub fn lookup_put(&self, key: &Key) -> Option<CanisterId> {
-        let (_, ring_node) = match self.can_ring.get_idx_node(key) {
+        let key_sha256 = calc_sha256(key);
+        let (_, ring_node) = match self.can_ring.get_idx_node_for_key(&key_sha256) {
             Some(v) => v,
             None => return None,
         };
@@ -204,16 +207,16 @@ impl BigmapIdx {
 #[derive(Clone, Eq, PartialEq)]
 struct CanisterUsedBytes {
     used_bytes: u32,
-    ring_key: CanisterPtr,
+    ring_node: CanisterPtr,
 }
 
 impl Ord for CanisterUsedBytes {
     fn cmp(&self, other: &CanisterUsedBytes) -> Ordering {
-        // In case of a tie compare ring_key - this step is necessary
+        // In case of a tie compare ring_node - this step is necessary
         // to make implementations of `PartialEq` and `Ord` consistent.
         self.used_bytes
             .cmp(&other.used_bytes)
-            .then_with(|| self.ring_key.cmp(&other.ring_key))
+            .then_with(|| self.ring_node.cmp(&other.ring_node))
     }
 }
 

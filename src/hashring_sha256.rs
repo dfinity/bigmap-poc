@@ -84,8 +84,18 @@ fn biguint_to_sha256_digest(bigint: &BigUint) -> Sha256Digest {
     *Sha256Digest::from_slice(&array)
 }
 
+pub(crate) fn sha256_range_half(
+    sha256_lower: &Sha256Digest,
+    sha256_upper: &Sha256Digest,
+) -> Sha256Digest {
+    let i_prev = biguint_from_slice256(sha256_lower.as_slice());
+    let i = biguint_from_slice256(sha256_upper.as_slice());
+    let bigint_diff = i_prev.clone() + (i - i_prev) / 2u32;
+    biguint_to_sha256_digest(&bigint_diff)
+}
+
 #[allow(dead_code)]
-impl<T: std::convert::AsRef<[u8]> + Clone + PartialEq + std::fmt::Debug> HashRing<T> {
+impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
     /// Add `node` to the hash ring.
     pub fn add(&mut self, node: T) {
         let key = if self.ring.is_empty() {
@@ -116,9 +126,9 @@ impl<T: std::convert::AsRef<[u8]> + Clone + PartialEq + std::fmt::Debug> HashRin
         self.ring.sort();
     }
 
-    /// Add `node` to the hash ring, at the `key` position
-    pub fn add_with_key(&mut self, key: &Sha256Digest, node: T) {
-        self.ring.push(Node::new(*key, node));
+    /// Add `node` to the hash ring, at the `idx` position
+    pub fn add_with_key(&mut self, idx: &Sha256Digest, node: T) {
+        self.ring.push(Node::new(*idx, node));
         self.ring.sort();
     }
 
@@ -143,6 +153,22 @@ impl<T: std::convert::AsRef<[u8]> + Clone + PartialEq + std::fmt::Debug> HashRin
             Err(n) => n,
             Ok(n) => n,
         };
+
+        if n == self.ring.len() {
+            return Some((0, &self.ring[0].node));
+        }
+
+        Some((n, &self.ring[n].node))
+    }
+
+    /// Get the Option<(idx,node)> for the provided `node`.
+    /// Returns `None` if the ring is empty or the node couldn't be found
+    pub fn get_idx_node_for_node(&self, node: &T) -> Option<(usize, &T)> {
+        if self.ring.is_empty() {
+            return None;
+        }
+
+        let n = self.ring.iter().position(|e| e.node == *node).unwrap_or(0);
 
         if n == self.ring.len() {
             return Some((0, &self.ring[0].node));
