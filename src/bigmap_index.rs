@@ -1,5 +1,7 @@
-use ::bigmap::{index::BigmapIdx, println, CanisterId, Key};
+use ::bigmap::{index::BigmapIdx, CanisterId, Key};
 use futures::executor::block_on;
+#[cfg(target_arch = "wasm32")]
+use ic_cdk::println;
 use ic_cdk_macros::*;
 use lazy_static::lazy_static;
 use std::sync::Mutex;

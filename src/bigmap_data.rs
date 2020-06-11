@@ -1,5 +1,6 @@
 use ::bigmap::data::DataBucket;
-use ::bigmap::{println, CanisterId, Key, Val};
+use ::bigmap::{CanisterId, Key, Val};
+use ic_cdk::println;
 use ic_cdk_macros::*;
 use lazy_static::lazy_static;
 use std::sync::Mutex;

@@ -55,18 +55,3 @@ where
     digest.update(input);
     digest.finalize()
 }
-
-/// Format and then print the formatted message
-#[cfg(target_arch = "wasm32")]
-#[macro_export]
-macro_rules! println {
-    ($fmt:expr) => (ic_cdk::print(format!($fmt)));
-    ($fmt:expr, $($arg:tt)*) => (ic_cdk::print(format!($fmt, $($arg)*)));
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[macro_export]
-macro_rules! println {
-    ($fmt:expr) => (std::println!($fmt));
-    ($fmt:expr, $($arg:tt)*) => (std::println!($fmt, $($arg)*));
-}
