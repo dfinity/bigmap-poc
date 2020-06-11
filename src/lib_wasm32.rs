@@ -51,6 +51,6 @@ impl Into<ic_cdk::CanisterId> for CanisterId {
 
 impl std::fmt::Display for CanisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{}", hex::encode(self.0.clone()))
+        write!(f, "ic:{}", hex::encode(self.0.clone()))
     }
 }
