@@ -1,5 +1,6 @@
+// use ::bigmap::call_candid;
 use ::bigmap::{index::BigmapIdx, CanisterId, Key, Val};
-use futures::executor::block_on;
+// use futures::executor::block_on;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use ic_cdk_macros::*;
@@ -20,12 +21,17 @@ async fn get(key: Key) -> Option<Val> {
     println!("BigMap index: get key {}", String::from_utf8_lossy(&key));
     match bigmap_idx.lookup_get(&key) {
         Some(can_id) => {
+            let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
                 "BigMap index: get key {} @CanisterId {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            ic_cdk::call(can_id.0.into(), "get", Some(key)).await.ok()
+            // FIXME: ic_ckd::call doesn't work
+            ic_cdk::call(can_id, "get_as_update", Some(key))
+                .await
+                .unwrap()
+            // call_candid(can_id.0, "get_as_update", key).await.unwrap()
         }
         None => {
             println!(
@@ -48,20 +54,30 @@ async fn put(key: Key, value: Val) {
         }
     };
 
-    println!("BigMap index: put key {}", String::from_utf8_lossy(&key));
+    println!(
+        "BigMap index: put key {} val {}",
+        String::from_utf8_lossy(&key),
+        String::from_utf8_lossy(&value)
+    );
     match bigmap_idx.lookup_put(&key) {
         Some(can_id) => {
+            let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
                 "BigMap index: put key {} @CanisterId {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            let _: () = ic_cdk::call(can_id.0.clone().into(), "put", Some((key, value)))
+            ic_cdk::call_no_return(can_id.clone(), "put", Some((key, value)))
                 .await
                 .expect(&format!(
                     "BigMap index: put call to CanisterId {} failed",
                     can_id
                 ));
+            // let x = bigmap::dfn_candid::from_output((key.clone(), value.clone()));
+            // let y: (Key, Val) = bigmap::dfn_candid::to_input(x.clone());
+            // println!("{:?}", x);
+            // println!("{:?}, {:?}", y.0, y.1);
+            // call_candid(can_id.0, "put", (key, value)).await.unwrap()
         }
         None => {
             println!(
@@ -155,21 +171,31 @@ fn initialize() {
     bigmap_idx.set_fn_xcq_holds_key(Box::new(xcq_holds_key_fn));
 }
 
+// async fn xcq_used_bytes_async(can_id: CanisterId) -> usize {
+//     ic_cdk::call(can_id.0.into(), "used_bytes", None::<()>)
+//         .await
+//         .expect("async call failed")
+// }
+
 // Temporary function, until we're able to call other canisters from native code
 // in Rust SDK
-fn xcq_used_bytes_fn(can_id: CanisterId) -> usize {
-    let res: Result<usize, String> =
-        block_on(ic_cdk::call(can_id.0.into(), "used_bytes", None::<()>))
-            .expect("async call failed");
-    res.expect("used_bytes call failed")
+fn xcq_used_bytes_fn(_can_id: CanisterId) -> usize {
+    // ic_cdk::block_on(ic_cdk::call(can_id.0.into(), "used_bytes", None::<()>));
+    // let res: Result<usize, String> = arg_data_1<usize>();
+    // let res: usize = xcq_used_bytes_async(can_id.0.into());
+    // res.expect("used_bytes call failed")
+    // FIXME: do inter-canister calls
+    0
 }
 
 // Temporary function, until we're able to call other canisters from native code
 // in Rust SDK
-fn xcq_holds_key_fn(can_id: CanisterId, key: &Key) -> bool {
-    let res: Result<bool, String> =
-        block_on(ic_cdk::call(can_id.0.into(), "holds_key", Some(key))).expect("async call failed");
-    res.expect("holds_key call failed")
+fn xcq_holds_key_fn(_can_id: CanisterId, _key: &Key) -> bool {
+    // let res = async_runtime::rt::spawn(ic_cdk::call(can_id.0.into(), "holds_key", Some(key)))
+    //     .expect("async call failed");
+    // res.expect("holds_key call failed")
+    // FIXME: do inter-canister calls
+    true
 }
 
 lazy_static! {

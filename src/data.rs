@@ -48,7 +48,7 @@ impl DataBucket {
         self.entries.insert(key_sha2, (key, value));
     }
 
-    pub fn get(&self, key: Key) -> Result<Val, String> {
+    pub fn get(&self, key: Key) -> Result<&Val, String> {
         println!(
             "DataBucket {} get {}",
             self.id,
@@ -56,7 +56,7 @@ impl DataBucket {
         );
         let key_sha2 = calc_sha256(&key);
         match self.entries.get(&key_sha2) {
-            Some((_, v)) => Ok(v.to_vec()),
+            Some((_, v)) => Ok(v),
             None => Err("Entry not found".to_string()),
         }
     }

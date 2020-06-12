@@ -1,9 +1,9 @@
 service : {
-    "get": (vec nat8) -> (opt vec nat8);
-    "put": (vec nat8, vec nat8) -> ();
+    "get": (key: vec nat8) -> (opt vec nat8);
+    "put": (key: vec nat8, value: vec nat8) -> ();
     "reset": (nat) -> () oneway;
     "needs_data_buckets": () -> (nat);
-    "add_data_buckets": (vec text) -> ();
-    "lookup_data_bucket_for_get": (vec nat8) -> (opt text);
-    "lookup_data_bucket_for_put": (vec nat8) -> (opt text);
+    "add_data_buckets": (data_canister_ids: vec text) -> ();
+    "lookup_data_bucket_for_get": (key: vec nat8) -> (opt text);
+    "lookup_data_bucket_for_put": (key: vec nat8) -> (opt text);
 }

@@ -55,3 +55,12 @@ where
     digest.update(input);
     digest.finalize()
 }
+
+#[allow(dead_code)]
+pub mod dfn_candid;
+#[allow(dead_code)]
+mod dfn_core;
+#[allow(dead_code)]
+mod dfn_futures;
+// pub use dfn_candid;
+pub use dfn_candid::call_candid;
