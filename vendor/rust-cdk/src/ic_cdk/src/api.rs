@@ -45,6 +45,24 @@ impl CanisterId {
     }
 }
 
+impl std::fmt::Display for CanisterId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ic:{}", hex::encode(self.0.clone()))
+    }
+}
+
+impl From<Vec<u8>> for CanisterId {
+    fn from(item: Vec<u8>) -> CanisterId {
+        CanisterId {0: item}
+    }
+}
+
+impl Into<std::vec::Vec<u8>> for CanisterId {
+    fn into(self) -> std::vec::Vec<u8> {
+        self.0
+    }
+}
+
 pub type CallResult<R> = Result<R, (RejectionCode, String)>;
 
 /// Internal state for the Future when sending a call.
