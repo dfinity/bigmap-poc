@@ -10,8 +10,8 @@ lto = true
 opt-level = 'z'
 
 [dependencies]
-ic_cdk = { path = "../rust-cdk/src/ic_cdk" }
-ic_cdk_macros = { path = "../rust-cdk/src/ic_cdk_macros" }
+ic_cdk = { path = "vendor/rust-cdk/src/ic_cdk" }
+ic_cdk_macros = { path = "vendor/rust-cdk/src/ic_cdk_macros" }
 candid = "0.2.6"
 lazy_static = "1.4.0"
 hex = "0.4.2"

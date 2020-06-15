@@ -460,7 +460,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cfg-if",
- "hex 0.4.2",
  "serde",
  "wee_alloc",
 ]
