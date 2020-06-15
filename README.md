@@ -45,6 +45,7 @@ Rust CDK is included with Big Map through `git subtree`, so it does not have to 
 
 ```bash
 git clone git@github.com:dfinity/big-map-rs.git
+cd big-map-rs
 ```
 
 
