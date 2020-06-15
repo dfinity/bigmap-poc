@@ -2,6 +2,8 @@
 
 BigMap is a simple, approachable library for building infinitely scalable key-value storage on the Internet Computer.
 
+This is the Rust implementation of BigMap. There is also a Motoko-based implementation here: https://github.com/dfinity/motoko-bigmap
+
 ## Super Powers realized by BigMap
 
 The BigMap library touches on the following aspects of the vision of the Internet Computer's "super powers":
@@ -26,7 +28,6 @@ As mentioned above, this library will permit unlimited scaling.  Under the hood,
 > "Build mass market internet services using the canister model (each canister can only grow to the capacity of a single subnetwork, but you can build a system from any number of canisters)" (text from [10 Super Powers List]).
 
 
-
 ## References
 
 - [10 Super Powers List](https://docs.google.com/document/d/1Bxnn0--YoB_2sVWm33jWXhDFxsyOEhYG0KU7G1SL_q8/edit)
@@ -34,23 +35,27 @@ As mentioned above, this library will permit unlimited scaling.  Under the hood,
 
 # Prerequisites
 
-Have Rust SDK/CDK and the Big Map in the same directory:
-
-It's necessary to have the DFX version >= 0.5.7-28
+It's necessary to have the DFX version >= 0.5.8
 
 ```bash
-git clone git@github.com:dfinity-lab/sdk.git
-git clone git@github.com:dfinity-lab/rust-cdk.git
+DFX_VERSION=0.5.8 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+```
+
+Rust CDK is included with Big Map through `git subtree`, so it does not have to be separately downloaded and installed. You do have to clone this repo, though :)
+
+```bash
 git clone git@github.com:dfinity/big-map-rs.git
 ```
 
 
+<!--
 ```bash
 cd sdk
 cargo build --release
 alias dfx=$(realpath target/x86_64-unknown-linux-musl/release/dfx)
 cd ../big-map-rs
 ```
+-->
 
 Tested with Rust 1.43.0
 ```bash
