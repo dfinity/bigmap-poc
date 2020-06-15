@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "canisters": {
+    "counter_rs": {
+      "type": "custom",
+      "candid": "src/counter_rs/counter.did",
+      "wasm": "target/wasm32-unknown-unknown/release/counter_rs.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package counter_rs --release"
+    },
+    "counter_mo": {
+      "type": "motoko",
+      "main": "src/counter_mo/main.mo"
+    },
+    "inter_rs": {
+      "type": "custom",
+      "candid": "src/inter_rs/lib.did",
+      "wasm": "target/wasm32-unknown-unknown/release/inter_rs.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package inter_rs --release",
+      "dependencies": [
+        "counter_mo"
+      ]
+    },
+    "inter_mo": {
+      "type": "motoko",
+      "main": "src/inter_mo/main.mo"
+    },
+    "inter2_rs": {
+      "type": "custom",
+      "candid": "src/inter2_rs/lib.did",
+      "wasm": "target/wasm32-unknown-unknown/release/inter2_rs.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package inter2_rs --release",
+      "dependencies": [
+        "inter_mo"
+      ]
+    },
+    "inter2_mo": {
+      "type": "motoko",
+      "main": "src/inter2_mo/main.mo"
+    }
+  },
+  "defaults": {
+    "build": {
+      "output": "canisters/"
+    },
+    "start": {
+      "address": "127.0.0.1",
+      "port": 8000,
+      "serve_root": "canisters/eeoo/assets"
+    }
+  }
+}

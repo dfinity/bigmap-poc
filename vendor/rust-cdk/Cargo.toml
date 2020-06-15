@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/ic_cdk",
+    "src/ic_cdk_macros",
+]
