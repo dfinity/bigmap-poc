@@ -7,4 +7,6 @@ if type cargo > /dev/null; then
   cargo build --target wasm32-unknown-unknown --package bigmap --release
 else
   echo "Rust `cargo` not installed, not rebuilding wasm"
+  echo "Trying to download the latest version via git lfs"
+  git lfs pull
 fi
