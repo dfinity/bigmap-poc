@@ -75,7 +75,7 @@ fn bigmap_put_get() {
         let can_data = db_map.lock().unwrap();
         let can_data = can_data.get(&can_data_id).unwrap();
 
-        assert_eq!(can_data.get(key).unwrap(), value);
+        assert_eq!(*can_data.get(key).unwrap(), value);
     }
 }
 
@@ -158,6 +158,6 @@ fn bigmap_put_rebalance_get() {
         let can_data = db_map.lock().unwrap();
         let can_data = can_data.get(&can_data_id).unwrap();
 
-        assert_eq!(can_data.get(key).unwrap(), value);
+        assert_eq!(*can_data.get(key).unwrap(), value);
     }
 }

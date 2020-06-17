@@ -16,7 +16,7 @@ fn bm_data_put_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![i; 200_000];
 
-        assert_eq!(d.get(key).unwrap(), value);
+        assert_eq!(*d.get(key).unwrap(), value);
     }
 }
 
