@@ -51,6 +51,9 @@ impl Into<ic_cdk::CanisterId> for CanisterId {
 
 impl std::fmt::Display for CanisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ic:{}", hex::encode(self.0.clone()))
+        let can_id = self.0.clone();
+        let mut crc8 = crc8::Crc8::create_msb(7);
+        let crc = crc8.calc(&can_id, can_id.len() as i32, 0);
+        write!(f, "ic:{}{:02x}", hex::encode(self.0.clone()), crc)
     }
 }

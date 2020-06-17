@@ -61,6 +61,7 @@ dependencies = [
  "bitflags",
  "candid",
  "cfg-if",
+ "crc8",
  "digest 0.9.0",
  "futures",
  "hex 0.4.2",
