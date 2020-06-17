@@ -1,24 +1,19 @@
-// use ::bigmap::call_candid;
+use ::bigmap::call_candid;
 use ::bigmap::{index::BigmapIdx, CanisterId, Key, Val};
 // use futures::executor::block_on;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
+use ic_cdk::storage;
 use ic_cdk_macros::*;
-use lazy_static::lazy_static;
-use std::sync::Mutex;
+// use lazy_static::lazy_static;
+// use std::sync::Mutex;
 
 #[update]
 #[allow(dead_code)]
 async fn get(key: Key) -> Option<Val> {
-    let bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return None;
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
-    println!("BigMap index: get key {}", String::from_utf8_lossy(&key));
+    // println!("BigMap index: get key {}", String::from_utf8_lossy(&key));
     match bigmap_idx.lookup_get(&key) {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
@@ -28,10 +23,10 @@ async fn get(key: Key) -> Option<Val> {
                 can_id
             );
             // FIXME: ic_ckd::call doesn't work
-            ic_cdk::call(can_id, "get_as_update", Some(key))
-                .await
-                .unwrap()
-            // call_candid(can_id.0, "get_as_update", key).await.unwrap()
+            // ic_cdk::call(can_id, "get_as_update", Some(key))
+            //     .await
+            //     .unwrap()
+            call_candid(can_id.0, "get_as_update", key).await.unwrap()
         }
         None => {
             println!(
@@ -45,20 +40,10 @@ async fn get(key: Key) -> Option<Val> {
 
 #[update]
 #[allow(dead_code)]
-async fn put(key: Key, value: Val) {
-    let bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return;
-        }
-    };
+async fn put(key: Key, value: Val) -> bool {
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
-    println!(
-        "BigMap index: put key {} val {}",
-        String::from_utf8_lossy(&key),
-        String::from_utf8_lossy(&value)
-    );
+    // println!("BigMap index: put key {}", String::from_utf8_lossy(&key));
     match bigmap_idx.lookup_put(&key) {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
@@ -67,12 +52,12 @@ async fn put(key: Key, value: Val) {
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            ic_cdk::call_no_return(can_id.clone(), "put", Some((key, value)))
+            ic_cdk::call(can_id.clone(), "put", Some((key, value)))
                 .await
                 .expect(&format!(
                     "BigMap index: put call to CanisterId {} failed",
                     can_id
-                ));
+                ))
             // let x = bigmap::dfn_candid::from_output((key.clone(), value.clone()));
             // let y: (Key, Val) = bigmap::dfn_candid::to_input(x.clone());
             // println!("{:?}", x);
@@ -84,6 +69,7 @@ async fn put(key: Key, value: Val) {
                 "BigMap index: no data canister suitable for key {}",
                 String::from_utf8_lossy(&key)
             );
+            false
         }
     }
 }
@@ -91,13 +77,7 @@ async fn put(key: Key, value: Val) {
 #[query]
 #[allow(dead_code)]
 fn needs_data_buckets() -> u32 {
-    let bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return 0;
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
     bigmap_idx.canisters_needed()
 }
@@ -105,13 +85,7 @@ fn needs_data_buckets() -> u32 {
 #[update]
 #[allow(dead_code)]
 fn add_data_buckets(can_vec: Vec<String>) {
-    let mut bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return;
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
     let mut cans: Vec<CanisterId> = Vec::new();
     for can_text in can_vec {
@@ -124,13 +98,7 @@ fn add_data_buckets(can_vec: Vec<String>) {
 #[query]
 #[allow(dead_code)]
 async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
-    let bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return Default::default();
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_put(&key) {
         Some(can_id) => Some(format!("{}", can_id)),
@@ -141,13 +109,7 @@ async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
 #[query]
 #[allow(dead_code)]
 async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
-    let bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return Default::default();
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_get(&key) {
         Some(can_id) => Some(format!("{}", can_id)),
@@ -157,18 +119,17 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
 
 #[init]
 fn initialize() {
-    let mut bigmap_idx = match (&*BM_IDX).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("BigMap Index: failed to lock the Bigmap Idx, err: {}", err);
-            return;
-        }
-    };
+    let bigmap_idx = storage::get::<BigmapIdx>();
 
     println!("BigMap Index: initialize");
     bigmap_idx.set_canister_id(ic_cdk::reflection::id().into());
     bigmap_idx.set_fn_xcq_used_bytes(Box::new(xcq_used_bytes_fn));
     bigmap_idx.set_fn_xcq_holds_key(Box::new(xcq_holds_key_fn));
+}
+
+#[query]
+async fn total_used_bytes() -> usize {
+    0
 }
 
 // async fn xcq_used_bytes_async(can_id: CanisterId) -> usize {
@@ -198,8 +159,8 @@ fn xcq_holds_key_fn(_can_id: CanisterId, _key: &Key) -> bool {
     true
 }
 
-lazy_static! {
-    static ref BM_IDX: Mutex<BigmapIdx> = Mutex::new(BigmapIdx::new());
-}
+// lazy_static! {
+//     static ref BM_IDX: Mutex<BigmapIdx> = Mutex::new(BigmapIdx::new());
+// }
 
 fn main() {}

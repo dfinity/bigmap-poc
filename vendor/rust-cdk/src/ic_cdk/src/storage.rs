@@ -27,16 +27,9 @@ pub fn get<T: Sized + Default + 'static>() -> &'static mut T {
 
     let store = storage();
 
-    if store.contains_key(&type_id) {
-        let v = store.get_mut(&type_id).unwrap();
+    let entry = store.entry(type_id).or_insert(Box::new(T::default()));
 
-        (v.as_mut())
-            .downcast_mut::<T>()
-            .expect("Unexpected value of invalid type.")
-    } else {
-        let value = Box::new(T::default());
-        store.insert(type_id, value);
-
-        get::<T>()
-    }
+    entry
+        .downcast_mut::<T>()
+        .expect("Unexpected value of invalid type.")
 }

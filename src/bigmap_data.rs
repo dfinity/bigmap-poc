@@ -1,72 +1,80 @@
 use ::bigmap::data::DataBucket;
 use ::bigmap::{CanisterId, Key, Val};
+#[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
+use ic_cdk::storage;
 use ic_cdk_macros::*;
-use lazy_static::lazy_static;
-use std::sync::Mutex;
+// use lazy_static::lazy_static;
+// use std::sync::Mutex;
 
 #[query]
 async fn get(key: Key) -> Option<Val> {
-    let bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("Failed to lock the BD Bucket, due to err: {}", err);
-            return None;
-        }
-    };
+    let bm_data = storage::get::<DataBucket>();
 
-    println!("BigMap data: get key {}", String::from_utf8_lossy(&key));
-    bm_data.get(key).ok().cloned()
+    let res = bm_data.get(key.clone()).ok().cloned();
+    match &res {
+        Some(value) => println!(
+            "BigMap data: get key {} ({} bytes) => value ({} bytes)",
+            String::from_utf8_lossy(&key),
+            key.len(),
+            value.len()
+        ),
+        None => println!(
+            "BigMap data: get key {} ({} bytes) => None",
+            String::from_utf8_lossy(&key),
+            key.len()
+        ),
+    };
+    res
 }
 
 #[update]
 async fn get_as_update(key: Key) -> Option<Val> {
-    let bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("Failed to lock the BD Bucket, due to err: {}", err);
-            return None;
-        }
-    };
+    let bm_data = storage::get::<DataBucket>();
 
-    println!("BigMap data: get key {}", String::from_utf8_lossy(&key));
-    bm_data.get(key).ok().cloned()
+    let res = bm_data.get(key.clone()).ok().cloned();
+    match &res {
+        Some(value) => println!(
+            "BigMap data: get_as_update key {} ({} bytes) => value ({} bytes)",
+            String::from_utf8_lossy(&key),
+            key.len(),
+            value.len()
+        ),
+        None => println!(
+            "BigMap data: get_as_update key {} ({} bytes) => None",
+            String::from_utf8_lossy(&key),
+            key.len()
+        ),
+    };
+    res
 }
 
 #[update]
-async fn put(key: Key, value: Val) {
-    let mut bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("Failed to lock the BD Bucket, due to err: {}", err);
-            return;
-        }
-    };
+async fn put(key_value: (Key, Val)) -> bool {
+    let bm_data = storage::get::<DataBucket>();
 
-    println!("BigMap data: put key {}", String::from_utf8_lossy(&key));
+    let (key, value) = key_value;
+    println!(
+        "BigMap data: put key {} ({} bytes) value ({} bytes)",
+        String::from_utf8_lossy(&key),
+        key.len(),
+        value.len()
+    );
     bm_data.put(key, value);
+    true
 }
 
 #[update]
 async fn reset() {
-    let _bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => {
-            println!("Failed to lock the BD Bucket, due to err: {}", err);
-            return;
-        }
-    };
+    // let bm_data = storage::get::<DataBucket>();
 
-    println!("BigMap data: reset FIXME: implement");
+    println!("BigMap data: FIXME: implement reset");
 }
 
 #[query]
 #[allow(dead_code)]
 async fn holds_key(key: Key) -> Result<bool, String> {
-    let bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => return Err(format!("Failed to lock the BD Bucket, due to err: {}", err)),
-    };
+    let bm_data = storage::get::<DataBucket>();
 
     Ok(bm_data.holds_key(&key))
 }
@@ -74,10 +82,7 @@ async fn holds_key(key: Key) -> Result<bool, String> {
 #[query]
 #[allow(dead_code)]
 async fn used_bytes(_: ()) -> Result<usize, String> {
-    let bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => return Err(format!("Failed to lock the BD Bucket, due to err: {}", err)),
-    };
+    let bm_data = storage::get::<DataBucket>();
 
     Ok(bm_data.used_bytes())
 }
@@ -92,7 +97,10 @@ async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
 
     let res: Vec<(Key, Val)> = Vec::new();
 
-    println!("BigMap data: pop_entries_for_canister_id {}", can_id);
+    println!(
+        "BigMap data: FIXME: implement pop_entries_for_canister_id {}",
+        can_id
+    );
 
     // let _keys: Vec<Key> = bm_data
     //     .entries
@@ -123,17 +131,10 @@ async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
 #[update]
 #[allow(dead_code)]
 async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
-    let mut bm_data = match (&*BM_DATA).lock() {
-        Ok(v) => v,
-        Err(err) => return Err(format!("Failed to lock the BD Bucket, due to err: {}", err)),
-    };
+    let bm_data = storage::get::<DataBucket>();
 
     bm_data.set_index_canister(bigmap_idx_can);
     Ok(())
-}
-
-lazy_static! {
-    static ref BM_DATA: Mutex<DataBucket> = Mutex::new(DataBucket::new(Default::default()));
 }
 
 fn main() {}

@@ -67,7 +67,6 @@ dependencies = [
  "ic_cdk",
  "ic_cdk_macros",
  "indexmap",
- "lazy_static",
  "min-max-heap",
  "num-bigint",
  "serde",

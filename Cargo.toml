@@ -13,7 +13,7 @@ opt-level = 'z'
 ic_cdk = { path = "vendor/rust-cdk/src/ic_cdk" }
 ic_cdk_macros = { path = "vendor/rust-cdk/src/ic_cdk_macros" }
 candid = "0.2.6"
-lazy_static = "1.4.0"
+# lazy_static = "1.4.0"
 hex = "0.4.2"
 bincode = "1.2.1"
 wyhash = "0.3.0"
