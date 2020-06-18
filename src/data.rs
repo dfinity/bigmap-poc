@@ -20,7 +20,7 @@ pub struct DataBucket {
 #[allow(dead_code)]
 impl DataBucket {
     pub fn new(id: CanisterId) -> Self {
-        // println!("DataBucket new {}", id);
+        // println!("BigMap Data {}: new", id);
         Self {
             id,
             ..Default::default()
@@ -33,7 +33,7 @@ impl DataBucket {
 
     pub fn put(&mut self, key: Key, value: Val) {
         println!(
-            "DataBucket {} put {}",
+            "BigMap Data {}: put {}",
             self.id,
             String::from_utf8_lossy(&key)
         );
@@ -50,7 +50,7 @@ impl DataBucket {
 
     pub fn get(&self, key: Key) -> Result<&Val, String> {
         println!(
-            "DataBucket {} get {}",
+            "BigMap Data {}: get {}",
             self.id,
             String::from_utf8_lossy(&key)
         );

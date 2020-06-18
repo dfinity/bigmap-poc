@@ -13,16 +13,15 @@ use ic_cdk_macros::*;
 async fn get(key: Key) -> Option<Val> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
-    // println!("BigMap index: get key {}", String::from_utf8_lossy(&key));
     match bigmap_idx.lookup_get(&key) {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
-                "BigMap index: get key {} @CanisterId {}",
+                "BigMap Index {}: get key {} @CanisterId {}",
+                bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            // FIXME: ic_ckd::call doesn't work
             // ic_cdk::call(can_id, "get_as_update", Some(key))
             //     .await
             //     .unwrap()
@@ -30,7 +29,8 @@ async fn get(key: Key) -> Option<Val> {
         }
         None => {
             println!(
-                "BigMap index: no data canister suitable for key {}",
+                "BigMap Index {}: no data canister suitable for key {}",
+                bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key)
             );
             None
@@ -43,12 +43,12 @@ async fn get(key: Key) -> Option<Val> {
 async fn put(key: Key, value: Val) -> bool {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
-    // println!("BigMap index: put key {}", String::from_utf8_lossy(&key));
     match bigmap_idx.lookup_put(&key) {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
-                "BigMap index: put key {} @CanisterId {}",
+                "BigMap Index {}: put key {} @CanisterId {}",
+                bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key),
                 can_id
             );
@@ -58,15 +58,11 @@ async fn put(key: Key, value: Val) -> bool {
                     "BigMap index: put call to CanisterId {} failed",
                     can_id
                 ))
-            // let x = bigmap::dfn_candid::from_output((key.clone(), value.clone()));
-            // let y: (Key, Val) = bigmap::dfn_candid::to_input(x.clone());
-            // println!("{:?}", x);
-            // println!("{:?}, {:?}", y.0, y.1);
-            // call_candid(can_id.0, "put", (key, value)).await.unwrap()
         }
         None => {
             println!(
-                "BigMap index: no data canister suitable for key {}",
+                "BigMap Index {}: no data canister suitable for key {}",
+                bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key)
             );
             false
@@ -112,7 +108,16 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_get(&key) {
-        Some(can_id) => Some(format!("{}", can_id)),
+        Some(can_id) => {
+            let can_id = format!("{}", can_id);
+            println!(
+                "BigMap Index {}: lookup_data_bucket_for_get key {} => {}",
+                bigmap_idx.canister_id(),
+                String::from_utf8_lossy(&key),
+                can_id
+            );
+            Some(can_id)
+        }
         None => None,
     }
 }
@@ -121,8 +126,9 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
 fn initialize() {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
-    println!("BigMap Index: initialize");
-    bigmap_idx.set_canister_id(ic_cdk::reflection::id().into());
+    let can_id = ic_cdk::reflection::id().into();
+    println!("BigMap Index {}: initialize", can_id);
+    bigmap_idx.set_canister_id(can_id);
     bigmap_idx.set_fn_xcq_used_bytes(Box::new(xcq_used_bytes_fn));
     bigmap_idx.set_fn_xcq_holds_key(Box::new(xcq_holds_key_fn));
 }

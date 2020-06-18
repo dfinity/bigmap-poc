@@ -14,13 +14,15 @@ async fn get(key: Key) -> Option<Val> {
     let res = bm_data.get(key.clone()).ok().cloned();
     match &res {
         Some(value) => println!(
-            "BigMap data: get key {} ({} bytes) => value ({} bytes)",
+            "BigMap Data {}: get key {} ({} bytes) => value ({} bytes)",
+            bm_data.canister_id(),
             String::from_utf8_lossy(&key),
             key.len(),
             value.len()
         ),
         None => println!(
-            "BigMap data: get key {} ({} bytes) => None",
+            "BigMap Data {}: get key {} ({} bytes) => None",
+            bm_data.canister_id(),
             String::from_utf8_lossy(&key),
             key.len()
         ),
@@ -35,13 +37,15 @@ async fn get_as_update(key: Key) -> Option<Val> {
     let res = bm_data.get(key.clone()).ok().cloned();
     match &res {
         Some(value) => println!(
-            "BigMap data: get_as_update key {} ({} bytes) => value ({} bytes)",
+            "BigMap Data {}: get_as_update key {} ({} bytes) => value ({} bytes)",
+            bm_data.canister_id(),
             String::from_utf8_lossy(&key),
             key.len(),
             value.len()
         ),
         None => println!(
-            "BigMap data: get_as_update key {} ({} bytes) => None",
+            "BigMap Data {}: get_as_update key {} ({} bytes) => None",
+            bm_data.canister_id(),
             String::from_utf8_lossy(&key),
             key.len()
         ),
@@ -55,7 +59,8 @@ async fn put(key_value: (Key, Val)) -> bool {
 
     let (key, value) = key_value;
     println!(
-        "BigMap data: put key {} ({} bytes) value ({} bytes)",
+        "BigMap Data {}: put key {} ({} bytes) value ({} bytes)",
+        bm_data.canister_id(),
         String::from_utf8_lossy(&key),
         key.len(),
         value.len()
@@ -66,9 +71,12 @@ async fn put(key_value: (Key, Val)) -> bool {
 
 #[update]
 async fn reset() {
-    // let bm_data = storage::get::<DataBucket>();
+    let bm_data = storage::get::<DataBucket>();
 
-    println!("BigMap data: FIXME: implement reset");
+    println!(
+        "BigMap Data {}: FIXME: implement reset",
+        bm_data.canister_id()
+    );
 }
 
 #[query]
@@ -90,15 +98,13 @@ async fn used_bytes(_: ()) -> Result<usize, String> {
 #[update]
 #[allow(dead_code)]
 async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
-    // let bm_data = match (&*BM_DATA).lock() {
-    //     Ok(v) => v,
-    //     Err(_) => return Vec::new(),
-    // };
+    let bm_data = storage::get::<DataBucket>();
 
     let res: Vec<(Key, Val)> = Vec::new();
 
     println!(
-        "BigMap data: FIXME: implement pop_entries_for_canister_id {}",
+        "BigMap Data {}: FIXME: implement pop_entries_for_canister_id {}",
+        bm_data.canister_id(),
         can_id
     );
 
@@ -118,7 +124,7 @@ async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
 
     // for k in filt_keys {
     //     println!(
-    //         "BigMap data: key {} should be moved to canister_id={}",
+    //         "BigMap Data {}: key {} should be moved to canister_id={}",
     //         String::from_utf8_lossy(&k),
     //         can_id
     //     );
@@ -135,6 +141,15 @@ async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
 
     bm_data.set_index_canister(bigmap_idx_can);
     Ok(())
+}
+
+#[init]
+fn initialize() {
+    let bm_data = storage::get::<DataBucket>();
+
+    let can_id = ic_cdk::reflection::id().into();
+    println!("BigMap Data {}: initialize", can_id);
+    bm_data.set_canister_id(can_id);
 }
 
 fn main() {}

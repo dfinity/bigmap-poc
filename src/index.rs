@@ -65,7 +65,7 @@ impl BigmapIdx {
         // let mut new_can_util_vec = Vec::new();
 
         for can_id in can_ids {
-            println!("BigMap Index: add data CanisterId {}", can_id);
+            println!("BigMap Index {}: add data CanisterId {}", self.id, can_id);
 
             let ptr_new = CanisterPtr {
                 0: self.idx.len() as u32,
@@ -153,14 +153,14 @@ impl BigmapIdx {
             None => return None,
         };
 
-        // println!("BM index lookup_put @key {}", String::from_utf8_lossy(key));
+        // println!("BigMap Index {}: lookup_put @key {}", self.id, String::from_utf8_lossy(key));
         Some(self.can_ptr_to_canister_id(ring_node))
     }
 
     pub fn rebalance(&mut self) -> Result<u8, String> {
         println!(
-            "BigMap Index: rebalance pending can_ids {:?}",
-            self.can_rebalancing
+            "BigMap Index {}: rebalance pending can_ids {:?}",
+            self.id, self.can_rebalancing
         );
 
         let xcq_used_bytes = self
@@ -172,9 +172,15 @@ impl BigmapIdx {
             // let can_ptr = CanisterPtr { 0: i as u32 };
             let used_bytes = xcq_used_bytes(can_id.clone());
             if self.flags[i].contains(Flags::REBALANCING) {
-                println!("used: can_id {} -> {} (rebalancing)", can_id, used_bytes);
+                println!(
+                    "BigMap Index {}: used can_id {} -> {} (rebalancing)",
+                    self.id, can_id, used_bytes
+                );
             } else {
-                println!("used: can_id {} -> {}", can_id, used_bytes);
+                println!(
+                    "BigMap Index {}: used can_id {} -> {}",
+                    self.id, can_id, used_bytes
+                );
             }
         }
 
