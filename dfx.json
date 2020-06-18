@@ -1,7 +1,7 @@
 {
     "version": 1,
     "canisters": {
-        "bigmap_index": {
+        "bigmap": {
             "type": "custom",
             "candid": "src/bigmap_index.did",
             "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
