@@ -8,12 +8,6 @@ This is the Rust implementation of BigMap. There is also a Motoko-based implemen
 
 ## Prerequisites
 
-It's necessary to have the DFX version >= 0.5.8
-
-```bash
-DFX_VERSION=0.5.8 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
-```
-
 Rust CDK is included with Big Map through `git subtree`, so it does not have to be separately downloaded and installed. You do have to clone this repo, though :)
 
 ```bash
@@ -21,6 +15,12 @@ git clone git@github.com:dfinity/big-map-rs.git
 cd big-map-rs
 ```
 
+
+To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.5.8 or higher
+
+```bash
+DFX_VERSION=0.5.8 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+```
 
 <!--
 ```bash
