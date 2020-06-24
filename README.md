@@ -1,3 +1,5 @@
+![Rust](https://github.com/dfinity/bigmap-rs/workflows/Rust/badge.svg)
+
 # BigMap
 
 BigMap is a simple, approachable library for building infinitely scalable key-value storage on the Internet Computer.
