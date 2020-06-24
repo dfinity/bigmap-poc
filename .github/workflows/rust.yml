@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Build native mode
       run: cargo build --verbose
+    - name: Release build for wasm32
+      run: cargo build --release --target=wasm32-unknown-unknown
     - name: Run tests
       run: cargo test --verbose
