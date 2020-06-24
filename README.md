@@ -1,4 +1,4 @@
-![Rust](https://github.com/dfinity/bigmap-rs/workflows/Rust/badge.svg)
+[![Rust](https://github.com/dfinity/bigmap-rs/workflows/Rust/badge.svg)](https://github.com/dfinity/bigmap-rs/actions)
 
 # BigMap
 
