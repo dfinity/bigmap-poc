@@ -55,7 +55,7 @@ async fn get_as_update(key: Key) -> Option<Val> {
 
 #[update]
 async fn put(key_value: (Key, Val)) -> bool {
-    let bm_data = storage::get::<DataBucket>();
+    let bm_data = storage::get_mut::<DataBucket>();
 
     let (key, value) = key_value;
     println!(
@@ -80,7 +80,6 @@ async fn reset() {
 }
 
 #[query]
-#[allow(dead_code)]
 async fn holds_key(key: Key) -> Result<bool, String> {
     let bm_data = storage::get::<DataBucket>();
 
@@ -88,7 +87,6 @@ async fn holds_key(key: Key) -> Result<bool, String> {
 }
 
 #[query]
-#[allow(dead_code)]
 async fn used_bytes(_: ()) -> Result<usize, String> {
     let bm_data = storage::get::<DataBucket>();
 
@@ -96,7 +94,6 @@ async fn used_bytes(_: ()) -> Result<usize, String> {
 }
 
 #[update]
-#[allow(dead_code)]
 async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
     let bm_data = storage::get::<DataBucket>();
 
@@ -137,7 +134,7 @@ async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
 #[update]
 #[allow(dead_code)]
 async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
-    let bm_data = storage::get::<DataBucket>();
+    let bm_data = storage::get_mut::<DataBucket>();
 
     bm_data.set_index_canister(bigmap_idx_can);
     Ok(())
@@ -145,7 +142,7 @@ async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
 
 #[init]
 fn initialize() {
-    let bm_data = storage::get::<DataBucket>();
+    let bm_data = storage::get_mut::<DataBucket>();
 
     let can_id = ic_cdk::reflection::id().into();
     println!("BigMap Data {}: initialize", can_id);

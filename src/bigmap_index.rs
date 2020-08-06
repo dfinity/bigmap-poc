@@ -81,7 +81,7 @@ fn needs_data_buckets() -> u32 {
 #[update]
 #[allow(dead_code)]
 fn add_data_buckets(can_vec: Vec<String>) {
-    let bigmap_idx = storage::get::<BigmapIdx>();
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     let mut cans: Vec<CanisterId> = Vec::new();
     for can_text in can_vec {
@@ -105,7 +105,7 @@ async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
 #[query]
 #[allow(dead_code)]
 async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
-    let bigmap_idx = storage::get::<BigmapIdx>();
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     match bigmap_idx.lookup_get(&key) {
         Some(can_id) => {
@@ -124,7 +124,7 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
 
 #[init]
 fn initialize() {
-    let bigmap_idx = storage::get::<BigmapIdx>();
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     let can_id = ic_cdk::reflection::id().into();
     println!("BigMap Index {}: initialize", can_id);
