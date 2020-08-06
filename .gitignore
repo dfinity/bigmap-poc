@@ -2,9 +2,5 @@
 canisters/
 
 # Ignore everything in target/
-target/**/*
-# except the release builds of wasm modules
-!target/release/
-!target/release/bigmap_data.wasm
-!target/release/bigmap_index.wasm
+target/*
 
