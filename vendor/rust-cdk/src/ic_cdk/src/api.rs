@@ -1,5 +1,6 @@
 use crate::ic0;
 use candid::Encode;
+use data_encoding::BASE32_NOPAD;
 use std::cell::RefCell;
 use std::future::Future;
 use std::pin::Pin;
@@ -17,40 +18,65 @@ pub struct CanisterId(pub Vec<u8>);
 
 // TODO: move this to using the ic_agent canister.
 impl CanisterId {
-    pub fn from_str_unchecked(s: &str) -> Result<Self, String> {
-        // We don't validate the crc here.
-        let s = s.split_at(3).1; // remove 'ic:'
-        let s = s.split_at(s.len() - 2).0; // remove crc8
-        if s.len() % 2 != 0 {
-            return Err(format!("Invalid number of characters: {}", s.len()));
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        let s_repl = s.to_ascii_uppercase().replace("-", "");
+
+        let crc_and_can_id = BASE32_NOPAD
+            .decode(s_repl.as_bytes())
+            .map_err(|e| format!("Error while Base32 decoding {} => {}", s_repl, e))?;
+
+        if crc_and_can_id.len() < 4 {
+            return Err(format!(
+                "Base32 decoded string is only {}  bytes long",
+                crc_and_can_id.len()
+            ));
         }
-        let s: &[u8] = s.as_bytes();
+        let (digest_provided, can_id) = crc_and_can_id.split_at(4);
 
-        fn val(a: u8, idx: usize) -> Result<u8, String> {
-            match a {
-                b'0'..=b'9' => Ok(a - b'0'),
-                b'a'..=b'f' => Ok(a - b'a' + 10),
-                b'A'..=b'F' => Ok(a - b'A' + 10),
-                x => return Err(format!("Invalid character at pos {}: '{}'", idx, x)),
-            }
+        let mut crc32hasher = crc32fast::Hasher::new();
+        crc32hasher.update(can_id);
+        let digest_calculated = crc32hasher.finalize().to_be_bytes();
+
+        if digest_provided != digest_calculated {
+            return Err("CRC32 checksum in the CanisterId is invalid".to_string());
         }
 
-        let v: Result<Vec<u8>, String> = s
-            .chunks(2)
-            .enumerate()
-            .map(|(i, pair)| Ok(val(pair[0], i)? << 4 | val(pair[1], i)?))
-            .collect();
-
-        Ok(CanisterId(v?))
+        Ok(CanisterId(Vec::from(can_id)))
     }
 }
 
 impl std::fmt::Display for CanisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let can_id = self.0.clone();
-        let mut crc8 = crc8::Crc8::create_lsb(7);
-        let crc = crc8.calc(&can_id, can_id.len() as i32, 0);
-        write!(f, "ic:{}{:02X}", hex::encode_upper(self.0.clone()), crc)
+        let can_id_slice = &self.0;
+
+        // Calculate CRC32 digest of the Canister ID
+        let mut crc32hasher = crc32fast::Hasher::new();
+        crc32hasher.update(can_id_slice);
+        let crc32_bytes = crc32hasher.finalize().to_be_bytes();
+
+        // Append the Canister ID bytes to the calculated CRC32 digest
+        let mut crc_and_can_id = Vec::from(crc32_bytes);
+        crc_and_can_id.extend(can_id_slice);
+
+        // Base32-encode the concatenated bytes
+        let s = BASE32_NOPAD.encode(&crc_and_can_id).to_ascii_lowercase();
+
+        // Print with a separator - (dash) inserted every 5 characters.
+        let mut s_peekable = s.chars().peekable();
+        while s_peekable.peek().is_some() {
+            let chunk: String = s_peekable.by_ref().take(5).collect();
+            write!(f, "{}", chunk)?;
+            if s_peekable.peek().is_some() {
+                write!(f, "-")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for CanisterId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CanisterId {}", self)
     }
 }
 
@@ -244,3 +270,6 @@ pub fn trap(message: &str) {
         ic0::trap(message.as_ptr() as i32, message.len() as i32);
     }
 }
+
+#[cfg(test)]
+mod tests;

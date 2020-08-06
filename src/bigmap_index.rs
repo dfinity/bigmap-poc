@@ -85,7 +85,7 @@ fn add_data_buckets(can_vec: Vec<String>) {
 
     let mut cans: Vec<CanisterId> = Vec::new();
     for can_text in can_vec {
-        let can_id = ic_cdk::CanisterId::from_str_unchecked(&can_text).unwrap();
+        let can_id = ic_cdk::CanisterId::from_str(&can_text).unwrap();
         cans.push(can_id.into());
     }
     bigmap_idx.add_canisters(cans);

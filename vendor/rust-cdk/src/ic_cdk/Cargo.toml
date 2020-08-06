@@ -10,4 +10,6 @@ cfg-if = "0.1.10"
 serde = "1.0.110"
 wee_alloc = { version = "0.4.5" }
 hex = "0.4.2"
-crc8 = "0.1.1"
+crc32fast = "1.2.0"
+data-encoding = "2.2.1"
+crc = "1.8.1"

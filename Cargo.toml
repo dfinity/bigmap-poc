@@ -26,7 +26,8 @@ num-bigint = "0.2.6"
 serde = "1.0.111"
 wee_alloc = "0.4.5"
 cfg-if = "0.1.10"
-crc8 = "0.1.1"
+crc32fast = "1.2.0"
+data-encoding = "2.2.1"
 
 [lib]
 name = "bigmap"

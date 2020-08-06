@@ -44,16 +44,38 @@ impl Into<std::vec::Vec<u8>> for CanisterId {
 
 impl Into<ic_cdk::CanisterId> for CanisterId {
     fn into(self) -> ic_cdk::CanisterId {
-        ic_cdk::CanisterId::from_str_unchecked(std::str::from_utf8(&self.0).unwrap())
+        ic_cdk::CanisterId::from_str(std::str::from_utf8(&self.0).unwrap())
             .expect("Could not parse the CanisterId")
     }
 }
 
 impl std::fmt::Display for CanisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let can_id = self.0.clone();
-        let mut crc8 = crc8::Crc8::create_msb(7);
-        let crc = crc8.calc(&can_id, can_id.len() as i32, 0);
-        write!(f, "ic:{}{:02X}", hex::encode_upper(self.0.clone()), crc)
+        let can_id_slice = &self.0;
+
+        // Calculate CRC32 digest of the Canister ID
+        let mut crc32hasher = crc32fast::Hasher::new();
+        crc32hasher.update(can_id_slice);
+        let crc32_bytes = crc32hasher.finalize().to_be_bytes();
+
+        // Append the Canister ID bytes to the calculated CRC32 digest
+        let mut crc_and_can_id = Vec::from(crc32_bytes);
+        crc_and_can_id.extend(can_id_slice);
+
+        // Base32-encode the concatenated bytes
+        let s = data_encoding::BASE32_NOPAD
+            .encode(&crc_and_can_id)
+            .to_ascii_lowercase();
+
+        // Print with a separator - (dash) inserted every 5 characters.
+        let mut s_peekable = s.chars().peekable();
+        while s_peekable.peek().is_some() {
+            let chunk: String = s_peekable.by_ref().take(5).collect();
+            write!(f, "{}", chunk)?;
+            if s_peekable.peek().is_some() {
+                write!(f, "-")?;
+            }
+        }
+        Ok(())
     }
 }
