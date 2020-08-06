@@ -4,6 +4,7 @@
 [build]
 # target = "wasm32-unknown-unknown"
 # rustflags = ["-Z", "unstable-options"]
+# rustflags = ["-C", "link-args=--gc-sections"]
 
 [profile.bigmap_data.build-override]
 target = "wasm32-unknown-unknown"
