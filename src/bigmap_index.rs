@@ -52,7 +52,7 @@ async fn put(key: Key, value: Val) -> bool {
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            ic_cdk::call(can_id.clone(), "put", Some((key, value)))
+            ic_cdk::call(can_id.clone(), "put_from_index", Some((key, value)))
                 .await
                 .expect(&format!(
                     "BigMap index: put call to CanisterId {} failed",

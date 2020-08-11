@@ -54,10 +54,9 @@ async fn get_as_update(key: Key) -> Option<Val> {
 }
 
 #[update]
-async fn put(key_value: (Key, Val)) -> bool {
+async fn put(key: Key, value: Val) -> bool {
     let bm_data = storage::get_mut::<DataBucket>();
 
-    let (key, value) = key_value;
     println!(
         "BigMap Data {}: put key {} ({} bytes) value ({} bytes)",
         bm_data.canister_id(),
@@ -67,6 +66,17 @@ async fn put(key_value: (Key, Val)) -> bool {
     );
     bm_data.put(key, value);
     true
+}
+
+#[update]
+async fn put_from_index(key_value: (Key, Val)) -> bool {
+    // There is an ugly bug at the moment, where arguments in
+    // a function call function(arg1, arg2) from
+    // a Canister A to Canister B get converted into function((arg1, arg2))
+    // in the target canister.
+    // Therefore, we do the splitting of the arguments here.
+    let (key, value) = key_value;
+    put(key, value).await
 }
 
 #[update]
