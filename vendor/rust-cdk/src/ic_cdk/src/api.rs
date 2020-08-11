@@ -1,6 +1,5 @@
 use crate::ic0;
 use candid::Encode;
-use data_encoding::BASE32_NOPAD;
 use std::cell::RefCell;
 use std::future::Future;
 use std::pin::Pin;
@@ -18,59 +17,82 @@ pub struct CanisterId(pub Vec<u8>);
 
 // TODO: move this to using the ic_agent canister.
 impl CanisterId {
-    pub fn from_str(s: &str) -> Result<Self, String> {
-        let s_repl = s.to_ascii_uppercase().replace("-", "");
+    pub fn from_str(input: &str) -> Result<Self, CanisterIdParseError> {
+        // Strategy: Parse very liberally, then pretty-print and compare output
+        // This is both simpler and yields better error messages
 
-        let crc_and_can_id = BASE32_NOPAD
-            .decode(s_repl.as_bytes())
-            .map_err(|e| format!("Error while Base32 decoding {} => {}", s_repl, e))?;
-
-        if crc_and_can_id.len() < 4 {
-            return Err(format!(
-                "Base32 decoded string is only {}  bytes long",
-                crc_and_can_id.len()
-            ));
+        let mut s = input.to_string();
+        s.make_ascii_lowercase();
+        s.retain(|c| c.is_ascii_alphanumeric());
+        match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &s) {
+            Some(mut bytes) => {
+                if bytes.len() < 4 {
+                    return Err(CanisterIdParseError::TooShort);
+                }
+                let result = CanisterId(bytes.split_off(4));
+                let expected = format!("{}", result);
+                if input != expected {
+                    return Err(CanisterIdParseError::InvalidChecksum {
+                        found: input.to_string(),
+                        expected,
+                    });
+                }
+                Ok(result)
+            }
+            None => Err(CanisterIdParseError::NotBase32),
         }
-        let (digest_provided, can_id) = crc_and_can_id.split_at(4);
-
-        let mut crc32hasher = crc32fast::Hasher::new();
-        crc32hasher.update(can_id);
-        let digest_calculated = crc32hasher.finalize().to_be_bytes();
-
-        if digest_provided != digest_calculated {
-            return Err("CRC32 checksum in the CanisterId is invalid".to_string());
-        }
-
-        Ok(CanisterId(Vec::from(can_id)))
     }
 }
 
 impl std::fmt::Display for CanisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let can_id_slice = &self.0;
-
+        let blob = &self.0;
         // Calculate CRC32 digest of the Canister ID
-        let mut crc32hasher = crc32fast::Hasher::new();
-        crc32hasher.update(can_id_slice);
-        let crc32_bytes = crc32hasher.finalize().to_be_bytes();
+        let mut hasher = crc32fast::Hasher::new();
+        hasher.update(&blob);
+        let checksum = hasher.finalize();
 
         // Append the Canister ID bytes to the calculated CRC32 digest
-        let mut crc_and_can_id = Vec::from(crc32_bytes);
-        crc_and_can_id.extend(can_id_slice);
+        let mut bytes = vec![];
+        bytes.extend(&(checksum.to_be_bytes().to_vec()));
+        bytes.extend_from_slice(&blob);
 
         // Base32-encode the concatenated bytes
-        let s = BASE32_NOPAD.encode(&crc_and_can_id).to_ascii_lowercase();
+        let mut s = base32::encode(base32::Alphabet::RFC4648 { padding: false }, &bytes);
+        s.make_ascii_lowercase();
 
         // Print with a separator - (dash) inserted every 5 characters.
-        let mut s_peekable = s.chars().peekable();
-        while s_peekable.peek().is_some() {
-            let chunk: String = s_peekable.by_ref().take(5).collect();
-            write!(f, "{}", chunk)?;
-            if s_peekable.peek().is_some() {
-                write!(f, "-")?;
-            }
+        while s.len() > 5 {
+            // too bad split_off does not work the other way
+            let rest = s.split_off(5);
+            write!(f, "{}-", s)?;
+            s = rest;
         }
-        Ok(())
+        write!(f, "{}", s)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CanisterIdParseError {
+    TooShort,
+    NotBase32,
+    InvalidChecksum { found: String, expected: String },
+}
+
+impl std::fmt::Display for CanisterIdParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TooShort => write!(f, "CanisterId textual representation is too short"),
+            Self::NotBase32 => write!(
+                f,
+                "Cannot decode CanisterId textual representation as base32"
+            ),
+            Self::InvalidChecksum { found, expected } => write!(
+                f,
+                "CanisterId {} failed checksum validation, expected {}",
+                found, expected
+            ),
+        }
     }
 }
 
