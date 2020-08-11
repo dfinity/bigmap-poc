@@ -68,31 +68,3 @@ dfx canister call bigmap get '(vec { 97; 98; 99; })'
 # (opt vec { 4; 5; 6; })
 ```
 
-
-## Super Powers realized by BigMap
-
-The BigMap library touches on the following aspects of the vision of the Internet Computer's "super powers":
-
-### 3. "Data Without Storage"
-
-This library offers building blocks for application-specific, in-memory data abstractions that scale.  This goal relates to the following excerpt:
-
-> "Imagine that whenever you...created a collection...no matter how big...those abstractions would be sufficient to ensure the persistence of the data, without the need to marshal it out to databases or in and out of files for safe keeping" (text from [10 Super Powers List]).
-
-### 6. "Treat systems like software libraries"
-
-This library can be integrated as a library.  This library can also be integrated as a service.
-
-> "Third party systems and services providing powerful functionality...can be easily integrated into your own system just like you integrate software libraries today." (text from [10 Super Powers List]).
-
-
-### 9. "Scale out"
-
-As mentioned above, this library will permit unlimited scaling.  Under the hood, this is achieved via _cross-subnetwork_ application-level abstractions, instantiated from generic abstractions provided by BigMap.
-
-> "Build mass market internet services using the canister model (each canister can only grow to the capacity of a single subnetwork, but you can build a system from any number of canisters)" (text from [10 Super Powers List]).
-
-
-### References
-
-- [10 Super Powers List](https://docs.google.com/document/d/1Bxnn0--YoB_2sVWm33jWXhDFxsyOEhYG0KU7G1SL_q8/edit)
