@@ -8,7 +8,7 @@ use ic_cdk_macros::*;
 // use std::sync::Mutex;
 
 #[query]
-async fn get(key: Key) -> Option<Val> {
+fn get(key: Key) -> Option<Val> {
     let bm_data = storage::get::<DataBucket>();
 
     let res = bm_data.get(key.clone()).ok().cloned();
@@ -31,7 +31,7 @@ async fn get(key: Key) -> Option<Val> {
 }
 
 #[update]
-async fn get_as_update(key: Key) -> Option<Val> {
+fn get_as_update(key: Key) -> Option<Val> {
     let bm_data = storage::get::<DataBucket>();
 
     let res = bm_data.get(key.clone()).ok().cloned();
@@ -54,7 +54,7 @@ async fn get_as_update(key: Key) -> Option<Val> {
 }
 
 #[update]
-async fn put(key: Key, value: Val) -> bool {
+fn put(key: Key, value: Val) -> bool {
     let bm_data = storage::get_mut::<DataBucket>();
 
     println!(
@@ -76,11 +76,11 @@ async fn put_from_index(key_value: (Key, Val)) -> bool {
     // in the target canister.
     // Therefore, we do the splitting of the arguments here.
     let (key, value) = key_value;
-    put(key, value).await
+    put(key, value)
 }
 
 #[update]
-async fn reset() {
+fn reset() {
     let bm_data = storage::get::<DataBucket>();
 
     println!(
@@ -90,21 +90,21 @@ async fn reset() {
 }
 
 #[query]
-async fn holds_key(key: Key) -> Result<bool, String> {
+fn holds_key(key: Key) -> Result<bool, String> {
     let bm_data = storage::get::<DataBucket>();
 
     Ok(bm_data.holds_key(&key))
 }
 
 #[query]
-async fn used_bytes(_: ()) -> Result<usize, String> {
+fn used_bytes(_: ()) -> Result<usize, String> {
     let bm_data = storage::get::<DataBucket>();
 
     Ok(bm_data.used_bytes())
 }
 
 #[update]
-async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
+fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
     let bm_data = storage::get::<DataBucket>();
 
     let res: Vec<(Key, Val)> = Vec::new();
@@ -142,8 +142,7 @@ async fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
 }
 
 #[update]
-#[allow(dead_code)]
-async fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
+fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
     let bm_data = storage::get_mut::<DataBucket>();
 
     bm_data.set_index_canister(bigmap_idx_can);

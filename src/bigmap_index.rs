@@ -9,7 +9,6 @@ use ic_cdk_macros::*;
 // use std::sync::Mutex;
 
 #[update]
-#[allow(dead_code)]
 async fn get(key: Key) -> Option<Val> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
@@ -22,10 +21,10 @@ async fn get(key: Key) -> Option<Val> {
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            // ic_cdk::call(can_id, "get_as_update", Some(key))
-            //     .await
-            //     .unwrap()
-            call_candid(can_id.0, "get_as_update", key).await.unwrap()
+            ic_cdk::call(can_id, "get_as_update", Some(key))
+                .await
+                .unwrap()
+            // call_candid(can_id.0, "get_as_update", key).await.unwrap()
         }
         None => {
             println!(
@@ -39,7 +38,6 @@ async fn get(key: Key) -> Option<Val> {
 }
 
 #[update]
-#[allow(dead_code)]
 async fn put(key: Key, value: Val) -> bool {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
@@ -71,7 +69,6 @@ async fn put(key: Key, value: Val) -> bool {
 }
 
 #[query]
-#[allow(dead_code)]
 fn needs_data_buckets() -> u32 {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
@@ -79,7 +76,6 @@ fn needs_data_buckets() -> u32 {
 }
 
 #[update]
-#[allow(dead_code)]
 fn add_data_buckets(can_vec: Vec<String>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
@@ -92,7 +88,6 @@ fn add_data_buckets(can_vec: Vec<String>) {
 }
 
 #[query]
-#[allow(dead_code)]
 async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
@@ -103,7 +98,6 @@ async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
 }
 
 #[query]
-#[allow(dead_code)]
 async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
