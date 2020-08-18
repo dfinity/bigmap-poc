@@ -12,4 +12,3 @@ wee_alloc = { version = "0.4.5" }
 hex = "0.4.2"
 crc32fast = "1.2.0"
 base32 = "0.4.0"
-crc = "1.8.1"
