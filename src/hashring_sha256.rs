@@ -79,9 +79,15 @@ fn biguint_from_slice256(s: &[u8]) -> BigUint {
 fn biguint_to_sha256_digest(bigint: &BigUint) -> Sha256Digest {
     let mut key = bigint.to_radix_be(256);
     key.resize(32, 0);
-    let mut array = [0; 32];
-    array.clone_from_slice(Vec::from(key).as_slice());
-    *Sha256Digest::from_slice(&array)
+    *Sha256Digest::from_slice(&key)
+}
+
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref SHA256_DIGEST_MIN: Sha256Digest = biguint_to_sha256_digest(&BigUint::from(0u64));
+    pub static ref SHA256_DIGEST_MAX: Sha256Digest =
+        biguint_to_sha256_digest(&BigUint::parse_bytes(b"f".repeat(64).as_slice(), 16).unwrap());
 }
 
 pub(crate) fn sha256_range_half(
@@ -97,7 +103,8 @@ pub(crate) fn sha256_range_half(
 #[allow(dead_code)]
 impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
     /// Add `node` to the hash ring.
-    pub fn add(&mut self, node: T) {
+    /// Returns the index at which the node was added
+    pub fn add(&mut self, node: T) -> usize {
         let key = if self.ring.is_empty() {
             BigUint::parse_bytes(b"f".repeat(64).as_slice(), 16).unwrap()
         } else {
@@ -122,14 +129,17 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
         };
         let key_hash = biguint_to_sha256_digest(&key);
         // let key = get_key(&self.hash_builder, &node);
-        self.ring.push(Node::new(key_hash, node));
+        self.ring.push(Node::new(key_hash, node.clone()));
         self.ring.sort();
+        self.get_idx_key_node_for_node(&node).unwrap().0
     }
 
-    /// Add `node` to the hash ring, at the `idx` position
-    pub fn add_with_key(&mut self, idx: &Sha256Digest, node: T) {
-        self.ring.push(Node::new(*idx, node));
+    /// Add `node` to the hash ring, with the provided key
+    /// Returns the index at which the node was added
+    pub fn add_with_key(&mut self, key: &Sha256Digest, node: T) -> usize {
+        self.ring.push(Node::new(*key, node.clone()));
         self.ring.sort();
+        self.get_idx_key_node_for_node(&node).unwrap().0
     }
 
     /// Remove `node` from the hash ring. Requires searching the entire ring.
@@ -163,7 +173,8 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
 
     /// Get the Option<(idx,node)> for the provided `node`.
     /// Returns `None` if the ring is empty or the node couldn't be found
-    pub fn get_idx_node_for_node(&self, node: &T) -> Option<(usize, &T)> {
+    /// Note that the returned node may be different from the provided, in case there is no exact match
+    pub fn get_idx_key_node_for_node(&self, node: &T) -> Option<(usize, Sha256Digest, &T)> {
         if self.ring.is_empty() {
             return None;
         }
@@ -171,10 +182,22 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
         let n = self.ring.iter().position(|e| e.node == *node).unwrap_or(0);
 
         if n == self.ring.len() {
-            return Some((0, &self.ring[0].node));
+            // No match found - return the last entry
+            return Some((0, self.ring[0].key, &self.ring[0].node));
         }
 
-        Some((n, &self.ring[n].node))
+        Some((n, self.ring[n].key, &self.ring[n].node))
+    }
+
+    pub fn get_key_range_for_idx(&self, idx: usize) -> (Sha256Digest, Sha256Digest) {
+        if self.ring.is_empty() || idx >= self.ring.len() {
+            return (*SHA256_DIGEST_MIN, *SHA256_DIGEST_MIN);
+        }
+
+        if idx == 0 {
+            return (*SHA256_DIGEST_MIN, self.ring[0].key);
+        }
+        return (self.ring[idx - 1].key, self.ring[idx].key);
     }
 
     /// Get the Option<(key,node)> responsible for `key`.

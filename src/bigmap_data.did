@@ -3,5 +3,6 @@ service : {
     "put": (key: vec nat8, value: vec nat8) -> (bool);
     "put_from_index": (key: vec nat8, value: vec nat8) -> (bool);
     "reset": (nat) -> () oneway;
+    "used_bytes": () -> (int64);
     "get_as_update": (key: vec nat8) -> (opt vec nat8);
 }

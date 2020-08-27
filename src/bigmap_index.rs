@@ -1,18 +1,14 @@
-use ::bigmap::call_candid;
 use ::bigmap::{index::BigmapIdx, CanisterId, Key, Val};
-// use futures::executor::block_on;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use ic_cdk::storage;
 use ic_cdk_macros::*;
-// use lazy_static::lazy_static;
-// use std::sync::Mutex;
 
 #[update]
 async fn get(key: Key) -> Option<Val> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
-    match bigmap_idx.lookup_get(&key) {
+    match bigmap_idx.lookup_get(&key).await {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
@@ -76,7 +72,7 @@ fn needs_data_buckets() -> u32 {
 }
 
 #[update]
-fn add_data_buckets(can_vec: Vec<String>) {
+async fn add_data_buckets(can_vec: Vec<String>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     let mut cans: Vec<CanisterId> = Vec::new();
@@ -84,7 +80,7 @@ fn add_data_buckets(can_vec: Vec<String>) {
         let can_id = ic_cdk::CanisterId::from_str(&can_text).unwrap();
         cans.push(can_id.into());
     }
-    bigmap_idx.add_canisters(cans);
+    bigmap_idx.add_canisters(cans).await;
 }
 
 #[query]
@@ -101,7 +97,7 @@ async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
 async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
-    match bigmap_idx.lookup_get(&key) {
+    match bigmap_idx.lookup_get(&key).await {
         Some(can_id) => {
             let can_id = format!("{}", can_id);
             println!(
@@ -116,6 +112,13 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     }
 }
 
+#[update]
+async fn maintenance() -> Result<u8, String> {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    bigmap_idx.maintenance().await
+}
+
 #[init]
 fn initialize() {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
@@ -123,44 +126,11 @@ fn initialize() {
     let can_id = ic_cdk::reflection::id().into();
     println!("BigMap Index {}: initialize", can_id);
     bigmap_idx.set_canister_id(can_id);
-    bigmap_idx.set_fn_xcq_used_bytes(Box::new(xcq_used_bytes_fn));
-    bigmap_idx.set_fn_xcq_holds_key(Box::new(xcq_holds_key_fn));
 }
 
 #[query]
 async fn total_used_bytes() -> usize {
     0
 }
-
-// async fn xcq_used_bytes_async(can_id: CanisterId) -> usize {
-//     ic_cdk::call(can_id.0.into(), "used_bytes", None::<()>)
-//         .await
-//         .expect("async call failed")
-// }
-
-// Temporary function, until we're able to call other canisters from native code
-// in Rust SDK
-fn xcq_used_bytes_fn(_can_id: CanisterId) -> usize {
-    // ic_cdk::block_on(ic_cdk::call(can_id.0.into(), "used_bytes", None::<()>));
-    // let res: Result<usize, String> = arg_data_1<usize>();
-    // let res: usize = xcq_used_bytes_async(can_id.0.into());
-    // res.expect("used_bytes call failed")
-    // FIXME: do inter-canister calls
-    0
-}
-
-// Temporary function, until we're able to call other canisters from native code
-// in Rust SDK
-fn xcq_holds_key_fn(_can_id: CanisterId, _key: &Key) -> bool {
-    // let res = async_runtime::rt::spawn(ic_cdk::call(can_id.0.into(), "holds_key", Some(key)))
-    //     .expect("async call failed");
-    // res.expect("holds_key call failed")
-    // FIXME: do inter-canister calls
-    true
-}
-
-// lazy_static! {
-//     static ref BM_IDX: Mutex<BigmapIdx> = Mutex::new(BigmapIdx::new());
-// }
 
 fn main() {}

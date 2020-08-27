@@ -4,7 +4,7 @@ use crate::index::BigmapIdx;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
 
-#[derive(Clone, Debug, Default, Hash, Serialize, Deserialize, candid::CandidType, Eq, PartialEq)]
+#[derive(Clone, Default, Hash, Serialize, Deserialize, candid::CandidType, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct CanisterId(pub Vec<u8>);
 
@@ -79,5 +79,11 @@ impl std::fmt::Display for CanisterId {
             }
         }
         Ok(())
+    }
+}
+
+impl std::fmt::Debug for CanisterId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }

@@ -1,154 +1,156 @@
-use crate::{calc_sha256, hashring_sha256, CanisterId, Key};
+use crate::{calc_sha256, hashring_sha256, CanisterId, Key, Sha256Digest, Sha2Vec, Val};
+use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
-use min_max_heap::MinMaxHeap;
-use std::cmp::Ordering;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
 
 // CanisterPtr allows us to have u64 instead of a full CanisterId
 // in various parts of the BigMap Index
-#[derive(Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct CanisterPtr(u32);
 pub type DetHashSet<K> = HashSet<K, BuildHasherDefault<WyHash>>;
+pub type DetHashMap<K, V> = HashMap<K, V, BuildHasherDefault<WyHash>>;
 
-bitflags::bitflags! {
-    #[derive(Default)]
-    struct Flags: u8 {
-        const USAGE_ACCURATE = 0b0000_0001;
-        const REBALANCING = 0b0000_0010;
-        // const C = 0b00000100;
-        // const ABC = Self::A.bits | Self::B.bits | Self::C.bits;
-    }
-}
+type HashRingRange = (Sha256Digest, Sha256Digest);
 
-// #[derive(Default)]
-// struct CanStats {
-//     state: CanState,
-//     used_bytes: u32,
-// }
+// Testing types
+type FnPtrUsedBytes = Box<dyn Fn(CanisterId) -> usize>;
+type FnPtrHoldsKey = Box<dyn Fn(CanisterId, &Key) -> bool>;
+type FnPtrSetRange = Box<dyn Fn(CanisterId, Sha256Digest, Sha256Digest)>;
+type FnPtrGetRelocationBatch = Box<dyn Fn(CanisterId, u64) -> Vec<(Sha2Vec, Key, Val)>>;
+type FnPtrPutBatch = Box<dyn Fn(CanisterId, &Vec<(Sha2Vec, Key, Val)>) -> u64>;
+type FnPtrDeleteEntries = Box<dyn Fn(CanisterId, &Vec<Vec<u8>>)>;
 
-#[allow(dead_code)]
 #[derive(Default)]
 pub struct BigmapIdx {
     idx: Vec<CanisterId>, // indirection for CanisterId, to avoid many copies of CanisterIds
-    flags: Vec<Flags>,
-    can_ring: hashring_sha256::HashRing<CanisterPtr>,
-    utilization_heap: MinMaxHeap<CanisterUsedBytes>, // Canisters that can be rebalanced
-    can_rebalancing: DetHashSet<CanisterPtr>,
-    can_query_util: DetHashSet<CanisterPtr>,
-    can_needed: u32, // how many canisters need to be created?
-    xcq_used_bytes: Option<Box<dyn Fn(CanisterId) -> usize + Send>>, // cross-canister query fn
-    xcq_holds_key: Option<Box<dyn Fn(CanisterId, &Key) -> bool + Send>>, // cross-canister query fn
+    hash_ring: hashring_sha256::HashRing<CanisterPtr>,
+    rebalance_queue: VecDeque<CanisterPtr>,
+    now_rebalancing_src_dst: Option<(CanisterPtr, CanisterPtr)>,
+    is_rebalancing: bool,
+    batch_limit_bytes: u64,
+    num_canisters_needed: u32,
+    canister_available_queue: VecDeque<CanisterId>,
+    used_bytes_threshold: u64,
+    used_bytes_total: u64,
     id: CanisterId,
+    // Testing functions
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_used_bytes: Option<FnPtrUsedBytes>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_holds_key: Option<Box<dyn Fn(CanisterId, &Key) -> bool>>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_set_range: Option<FnPtrSetRange>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_get_relocation_batch: Option<FnPtrGetRelocationBatch>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_put_batch: Option<FnPtrPutBatch>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_delete_entries: Option<FnPtrDeleteEntries>,
 }
 
 #[allow(dead_code)]
 impl BigmapIdx {
     pub fn new() -> Self {
         Self {
-            can_needed: 3,
+            num_canisters_needed: 1,
+            used_bytes_threshold: 512 * 1024 * 1024,
+            batch_limit_bytes: 512 * 1024,
             ..Default::default()
         }
     }
 
     pub fn canisters_needed(&self) -> u32 {
-        self.can_needed
+        // TODO: adjust this number as BigMap grows
+        self.num_canisters_needed
     }
 
     fn can_ptr_to_canister_id(&self, can_ptr: &CanisterPtr) -> CanisterId {
         self.idx[can_ptr.0 as usize].clone()
     }
 
-    pub fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
+    // TODO: implement
+    pub fn add_data_canister_wasm_binary(&mut self, _wasm_binary: &[u8]) {
+        unimplemented!("add_data_canister_wasm_binary");
+    }
+
+    // TODO: Convert to the proper canister creation
+    pub async fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
         // let mut new_can_util_vec = Vec::new();
 
         for can_id in can_ids {
-            println!("BigMap Index {}: add data CanisterId {}", self.id, can_id);
+            println!(
+                "BigMap Index {}: Created Data CanisterId {}",
+                self.id, can_id
+            );
 
-            let ptr_new = CanisterPtr {
-                0: self.idx.len() as u32,
-            };
-            let mut ptr_next = None;
-            self.idx.push(can_id);
-            self.flags.push(Flags::default());
+            // Add all canisters to the available queue
+            self.canister_available_queue.push_back(can_id);
 
-            match self.utilization_heap.pop_max() {
-                Some(v) => {
-                    // This canister can be rebalanced
-                    let (e_idx, e_node_next) =
-                        self.can_ring.get_idx_node_for_node(&v.ring_node).unwrap();
-                    ptr_next = Some(e_node_next.clone());
-                    let (e_key, _) = self.can_ring.get_key_node_at_idx(e_idx).unwrap();
-                    let (e_key_prev, _) = self.can_ring.get_prev_key_node_at_idx(e_idx).unwrap();
-                    let e_key_new = hashring_sha256::sha256_range_half(&e_key_prev, &e_key);
-                    self.can_ring.add_with_key(&e_key_new, ptr_new.clone());
-                }
-                // No known canister to be rebalanced, add at an arbitrary position
-                None => self.can_ring.add(ptr_new.clone()),
-            };
-
-            // This canister may not hold all the data it should hold
-            if let Some(ptr_next) = ptr_next {
-                // Data from the next canister may need to be rebalanced into this one
-                let xcq_used_bytes = self
-                    .xcq_used_bytes
-                    .as_ref()
-                    .expect("xcq_used_bytes is not set");
-                if xcq_used_bytes(self.idx[ptr_next.0 as usize].clone()) > 0 {
-                    self.flags[ptr_new.0 as usize] |= Flags::REBALANCING;
-                    self.can_rebalancing.insert(ptr_new);
-                    self.flags[ptr_next.0 as usize] |= Flags::REBALANCING;
-                    self.can_rebalancing.insert(ptr_next);
-                }
-            }
-
-            // self.can_ring.add_with_key(max_utilized_can.ring_node, can_id);
-            if self.can_needed > 0 {
-                self.can_needed -= 1;
+            if self.num_canisters_needed > 0 {
+                self.num_canisters_needed -= 1;
             }
         }
 
-        self.utilization_heap.clear(); // we need fresh data
+        // No Data canister in BigMap yet, take one from the available queue
+        if self.hash_ring.is_empty() && !self.canister_available_queue.is_empty() {
+            let can_id = self.canister_available_queue.pop_front().unwrap();
+
+            println!(
+                "BigMap Index {}: Activating Data CanisterId {}",
+                self.id, can_id
+            );
+
+            let range = self.hash_ring_add_canister_id(&can_id);
+            self.update_data_canister_set_range(&can_id, range.0, range.1)
+                .await
+        };
     }
 
-    // Returns the CanisterIds which holds the key
+    // Returns the data bucket canister which should hold the key
     // If multiple canisters can hold the data due to rebalancing, we will
     // query all candidates and return the correct CanisterId
-    pub fn lookup_get(&self, key: &Key) -> Option<CanisterId> {
+    pub async fn lookup_get(&self, key: &Key) -> Option<CanisterId> {
         let key_sha256 = calc_sha256(key);
-        let (ring_idx, ring_node) = match self.can_ring.get_idx_node_for_key(&key_sha256) {
+        let (_, can_ptr) = match self.hash_ring.get_idx_node_for_key(&key_sha256) {
             Some(v) => v,
             None => return None,
         };
+        // println!("BigMap Index {}: lookup_get @key {}", self.id, String::from_utf8_lossy(key));
 
-        let xcq_holds_key = self
-            .xcq_holds_key
-            .as_ref()
-            .expect("xcq_holds_key is not set");
-
-        let can_id = self.can_ptr_to_canister_id(ring_node);
-        if xcq_holds_key(can_id.clone(), key) {
+        let can_id = self.can_ptr_to_canister_id(can_ptr);
+        if self.query_dcan_holds_key(&can_id, key).await {
             return Some(can_id);
         }
-        if self.can_rebalancing.contains(&ring_node) {
-            if let Some((_, ring_node_next)) = self.can_ring.get_next_key_node_at_idx(ring_idx) {
-                let can_id = self.can_ptr_to_canister_id(ring_node_next);
-                if xcq_holds_key(can_id.clone(), key) {
+
+        if let Some(can_src_dst_ptr) = self.now_rebalancing_src_dst {
+            let (rebalance_src_ptr, rebalance_dst_ptr) = can_src_dst_ptr;
+            if can_ptr == &rebalance_src_ptr {
+                // The destination canister doesn't have the key but it's currently rebalancing.
+                // The key may not have been moved yet from the source canister
+
+                let can_id = self.can_ptr_to_canister_id(&rebalance_dst_ptr);
+                if self.query_dcan_holds_key(&can_id, key).await {
+                    println!(
+                        "BigMap Index {}: lookup_get @key {} from a relocation destination {}",
+                        self.id,
+                        String::from_utf8_lossy(key),
+                        can_id
+                    );
                     return Some(can_id);
                 }
             }
         }
+
         None
     }
 
-    // Returns the CanisterIds which holds the key
-    // If multiple canisters can hold the data due to rebalancing, we will
-    // query all candidates and return the correct CanisterId
+    // Find the data bucket canister into which the object with the provided key should go
     pub fn lookup_put(&self, key: &Key) -> Option<CanisterId> {
         let key_sha256 = calc_sha256(key);
-        let (_, ring_node) = match self.can_ring.get_idx_node_for_key(&key_sha256) {
+        let (_, ring_node) = match self.hash_ring.get_idx_node_for_key(&key_sha256) {
             Some(v) => v,
             None => return None,
         };
@@ -157,36 +159,178 @@ impl BigmapIdx {
         Some(self.can_ptr_to_canister_id(ring_node))
     }
 
-    pub fn rebalance(&mut self) -> Result<u8, String> {
-        println!(
-            "BigMap Index {}: rebalance pending can_ids {:?}",
-            self.id, self.can_rebalancing
-        );
+    pub async fn maintenance(&mut self) -> Result<u8, String> {
+        // println!(
+        //     "BigMap Index {}: CanisterIds with pending rebalance {:?}",
+        //     self.id,
+        //     self.rebalance_queue
+        //         .iter()
+        //         .map(|can_ptr| self.can_ptr_to_canister_id(can_ptr))
+        //         .collect::<Vec<CanisterId>>()
+        // );
+        if self.is_rebalancing {
+            return Ok(10);
+        }
+        self.is_rebalancing = true;
+        let result;
 
-        let xcq_used_bytes = self
-            .xcq_used_bytes
-            .as_ref()
-            .expect("xcq_used_bytes is not set");
+        match self.rebalance_queue.front() {
+            Some(src_canister_ptr) => {
+                // Some canister is ready to be rebalanced. We'll do these steps:
+                // - Create destination canister, to which half of the data from the source canister will go
+                // - Move batches of objects from source canister to the destination canister
+                if self.now_rebalancing_src_dst.is_none() {
+                    // We're just starting to rebalance, create the destination canister
+                    let src_canister_ptr = src_canister_ptr.clone();
+                    let src_canister = self.can_ptr_to_canister_id(&src_canister_ptr);
+                    let dst_canister = self
+                        .create_data_bucket_canister()
+                        .await
+                        .expect("create_data_bucket_canister failed");
 
-        for (i, can_id) in self.idx.iter().enumerate() {
-            // let can_ptr = CanisterPtr { 0: i as u32 };
-            let used_bytes = xcq_used_bytes(can_id.clone());
-            if self.flags[i].contains(Flags::REBALANCING) {
-                println!(
-                    "BigMap Index {}: used can_id {} -> {} (rebalancing)",
-                    self.id, can_id, used_bytes
-                );
-            } else {
-                println!(
-                    "BigMap Index {}: used can_id {} -> {}",
-                    self.id, can_id, used_bytes
-                );
+                    let (dst_canister_ptr, range_dst, range_src) =
+                        self.hash_ring_add_before_this(&src_canister_ptr, &dst_canister.clone());
+
+                    // Now the new canister has been created and added to the hash ring
+
+                    // Update the range covered by Source and Destination canister
+                    self.update_data_canister_set_range(&src_canister, range_src.0, range_src.1)
+                        .await;
+                    self.update_data_canister_set_range(&dst_canister, range_dst.0, range_dst.1)
+                        .await;
+
+                    // Remember the canisters we're currently rebalancing, for future invocations
+                    self.now_rebalancing_src_dst = Some((src_canister_ptr, dst_canister_ptr))
+
+                    // And we're done adding the canister, now we only need to move the data
+                }
+
+                let (rebalance_src_ptr, rebalance_dst_ptr) = self.now_rebalancing_src_dst.unwrap();
+                let src_canister = self.can_ptr_to_canister_id(&rebalance_src_ptr);
+                let dst_canister = self.can_ptr_to_canister_id(&rebalance_dst_ptr);
+
+                let batch = self
+                    .update_data_canister_get_relocation_batch(
+                        &src_canister,
+                        self.batch_limit_bytes,
+                    )
+                    .await;
+                if !batch.is_empty() {
+                    let put_count = self
+                        .update_data_canister_put_batch(&dst_canister, &batch)
+                        .await;
+                    if batch.len() as u64 != put_count {
+                        println!(
+                            "BigMap Index {}: Not all elements were moved from {} to {}",
+                            self.id, src_canister, dst_canister
+                        )
+                    }
+                    let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
+
+                    self.update_data_canister_delete_entries(&src_canister, &batch_sha2)
+                        .await;
+                    result = Ok(1);
+                } else {
+                    println!(
+                        "BigMap Index {}: All pending elements moved from {} to {}",
+                        self.id, src_canister, dst_canister
+                    );
+                    self.now_rebalancing_src_dst = None;
+                    self.rebalance_queue.pop_front();
+                    if self.rebalance_queue.is_empty() {
+                        self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
+                            .await;
+                        if self.rebalance_queue.is_empty() {
+                            result = Ok(0)
+                        } else {
+                            result = Ok(1)
+                        }
+                    } else {
+                        result = Ok(1)
+                    }
+                }
+            }
+            None => {
+                self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
+                    .await;
+                if self.rebalance_queue.is_empty() {
+                    result = Ok(0); // Everything is balanced
+                } else {
+                    // We need to rebalance data, call me again ASAP
+                    result = Ok(1);
+                }
             }
         }
+        self.is_rebalancing = false;
+        result
+    }
 
-        self.can_rebalancing.clear();
+    async fn query_all_canisters_for_used_bytes_and_enqueue_rebalance(&mut self) {
+        self.used_bytes_total = 0;
 
-        Ok(0)
+        for (i, can_id) in self.idx.iter().enumerate() {
+            let can_ptr = CanisterPtr { 0: i as u32 };
+            let used_bytes = self.query_dcan_used_bytes(can_id).await as u64;
+            self.print_canister_utilization(can_id, used_bytes);
+            if used_bytes > self.used_bytes_threshold {
+                self.rebalance_queue.push_back(can_ptr);
+            }
+            self.used_bytes_total += used_bytes;
+        }
+        println!("Total capacity used {}", ByteSize(self.used_bytes_total));
+    }
+
+    fn hash_ring_add_before_this(
+        &mut self,
+        can_ptr: &CanisterPtr,
+        can_id_new: &CanisterId,
+    ) -> (CanisterPtr, HashRingRange, HashRingRange) {
+        let can_ptr_new = CanisterPtr {
+            0: self.idx.len() as u32,
+        };
+        // Query the Hash Ring for the information on the provided (existing) Canister
+        let (hr_i, hr_key, _) = self.hash_ring.get_idx_key_node_for_node(can_ptr).unwrap();
+        // Get the value of the previous key in the hash ring
+        let hr_key_prev = if hr_i == 0 {
+            // There is no previous key
+            *hashring_sha256::SHA256_DIGEST_MIN
+        } else {
+            self.hash_ring.get_prev_key_node_at_idx(hr_i).unwrap().0
+        };
+        // Now calculate the middle point between hr_key_prev and hr_key
+        let hr_key_new = hashring_sha256::sha256_range_half(&hr_key_prev, &hr_key);
+        self.hash_ring.add_with_key(&hr_key_new, can_ptr_new);
+
+        self.idx.push(can_id_new.clone());
+
+        // The entries in the hash ring are now updated
+        let hr_idx_new_canister = hr_i; // == self.hash_ring.get_idx_key_node_for_node(can_ptr_new).unwrap().0;
+        let hr_idx_old_canister = hr_i + 1; // == self.hash_ring.get_idx_key_node_for_node(can_ptr).unwrap().0;
+        (
+            can_ptr_new,
+            self.hash_ring.get_key_range_for_idx(hr_idx_new_canister),
+            self.hash_ring.get_key_range_for_idx(hr_idx_old_canister),
+        )
+    }
+
+    fn hash_ring_add_canister_id(&mut self, can_id: &CanisterId) -> HashRingRange {
+        let ptr_new = CanisterPtr {
+            0: self.idx.len() as u32,
+        };
+        self.hash_ring.add(ptr_new.clone());
+
+        self.idx.push(can_id.clone());
+
+        let hr_idx = self
+            .hash_ring
+            .get_idx_key_node_for_node(&ptr_new)
+            .unwrap()
+            .0;
+        self.hash_ring.get_key_range_for_idx(hr_idx)
+    }
+
+    pub fn set_used_bytes_threshold(&mut self, used_bytes_threshold: u64) {
+        self.used_bytes_threshold = used_bytes_threshold;
     }
 
     pub fn set_canister_id(&mut self, can_id: CanisterId) {
@@ -196,40 +340,174 @@ impl BigmapIdx {
     pub fn canister_id(&self) -> CanisterId {
         self.id.clone()
     }
+
+    async fn create_data_bucket_canister(&mut self) -> Result<CanisterId, String> {
+        match self.canister_available_queue.pop_front() {
+            Some(can_id) => Ok(can_id),
+            None => unimplemented!("create_data_bucket_canister"),
+        }
+    }
+
+    fn print_canister_utilization(&self, can_id: &CanisterId, used_bytes: u64) {
+        println!(
+            "CanisterId {} used {}",
+            can_id.clone(),
+            ByteSize(used_bytes)
+        );
+    }
 }
 
-// Cross-canister calls - function pointers
-// We can remove these once the Rust SDK is able to run Rust canisters natively
+#[cfg(target_arch = "wasm32")]
 impl BigmapIdx {
-    pub fn set_fn_xcq_used_bytes(&mut self, fn_ptr: Box<dyn Fn(CanisterId) -> usize + Send>) {
-        self.xcq_used_bytes = Some(fn_ptr);
+    async fn query_dcan_used_bytes(&self, can_id: &CanisterId) -> usize {
+        ic_cdk::call(can_id.clone().0.into(), "used_bytes", Some(()))
+            .await
+            .expect("used_bytes call failed")
     }
 
-    pub fn set_fn_xcq_holds_key(&mut self, fn_ptr: Box<dyn Fn(CanisterId, &Key) -> bool + Send>) {
-        self.xcq_holds_key = Some(fn_ptr);
+    async fn query_dcan_holds_key(&self, can_id: &CanisterId, key: &Key) {
+        ic_cdk::call(can_id.clone().0.into(), "holds_key", Some(key))
+            .await
+            .expect("holds_key call failed");
+    }
+
+    async fn update_dcan_set_range(
+        &self,
+        can_id: &CanisterId,
+        range_start: Sha256Digest,
+        range_end: Sha256Digest,
+    ) {
+        ic_cdk::call(
+            can_id.clone().0.into(),
+            "set_range",
+            Some((range_start, range_end)),
+        )
+        .await
+        .expect("set_range call failed")
+    }
+
+    async fn update_dcan_get_relocation_batch(
+        &self,
+        can_id: &CanisterId,
+        batch_size_bytes: u64,
+    ) -> Vec<(Key, Val)> {
+        ic_cdk::call(
+            can_id.clone().0.into(),
+            "get_relocation_batch",
+            Some(batch_size_bytes),
+        )
+        .await
+        .expect("get_relocation_batch call failed")
+    }
+
+    async fn update_dcan_put_batch(&self, can_id: &CanisterId, batch: Vec<(Key, Val)>) -> u64 {
+        ic_cdk::call(can_id.clone().0.into(), "put_batch", Some(batch))
+            .await
+            .expect("put_batch call failed")
+    }
+
+    async fn update_dcan_delete_entries(&self, can_id: &CanisterId, keys_sha2: Vec<Vec<u8>>) {
+        ic_cdk::call(can_id.clone().0.into(), "delete_entries", Some(keys_sha2))
+            .await
+            .expect("delete_entries call failed")
     }
 }
 
-#[derive(Clone, Eq, PartialEq)]
-struct CanisterUsedBytes {
-    used_bytes: u32,
-    ring_node: CanisterPtr,
-}
+#[cfg(not(target_arch = "wasm32"))]
+impl BigmapIdx {
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Testing helpers
+    //
+    //////////////////////////////////////////////////////////////////////////
 
-impl Ord for CanisterUsedBytes {
-    fn cmp(&self, other: &CanisterUsedBytes) -> Ordering {
-        // In case of a tie compare ring_node - this step is necessary
-        // to make implementations of `PartialEq` and `Ord` consistent.
-        self.used_bytes
-            .cmp(&other.used_bytes)
-            .then_with(|| self.ring_node.cmp(&other.ring_node))
+    pub fn set_fn_ptr_used_bytes(&mut self, fn_ptr: FnPtrUsedBytes) {
+        self.fn_ptr_used_bytes = Some(fn_ptr);
     }
-}
 
-// `PartialOrd` needs to be implemented as well.
-impl PartialOrd for CanisterUsedBytes {
-    fn partial_cmp(&self, other: &CanisterUsedBytes) -> Option<Ordering> {
-        Some(self.cmp(other))
+    pub fn set_fn_ptr_set_range(&mut self, fn_ptr: FnPtrSetRange) {
+        self.fn_ptr_set_range = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_holds_key(&mut self, fn_ptr: FnPtrHoldsKey) {
+        self.fn_ptr_holds_key = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_get_relocation_batch(&mut self, fn_ptr: FnPtrGetRelocationBatch) {
+        self.fn_ptr_get_relocation_batch = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_put_batch(&mut self, fn_ptr: FnPtrPutBatch) {
+        self.fn_ptr_put_batch = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_delete_entries(&mut self, fn_ptr: FnPtrDeleteEntries) {
+        self.fn_ptr_delete_entries = Some(fn_ptr);
+    }
+
+    async fn query_dcan_used_bytes(&self, can_id: &CanisterId) -> usize {
+        let fn_ptr = self
+            .fn_ptr_used_bytes
+            .as_ref()
+            .expect("fn_ptr_used_bytes is not set");
+        return fn_ptr(can_id.clone());
+    }
+
+    async fn query_dcan_holds_key(&self, can_id: &CanisterId, key: &Key) -> bool {
+        let fn_ptr = self
+            .fn_ptr_holds_key
+            .as_ref()
+            .expect("fn_ptr_used_bytes is not set");
+        return fn_ptr(can_id.clone(), key);
+    }
+
+    async fn update_data_canister_set_range(
+        &self,
+        can_id: &CanisterId,
+        range_start: Sha256Digest,
+        range_end: Sha256Digest,
+    ) {
+        let fn_ptr = self
+            .fn_ptr_set_range
+            .as_ref()
+            .expect("fn_ptr_set_range is not set");
+        return fn_ptr(can_id.clone(), range_start, range_end);
+    }
+
+    async fn update_data_canister_get_relocation_batch(
+        &self,
+        can_id: &CanisterId,
+        batch_limit_bytes: u64,
+    ) -> Vec<(Sha2Vec, Key, Val)> {
+        let fn_ptr = self
+            .fn_ptr_get_relocation_batch
+            .as_ref()
+            .expect("fn_ptr_get_relocation_batch is not set");
+        fn_ptr(can_id.clone(), batch_limit_bytes)
+    }
+
+    async fn update_data_canister_put_batch(
+        &self,
+        can_id: &CanisterId,
+        batch: &Vec<(Sha2Vec, Key, Val)>,
+    ) -> u64 {
+        let fn_ptr = self
+            .fn_ptr_put_batch
+            .as_ref()
+            .expect("fn_ptr_put_batch is not set");
+        fn_ptr(can_id.clone(), batch)
+    }
+
+    async fn update_data_canister_delete_entries(
+        &self,
+        can_id: &CanisterId,
+        keys_sha2: &Vec<Vec<u8>>,
+    ) {
+        let fn_ptr = self
+            .fn_ptr_delete_entries
+            .as_ref()
+            .expect("fn_ptr_delete_entries is not set");
+        return fn_ptr(can_id.clone(), keys_sha2);
     }
 }
 

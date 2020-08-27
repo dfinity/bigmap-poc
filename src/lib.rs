@@ -2,6 +2,7 @@ use digest::generic_array::GenericArray;
 use sha2::{Digest, Sha256};
 pub mod data;
 pub(crate) mod hashring;
+#[allow(dead_code)]
 pub(crate) mod hashring_sha256;
 pub mod index;
 
@@ -43,7 +44,7 @@ pub use lib_native::*;
 
 pub type Key = Vec<u8>;
 pub type Val = Vec<u8>;
-pub type Hashed = u64;
+pub type Sha2Vec = Vec<u8>;
 
 pub type Sha256Digest = GenericArray<u8, <Sha256 as Digest>::OutputSize>;
 
@@ -54,6 +55,12 @@ where
     let mut digest = Sha256::new();
     digest.update(input);
     digest.finalize()
+}
+
+fn sha256_digest_from_vec(input: &Vec<u8>) -> Sha256Digest {
+    let mut input = input.clone();
+    input.resize(32, 0); // ensure proper size
+    *Sha256Digest::from_slice(&input)
 }
 
 #[allow(dead_code)]

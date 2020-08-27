@@ -1,14 +1,16 @@
 use super::{calc_sha256, CanisterId, DataBucket};
+use crate::hashring_sha256::{SHA256_DIGEST_MAX, SHA256_DIGEST_MIN};
 
-#[test]
-fn bm_data_put_get() {
+#[actix_rt::test]
+async fn bm_data_put_get() {
     // Insert key&value pairs and then get the value, and verify the correctness
     let mut d = DataBucket::new(CanisterId::from(42));
+    d.set_range(&SHA256_DIGEST_MIN, &SHA256_DIGEST_MAX);
     for i in 0..100 as u8 {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![i; 200_000];
 
-        d.put(key, value);
+        d.put(key, value).expect("DataBucket put failed");
         assert!(d.used_bytes() >= i as usize * 200_000);
     }
 
@@ -24,6 +26,7 @@ fn bm_data_put_get() {
 fn bm_data_hash_range_get() {
     // Insert key&value pairs and then get the value, and verify the correctness
     let mut d = DataBucket::new(CanisterId::from(42));
+    d.set_range(&SHA256_DIGEST_MIN, &SHA256_DIGEST_MAX);
 
     let mut key_hashes = Vec::new();
 
@@ -32,7 +35,7 @@ fn bm_data_hash_range_get() {
         let value = vec![i; 200_000];
 
         key_hashes.push(calc_sha256(&key));
-        d.put(key, value);
+        d.put(key, value).expect("DataBucket put failed");
     }
 
     key_hashes.sort();

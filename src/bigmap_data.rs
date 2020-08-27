@@ -1,10 +1,9 @@
 use ::bigmap::data::DataBucket;
-use ::bigmap::{CanisterId, Key, Val};
+use ::bigmap::{Key, Sha2Vec, Val};
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use ic_cdk::storage;
 use ic_cdk_macros::*;
-// use lazy_static::lazy_static;
 // use std::sync::Mutex;
 
 #[query]
@@ -57,15 +56,26 @@ fn get_as_update(key: Key) -> Option<Val> {
 fn put(key: Key, value: Val) -> bool {
     let bm_data = storage::get_mut::<DataBucket>();
 
+    let key_str = String::from_utf8_lossy(&key);
     println!(
         "BigMap Data {}: put key {} ({} bytes) value ({} bytes)",
         bm_data.canister_id(),
-        String::from_utf8_lossy(&key),
+        key_str,
         key.len(),
         value.len()
     );
-    bm_data.put(key, value);
-    true
+    match bm_data.put(key.clone(), value) {
+        Ok(_) => true,
+        Err(err) => {
+            println!(
+                "BigMap Data {}: put key {} error: {}",
+                bm_data.canister_id(),
+                key_str,
+                err
+            );
+            false
+        }
+    }
 }
 
 #[update]
@@ -97,56 +107,42 @@ fn holds_key(key: Key) -> Result<bool, String> {
 }
 
 #[query]
-fn used_bytes(_: ()) -> Result<usize, String> {
+fn used_bytes(_: ()) -> usize {
     let bm_data = storage::get::<DataBucket>();
 
-    Ok(bm_data.used_bytes())
+    bm_data.used_bytes()
 }
 
 #[update]
-fn pop_entries_for_canister_id(can_id: CanisterId) -> Vec<(Key, Val)> {
-    let bm_data = storage::get::<DataBucket>();
-
-    let res: Vec<(Key, Val)> = Vec::new();
-
-    println!(
-        "BigMap Data {}: FIXME: implement pop_entries_for_canister_id {}",
-        bm_data.canister_id(),
-        can_id
-    );
-
-    // let _keys: Vec<Key> = bm_data
-    //     .entries
-    //     .keys()
-    //     .map(|v| v.clone())
-    //     .collect::<Vec<Key>>();
-
-    // let filt_keys: Vec<Vec<u8>> = call_json(
-    //     bm_data.index_canister.clone(),
-    //     "filter_keys_mapping_to_canister_id",
-    //     (keys, can_id.clone()),
-    // )
-    // .await
-    // .unwrap();
-
-    // for k in filt_keys {
-    //     println!(
-    //         "BigMap Data {}: key {} should be moved to canister_id={}",
-    //         String::from_utf8_lossy(&k),
-    //         can_id
-    //     );
-    //     res.push((k.clone(), bm_data.entries.remove(&k).unwrap()))
-    // }
-
-    res
-}
-
-#[update]
-fn set_bigmap_idx_can(bigmap_idx_can: CanisterId) -> Result<(), String> {
+fn set_range(mut range_start: Vec<u8>, mut range_end: Vec<u8>) {
     let bm_data = storage::get_mut::<DataBucket>();
 
-    bm_data.set_index_canister(bigmap_idx_can);
-    Ok(())
+    range_start.resize_with(32, Default::default);
+    range_end.resize_with(32, Default::default);
+    let range_start = generic_array::GenericArray::from_slice(&range_start);
+    let range_end = generic_array::GenericArray::from_slice(&range_end);
+    bm_data.set_range(range_start, range_end)
+}
+
+#[query]
+fn get_relocation_batch(batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {
+    let bm_data = storage::get::<DataBucket>();
+
+    bm_data.get_relocation_batch(batch_limit_bytes)
+}
+
+#[update]
+fn put_batch(batch: Vec<(Sha2Vec, Key, Val)>) -> u64 {
+    let bm_data = storage::get_mut::<DataBucket>();
+
+    bm_data.put_batch(&batch)
+}
+
+#[update]
+fn delete_entries(keys_sha2: Vec<Vec<u8>>) {
+    let bm_data = storage::get_mut::<DataBucket>();
+
+    bm_data.delete_entries(&keys_sha2)
 }
 
 #[init]

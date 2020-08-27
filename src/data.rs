@@ -1,4 +1,4 @@
-use crate::{calc_sha256, CanisterId, Key, Sha256Digest, Val};
+use crate::{calc_sha256, sha256_digest_from_vec, CanisterId, Key, Sha256Digest, Sha2Vec, Val};
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use std::collections::BTreeMap;
@@ -9,11 +9,11 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Default)]
 pub struct DataBucket {
-    pub index_canister: CanisterId,
-    pub rebalance_from_data_can: Option<CanisterId>,
-    pub rebalance_to_data_can: Option<CanisterId>,
-    pub entries: BTreeMap<Sha256Digest, (Key, Val)>,
+    pub entries: BTreeMap<Sha256Digest, (Key, Val)>, // Can be DetHashMap
+    range_start: Sha256Digest,                       // This DataBucket holds entries
+    range_end: Sha256Digest,                         // in [range_start..range_end]
     used_bytes: usize,
+    bytes_to_send: usize,
     id: CanisterId,
 }
 
@@ -27,33 +27,104 @@ impl DataBucket {
         }
     }
 
-    pub fn set_index_canister(&mut self, idx_can_id: CanisterId) {
-        self.index_canister = idx_can_id
+    pub fn set_range(&mut self, range_start: &Sha256Digest, range_end: &Sha256Digest) {
+        println!(
+            "BigMap Data {}: set_range {} .. {}",
+            self.id,
+            hex::encode(range_start),
+            hex::encode(range_end)
+        );
+        self.range_start = range_start.clone();
+        self.range_end = range_end.clone();
     }
 
-    pub fn put(&mut self, key: Key, value: Val) {
-        println!(
-            "BigMap Data {}: put {}",
-            self.id,
-            String::from_utf8_lossy(&key)
-        );
+    pub fn is_in_range(&self, key_sha2: &Sha256Digest) -> bool {
+        key_sha2 >= &self.range_start && key_sha2 < &self.range_end
+    }
+
+    pub fn put(&mut self, key: Key, value: Val) -> Result<(), String> {
+        // println!(
+        //     "BigMap Data {}: put {}",
+        //     self.id,
+        //     String::from_utf8_lossy(&key)
+        // );
+        let key_sha2 = calc_sha256(&key);
+        if !self.is_in_range(&key_sha2) {
+            return Err("Provided key is not in the range assigned to this DataBucket".to_string());
+        }
+
         self.used_bytes += key.len();
         self.used_bytes += value.len();
         self.used_bytes += 32; // for the Sha256 of the key (=32 bytes)
-        let key_sha2 = calc_sha256(&key);
+
         if let Some((_, (k, v))) = self.entries.get_key_value(&key_sha2) {
             // previous value is getting overwritten, update the accounting
             self.used_bytes -= k.len() + v.len() + 32;
         }
         self.entries.insert(key_sha2, (key, value));
+        Ok(())
+    }
+
+    pub fn get_relocation_batch(&self, batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {
+        let mut batch = Vec::new();
+        let mut batch_size_bytes = 0;
+
+        for (key_sha2, (key, value)) in self.entries.iter() {
+            if !self.is_in_range(key_sha2) {
+                if batch_size_bytes + (key.len() + value.len()) as u64 >= batch_limit_bytes {
+                    break;
+                }
+                batch.push((key_sha2.to_vec(), key.clone(), value.clone()));
+                batch_size_bytes += (key.len() + value.len()) as u64;
+            }
+        }
+
+        batch
+    }
+
+    pub fn put_batch(&mut self, batch: &Vec<(Sha2Vec, Key, Val)>) -> u64 {
+        let mut put_count = 0;
+
+        for (key_sha2, key, value) in batch.iter() {
+            let key_sha2 = sha256_digest_from_vec(key_sha2);
+            if self.is_in_range(&key_sha2) {
+                self.used_bytes += key.len();
+                self.used_bytes += value.len();
+                self.used_bytes += 32; // for the Sha256 of the key (=32 bytes)
+                self.entries.insert(key_sha2, (key.clone(), value.clone()));
+                put_count += 1;
+            } else {
+                println!(
+                    "BigMap Data {}: key is not in the assigned data bucket range {}",
+                    self.id,
+                    String::from_utf8_lossy(&key)
+                );
+            }
+        }
+
+        put_count
+    }
+
+    pub fn delete_entries(&mut self, keys_sha2: &Vec<Vec<u8>>) {
+        for key_sha2 in keys_sha2 {
+            let key_sha2 = sha256_digest_from_vec(key_sha2);
+            match self.entries.remove(&key_sha2) {
+                Some((key, value)) => {
+                    self.used_bytes -= key.len();
+                    self.used_bytes -= value.len();
+                    self.used_bytes -= 32; // for the Sha256 of the key (=32 bytes)
+                }
+                None => {}
+            }
+        }
     }
 
     pub fn get(&self, key: Key) -> Result<&Val, String> {
-        println!(
-            "BigMap Data {}: get {}",
-            self.id,
-            String::from_utf8_lossy(&key)
-        );
+        // println!(
+        //     "BigMap Data {}: get {}",
+        //     self.id,
+        //     String::from_utf8_lossy(&key)
+        // );
         let key_sha2 = calc_sha256(&key);
         match self.entries.get(&key_sha2) {
             Some((_, v)) => Ok(v),
@@ -67,7 +138,9 @@ impl DataBucket {
     }
 
     pub fn used_bytes(&self) -> usize {
-        // Hash map usage: (key+val+8) bytes * 1.1
+        // We use DataBucket with BTreeMap, and the size is precalculated
+        // For DataBucket configuration with HashMap, usage can be calculated as:
+        // (key_size + value_size + 8) bytes * 1.1
         // https://github.com/servo/servo/issues/6908
         self.used_bytes
     }
@@ -85,22 +158,6 @@ impl DataBucket {
             (Some(min), Some(max)) => Some((*min, *max)),
             _ => None,
         }
-    }
-
-    pub fn set_rebalance_from_data_can(&mut self, can_id: Option<CanisterId>) {
-        self.rebalance_from_data_can = can_id
-    }
-
-    pub fn set_rebalance_to_data_can(&mut self, can_id: Option<CanisterId>) {
-        self.rebalance_to_data_can = can_id
-    }
-
-    pub fn get_rebalance_from_data_can(&self) -> Option<CanisterId> {
-        self.rebalance_from_data_can.clone()
-    }
-
-    pub fn get_rebalance_to_data_can(&self) -> Option<CanisterId> {
-        self.rebalance_to_data_can.clone()
     }
 }
 
