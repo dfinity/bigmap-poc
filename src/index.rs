@@ -1,4 +1,6 @@
-use crate::{calc_sha256, hashring_sha256, CanisterId, Key, Sha256Digest, Sha2Vec, Val};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::Sha2Vec;
+use crate::{calc_sha256, hashring_sha256, CanisterId, Key, Sha256Digest, Val};
 use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
@@ -16,11 +18,17 @@ pub type DetHashMap<K, V> = HashMap<K, V, BuildHasherDefault<WyHash>>;
 type HashRingRange = (Sha256Digest, Sha256Digest);
 
 // Testing types
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrUsedBytes = Box<dyn Fn(CanisterId) -> usize>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrHoldsKey = Box<dyn Fn(CanisterId, &Key) -> bool>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrSetRange = Box<dyn Fn(CanisterId, Sha256Digest, Sha256Digest)>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrGetRelocationBatch = Box<dyn Fn(CanisterId, u64) -> Vec<(Sha2Vec, Key, Val)>>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrPutBatch = Box<dyn Fn(CanisterId, &Vec<(Sha2Vec, Key, Val)>) -> u64>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrDeleteEntries = Box<dyn Fn(CanisterId, &Vec<Vec<u8>>)>;
 
 #[derive(Default)]
@@ -104,8 +112,7 @@ impl BigmapIdx {
             );
 
             let range = self.hash_ring_add_canister_id(&can_id);
-            self.update_data_canister_set_range(&can_id, range.0, range.1)
-                .await
+            self.update_dcan_set_range(&can_id, range.0, range.1).await
         };
     }
 
@@ -194,9 +201,9 @@ impl BigmapIdx {
                     // Now the new canister has been created and added to the hash ring
 
                     // Update the range covered by Source and Destination canister
-                    self.update_data_canister_set_range(&src_canister, range_src.0, range_src.1)
+                    self.update_dcan_set_range(&src_canister, range_src.0, range_src.1)
                         .await;
-                    self.update_data_canister_set_range(&dst_canister, range_dst.0, range_dst.1)
+                    self.update_dcan_set_range(&dst_canister, range_dst.0, range_dst.1)
                         .await;
 
                     // Remember the canisters we're currently rebalancing, for future invocations
@@ -210,15 +217,10 @@ impl BigmapIdx {
                 let dst_canister = self.can_ptr_to_canister_id(&rebalance_dst_ptr);
 
                 let batch = self
-                    .update_data_canister_get_relocation_batch(
-                        &src_canister,
-                        self.batch_limit_bytes,
-                    )
+                    .update_dcan_get_relocation_batch(&src_canister, self.batch_limit_bytes)
                     .await;
                 if !batch.is_empty() {
-                    let put_count = self
-                        .update_data_canister_put_batch(&dst_canister, &batch)
-                        .await;
+                    let put_count = self.update_dcan_put_batch(&dst_canister, &batch).await;
                     if batch.len() as u64 != put_count {
                         println!(
                             "BigMap Index {}: Not all elements were moved from {} to {}",
@@ -227,7 +229,7 @@ impl BigmapIdx {
                     }
                     let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
 
-                    self.update_data_canister_delete_entries(&src_canister, &batch_sha2)
+                    self.update_dcan_delete_entries(&src_canister, &batch_sha2)
                         .await;
                     result = Ok(1);
                 } else {
@@ -365,10 +367,10 @@ impl BigmapIdx {
             .expect("used_bytes call failed")
     }
 
-    async fn query_dcan_holds_key(&self, can_id: &CanisterId, key: &Key) {
+    async fn query_dcan_holds_key(&self, can_id: &CanisterId, key: &Key) -> bool {
         ic_cdk::call(can_id.clone().0.into(), "holds_key", Some(key))
             .await
-            .expect("holds_key call failed");
+            .expect("holds_key call failed")
     }
 
     async fn update_dcan_set_range(
@@ -380,7 +382,7 @@ impl BigmapIdx {
         ic_cdk::call(
             can_id.clone().0.into(),
             "set_range",
-            Some((range_start, range_end)),
+            Some((range_start.to_vec(), range_end.to_vec())),
         )
         .await
         .expect("set_range call failed")
@@ -400,13 +402,13 @@ impl BigmapIdx {
         .expect("get_relocation_batch call failed")
     }
 
-    async fn update_dcan_put_batch(&self, can_id: &CanisterId, batch: Vec<(Key, Val)>) -> u64 {
+    async fn update_dcan_put_batch(&self, can_id: &CanisterId, batch: &Vec<(Key, Val)>) -> u64 {
         ic_cdk::call(can_id.clone().0.into(), "put_batch", Some(batch))
             .await
             .expect("put_batch call failed")
     }
 
-    async fn update_dcan_delete_entries(&self, can_id: &CanisterId, keys_sha2: Vec<Vec<u8>>) {
+    async fn update_dcan_delete_entries(&self, can_id: &CanisterId, keys_sha2: &Vec<Vec<u8>>) {
         ic_cdk::call(can_id.clone().0.into(), "delete_entries", Some(keys_sha2))
             .await
             .expect("delete_entries call failed")
@@ -461,7 +463,7 @@ impl BigmapIdx {
         return fn_ptr(can_id.clone(), key);
     }
 
-    async fn update_data_canister_set_range(
+    async fn update_dcan_set_range(
         &self,
         can_id: &CanisterId,
         range_start: Sha256Digest,
@@ -474,7 +476,7 @@ impl BigmapIdx {
         return fn_ptr(can_id.clone(), range_start, range_end);
     }
 
-    async fn update_data_canister_get_relocation_batch(
+    async fn update_dcan_get_relocation_batch(
         &self,
         can_id: &CanisterId,
         batch_limit_bytes: u64,
@@ -486,7 +488,7 @@ impl BigmapIdx {
         fn_ptr(can_id.clone(), batch_limit_bytes)
     }
 
-    async fn update_data_canister_put_batch(
+    async fn update_dcan_put_batch(
         &self,
         can_id: &CanisterId,
         batch: &Vec<(Sha2Vec, Key, Val)>,
@@ -498,11 +500,7 @@ impl BigmapIdx {
         fn_ptr(can_id.clone(), batch)
     }
 
-    async fn update_data_canister_delete_entries(
-        &self,
-        can_id: &CanisterId,
-        keys_sha2: &Vec<Vec<u8>>,
-    ) {
+    async fn update_dcan_delete_entries(&self, can_id: &CanisterId, keys_sha2: &Vec<Vec<u8>>) {
         let fn_ptr = self
             .fn_ptr_delete_entries
             .as_ref()

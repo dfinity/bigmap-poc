@@ -2,6 +2,7 @@ service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
     "put": (key: vec nat8, value: vec nat8) -> (bool);
     "put_from_index": (key: vec nat8, value: vec nat8) -> (bool);
+    "set_range": (range_from: vec nat8, range_to: vec nat8) -> () oneway;
     "reset": (nat) -> () oneway;
     "used_bytes": () -> (int64);
     "get_as_update": (key: vec nat8) -> (opt vec nat8);

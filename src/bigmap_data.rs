@@ -114,9 +114,10 @@ fn used_bytes(_: ()) -> usize {
 }
 
 #[update]
-fn set_range(mut range_start: Vec<u8>, mut range_end: Vec<u8>) {
+fn set_range(range: (Vec<u8>, Vec<u8>)) {
     let bm_data = storage::get_mut::<DataBucket>();
 
+    let (mut range_start, mut range_end) = range;
     range_start.resize_with(32, Default::default);
     range_end.resize_with(32, Default::default);
     let range_start = generic_array::GenericArray::from_slice(&range_start);
