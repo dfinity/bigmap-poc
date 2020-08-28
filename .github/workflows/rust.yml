@@ -22,6 +22,9 @@ jobs:
       run: |
         rustup update
         rustup target add wasm32-unknown-unknown
+        # Ensure both native and wasm32 targets build
+        cargo build --release
         cargo build --release --target=wasm32-unknown-unknown
     - name: Run tests
-      run: cargo test --verbose
+      run: |
+        cargo test --verbose
