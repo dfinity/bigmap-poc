@@ -27,4 +27,10 @@ jobs:
     - name: Run tests
       run: |
         cargo test
+    - name: DFX test
+      run: |
+        echo y | DFX_VERSION=0.6.4 bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+        echo "::add-path::$HOME/bin"
+        $HOME/bin/dfx start --background
+        $HOME/bin/dfx canister create --all
         bash test.sh
