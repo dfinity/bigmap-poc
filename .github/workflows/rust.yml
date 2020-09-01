@@ -1,5 +1,8 @@
 name: Rust
 
+# Can be tested locally with the following command:
+# act -P ubuntu-latest=nektos/act-environments-ubuntu:18.04
+
 on:
   push:
     branches: [ master ]
@@ -26,9 +29,11 @@ jobs:
         cargo build
     - name: Build wasm32 binaries in release mode
       run: |
+        source $HOME/.cargo/env
         cargo build --release --target=wasm32-unknown-unknown
     - name: Run cargo tests
       run: |
+        source $HOME/.cargo/env
         cargo test
     - name: DFX test
       run: |
