@@ -9,34 +9,25 @@ This is the Rust implementation of BigMap. There is also a Motoko-based implemen
 ## Prerequisites
 
 ### IC SDK
-To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.1 or higher
+To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.4 or higher
 
 ```bash
-DFX_VERSION=0.6.2 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+DFX_VERSION=0.6.4 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 ```
 
 Rust CDK is included with Big Map through `git subtree`, so it does not have to be separately downloaded and installed.
 
 ### Rust
-Tested with Rust 1.43+. Please make sure you install the latest version.
+Tested with Rust 1.45+. Please make sure you install the latest version.
 
-#### If you don't have Rust already installed
+#### Make sure you're running the latest version of Rust, with wasm32 target
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-#### If you do have Rust already installed, but may be an older version
-```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 rustup toolchain install stable
 rustup override set stable
-```
-
-#### In both cases, add Wasm32 target in Rust
-```bash
 rustup target add wasm32-unknown-unknown
 ```
-
 
 ## Build and install canisters
 
@@ -49,6 +40,8 @@ dfx canister call bigmap add_data_buckets "(vec { \"$(dfx canister id bigmap_dat
 ```
 
 ## Test
+
+You can either take a look at `test.sh` for a complete set of test steps, or you can selectively run the below commands:
 
 ```bash
 dfx canister call bigmap_data_0 get '(vec { 97; 98; 99; })'
