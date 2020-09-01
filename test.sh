@@ -17,7 +17,7 @@ rm -rf canisters && "$DFX" build
 # read -p "Press enter to add data buckets to the index"
 "$DFX" canister call bigmap add_data_buckets "(vec { \"$($DFX canister id bigmap_data_0)\"; \"$($DFX canister id bigmap_data_1)\"; \"$($DFX canister id bigmap_data_2)\"; })"
 
-read -p "Press enter to test get and put"
+# read -p "Press enter to test get and put"
 
 echo 'key "abc" through the index:'
 "$DFX" canister call bigmap get '(vec { 97; 98; 99; })'
