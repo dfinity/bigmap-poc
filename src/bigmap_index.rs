@@ -17,9 +17,7 @@ async fn get(key: Key) -> Option<Val> {
                 String::from_utf8_lossy(&key),
                 can_id
             );
-            ic_cdk::call(can_id, "get_as_update", Some(key))
-                .await
-                .unwrap()
+            ic_cdk::call(can_id, "get", Some(key)).await.unwrap()
             // call_candid(can_id.0, "get_as_update", key).await.unwrap()
         }
         None => {
