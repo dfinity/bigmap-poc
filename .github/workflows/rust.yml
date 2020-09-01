@@ -43,4 +43,4 @@ jobs:
         echo "dfx start --background"
         dfx start --background
         dfx canister create --all
-        bash test.sh
+        timeout 600 bash test.sh
