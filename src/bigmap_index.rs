@@ -24,7 +24,7 @@ async fn get(key: Key) -> Option<Val> {
         }
         None => {
             println!(
-                "BigMap Index {}: no data canister suitable for key {}",
+                "BigMap Index {}: no data canister holds the key {}",
                 bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key)
             );
