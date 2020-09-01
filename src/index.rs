@@ -112,7 +112,7 @@ impl BigmapIdx {
             );
 
             let range = self.hash_ring_add_canister_id(&can_id);
-            self.update_dcan_set_range(&can_id, range.0, range.1).await
+            self.update_dcan_set_range(&can_id, range.0, range.1).await;
         };
     }
 
@@ -379,7 +379,7 @@ impl BigmapIdx {
         range_start: Sha256Digest,
         range_end: Sha256Digest,
     ) {
-        ic_cdk::call(
+        ic_cdk::call_no_return(
             can_id.clone().0.into(),
             "set_range",
             Some((range_start.to_vec(), range_end.to_vec())),

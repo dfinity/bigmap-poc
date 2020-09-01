@@ -122,7 +122,7 @@ fn set_range(range: (Vec<u8>, Vec<u8>)) {
     range_end.resize_with(32, Default::default);
     let range_start = generic_array::GenericArray::from_slice(&range_start);
     let range_end = generic_array::GenericArray::from_slice(&range_end);
-    bm_data.set_range(range_start, range_end)
+    bm_data.set_range(range_start, range_end);
 }
 
 #[query]
