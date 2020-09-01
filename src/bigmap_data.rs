@@ -100,10 +100,10 @@ fn reset() {
 }
 
 #[query]
-fn holds_key(key: Key) -> Result<bool, String> {
+fn holds_key(key: Key) -> bool {
     let bm_data = storage::get::<DataBucket>();
 
-    Ok(bm_data.holds_key(&key))
+    bm_data.holds_key(&key)
 }
 
 #[query]
