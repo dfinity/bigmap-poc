@@ -1,30 +1,14 @@
 {
-    "exclude": [
-        "vendor",
-        "build",
-        "scripts",
-        "tests"
-    ],
-    "include": [
-        "src"
-    ],
-    "compilerOptions": {
-        "noImplicitAny": false,
-        "allowJs": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "jsx": "react",
-        "lib": [
-            "ES2018",
-            "DOM"
-        ],
-        "module": "esnext",
-        "strict": true,
-        "target": "es2018",
-        "skipLibCheck": true,
-        "allowSyntheticDefaultImports": true,
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true
-    }
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "lib": ["ES2018", "DOM", "ES2020.BigInt"],
+    "allowJs": true,
+    "jsx": "react",
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {},
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  }
 }

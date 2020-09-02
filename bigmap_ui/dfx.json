@@ -1,11 +1,19 @@
 {
   "canisters": {
+    "tsreact_v2": {
+      "main": "src/tsreact_v2/main.mo",
+      "type": "motoko"
+    },
     "bigmap_ui": {
+      "dependencies": [
+        "tsreact_v2"
+      ],
       "frontend": {
-        "entrypoint": "src/index.js"
+        "entrypoint": "src/bigmap_ui/public/App.tsx"
       },
       "source": [
-        "build/bigmap_ui/assets"
+        "src/bigmap_ui/assets",
+        "dist/bigmap_ui/"
       ],
       "type": "assets"
     }
@@ -13,11 +21,6 @@
   "defaults": {
     "build": {
       "packtool": ""
-    },
-    "start": {
-      "address": "0.0.0.0",
-      "port": 8080,
-      "serve_root": "build/bigmap_ui/assets"
     }
   },
   "dfx": "0.6.4",
@@ -32,5 +35,6 @@
       ],
       "type": "persistent"
     }
-  }
+  },
+  "version": 1
 }
