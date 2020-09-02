@@ -1,0 +1,30 @@
+{
+    "exclude": [
+        "vendor",
+        "build",
+        "scripts",
+        "tests"
+    ],
+    "include": [
+        "src"
+    ],
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "allowJs": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "jsx": "react",
+        "lib": [
+            "ES2018",
+            "DOM"
+        ],
+        "module": "esnext",
+        "strict": true,
+        "target": "es2018",
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true
+    }
+}
