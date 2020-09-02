@@ -1,0 +1,36 @@
+{
+  "canisters": {
+    "bigmap_ui": {
+      "frontend": {
+        "entrypoint": "src/index.js"
+      },
+      "source": [
+        "build/bigmap_ui/assets"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    },
+    "start": {
+      "address": "0.0.0.0",
+      "port": 8080,
+      "serve_root": "build/bigmap_ui/assets"
+    }
+  },
+  "dfx": "0.6.4",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    },
+    "tungsten": {
+      "providers": [
+        "https://gw.dfinity.network"
+      ],
+      "type": "persistent"
+    }
+  }
+}
