@@ -8,15 +8,12 @@
       "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
     },
     "bigmap_ui": {
-      "dependencies": [
-        "tsreact_v2"
-      ],
       "frontend": {
-        "entrypoint": "src/bigmap_ui/public/App.tsx"
+        "entrypoint": "bigmap_ui/src/public/App.tsx"
       },
       "source": [
-        "src/bigmap_ui/assets",
-        "dist/bigmap_ui/"
+        "bigmap_ui/src/assets",
+        "bigmap_ui/dist/bigmap_ui/"
       ],
       "type": "assets"
     },
@@ -35,7 +32,7 @@
       "type": "persistent"
     },
     "local": {
-      "bind": "0.0.0.0:8080",
+      "bind": "0.0.0.0:8000",
       "type": "ephemeral"
     }
   },
