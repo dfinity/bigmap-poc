@@ -1,6 +1,7 @@
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 const dfxJson = require("./dfx.json");
+const AndrewFileListPlugin = require("./custom_andrew_plugin");
 
 // List of all aliases for canisters. This creates the module alias for
 // the `import ... from "ic:canisters/xyz"` where xyz is the name of a
@@ -81,7 +82,9 @@ function generateWebpackConfigForCanister(name, info) {
     //    { test: /\.css$/, use: ['style-loader','css-loader'] }
     //  ]
     // },
-    plugins: [],
+    plugins: [
+      new AndrewFileListPlugin()
+    ],
   };
 }
 
