@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './bigmap_ui/public/App';
+import App from './public/App';
 
 import "bootswatch/dist/darkly/bootstrap.min.css";
 

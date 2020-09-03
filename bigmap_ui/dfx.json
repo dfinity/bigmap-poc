@@ -2,10 +2,10 @@
   "canisters": {
     "bigmap_ui": {
       "frontend": {
-        "entrypoint": "src/bigmap_ui/public/App.tsx"
+        "entrypoint": "src/public/App.tsx"
       },
       "source": [
-        "src/bigmap_ui/assets",
+        "src/assets",
         "dist/bigmap_ui/"
       ],
       "type": "assets"

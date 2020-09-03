@@ -61,7 +61,7 @@ class App extends React.Component<AppProps, AppState> {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="mr-auto">
-                <Nav.Link href="/">Home</Nav.Link>
+                <Nav.Link href="#home">Home</Nav.Link>
                 <Nav.Link href="#details">Details</Nav.Link>
                 <Nav.Link href="#search">Search</Nav.Link>
               </Nav>
@@ -74,6 +74,7 @@ class App extends React.Component<AppProps, AppState> {
           <Jumbotron className="p-1"></Jumbotron>
           <HashRouter>
             <Route exact path="/" component={PageOverview} />
+            <Route path="/home" component={PageOverview} />
             <Route path="/details" component={PageDetails} />
             <Route path="/search" component={PageSearch} />
           </HashRouter>
