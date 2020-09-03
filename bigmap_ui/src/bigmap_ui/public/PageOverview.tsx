@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Line } from "react-chartjs-2";
-import { MDBContainer } from "mdbreact";
+import Card from 'react-bootstrap/Card';
+import { Container, Row, Col, Badge } from "react-bootstrap";
 
-class ChartsPage extends React.Component {
+class PageOverview extends React.Component {
   state = {
     dataLine: {
       labels: ["January", "February", "March", "April", "May", "June", "July"],
@@ -35,12 +35,22 @@ class ChartsPage extends React.Component {
 
   render() {
     return (
-      <MDBContainer>
-        <h3 className="mt-5">Total used Gigabytes over time</h3>
-        <Line data={this.state.dataLine} options={{ responsive: true }} />
-      </MDBContainer>
+      <Container>
+        <Row>
+          <Col>
+            <Card style={{ width: '18rem' }} className="m-5">
+              <Card.Body>
+                <Card.Title>Total Data Stored</Card.Title>
+                <Card.Text>
+                  <Badge variant="light">20 MB</Badge>
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
 
-export default ChartsPage;
+export default PageOverview;

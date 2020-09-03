@@ -8,7 +8,7 @@ import "bootswatch/dist/darkly/bootstrap.min.css";
 // Updated required for "mobile web app" behavior
 // https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
 
-const APP_TITLE = "BOOTS_TRAP";
+const APP_TITLE = "BigMap UI";
 
 const updates = [
   {
