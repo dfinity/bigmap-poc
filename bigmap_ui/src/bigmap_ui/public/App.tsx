@@ -1,12 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { HashRouter, Route } from 'react-router-dom';
 
-import Navbar from 'react-bootstrap/Navbar';
-import Nav from 'react-bootstrap/Nav';
-import Jumbotron from 'react-bootstrap/Jumbotron';
-import Table from 'react-bootstrap/Table';
-import Container from 'react-bootstrap/Container';
-import ChartsPage from './Charts';
+import { Container, Jumbotron, Navbar, Nav, Form, FormControl, Button, Row } from "react-bootstrap";
+import PageOverview from './PageOverview';
+import PageDetails from './PageDetails';
+import PageSearch from './PageSearch';
 
 // A wide choice of themes available at https://bootswatch.com/
 // Here is a shortlist
@@ -55,49 +54,28 @@ class App extends React.Component<AppProps, AppState> {
   render() {
     return (
       <Container>
-        <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
-          <Navbar.Brand href="#home">BigMap Dashboard</Navbar.Brand>
-          <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-          <Navbar.Collapse id="responsive-navbar-nav">
-            <Nav className="mr-auto">
-              <Nav.Link href="#overview">Overview</Nav.Link>
-              <Nav.Link href="#utilization">Utilization</Nav.Link>
-              <Nav.Link href="#search">Search</Nav.Link>
-            </Nav>
-            <Nav>
-              <Nav.Link href="https://github.com/dfinity/bigmap-rs">Fork me on GitHub</Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Navbar>
-        <Jumbotron>
-          <ChartsPage />
-        </Jumbotron>
-        <Jumbotron>
-          <h1 className="header">BigMap Entries</h1><br />
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Username</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Mark</td>
-                <td>Otto</td>
-                <td>@mdo</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Jacob</td>
-                <td>Thornton</td>
-                <td>@fat</td>
-              </tr>
-            </tbody>
-          </Table>
+        <h2 className="pt-5 pb-5">BigMap Dashboard</h2>
+        <Jumbotron className="pt-1" fluid>
+          <Navbar variant="dark" expand="lg" className="pb-5">
+            {/* <Navbar.Brand href="#home">Home</Navbar.Brand> */}
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="mr-auto">
+                <Nav.Link href="/">Home</Nav.Link>
+                <Nav.Link href="#details">Details</Nav.Link>
+                <Nav.Link href="#search">Search</Nav.Link>
+              </Nav>
+              <Form inline>
+                <FormControl type="text" placeholder="Search" className="mr-sm-2" />
+                <Button variant="outline-success">Search</Button>
+              </Form>
+            </Navbar.Collapse>
+          </Navbar>
+          <HashRouter>
+            <Route exact path="/" component={PageOverview} />
+            <Route path="/details" component={PageDetails} />
+            <Route path="/search" component={PageSearch} />
+          </HashRouter>
         </Jumbotron>
       </Container>
     );
