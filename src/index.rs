@@ -89,6 +89,23 @@ impl BigmapIdx {
         // let mut new_can_util_vec = Vec::new();
 
         for can_id in can_ids {
+            for can_id_existing in &self.idx {
+                if &can_id == can_id_existing {
+                    println!(
+                        "BigMap Index {}: Skipping already existing Data CanisterId {}",
+                        self.id, can_id
+                    );
+                }
+            }
+            for can_id_existing in &self.canister_available_queue {
+                if &can_id == can_id_existing {
+                    println!(
+                        "BigMap Index {}: Skipping already existing Data CanisterId {}",
+                        self.id, can_id
+                    );
+                }
+            }
+
             println!(
                 "BigMap Index {}: Created Data CanisterId {}",
                 self.id, can_id
