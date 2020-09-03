@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-
-export default ChartsPage;
 
 import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
-import NavDropdown from 'react-bootstrap/NavDropdown';
 import Jumbotron from 'react-bootstrap/Jumbotron';
 import Table from 'react-bootstrap/Table';
 import Container from 'react-bootstrap/Container';
-import Button from 'react-bootstrap/Button';
+import ChartsPage from './Charts';
 
 // A wide choice of themes available at https://bootswatch.com/
 // Here is a shortlist
@@ -56,8 +53,6 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   render() {
-    const { count } = this.state;
-
     return (
       <Container>
         <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
@@ -109,48 +104,7 @@ class App extends React.Component<AppProps, AppState> {
   }
 }
 
-import { Line } from "react-chartjs-2";
-import { MDBContainer } from "mdbreact";
-
-class ChartsPage extends React.Component {
-  state = {
-    dataLine: {
-      labels: ["January", "February", "March", "April", "May", "June", "July"],
-      datasets: [
-        {
-          label: "Used Gigabytes",
-          fill: true,
-          lineTension: 0.3,
-          backgroundColor: "rgba(225, 204,230, .3)",
-          borderColor: "rgb(205, 130, 158)",
-          borderCapStyle: "butt",
-          borderDash: [],
-          borderDashOffset: 0.0,
-          borderJoinStyle: "miter",
-          pointBorderColor: "rgb(205, 130,1 58)",
-          pointBackgroundColor: "rgb(255, 255, 255)",
-          pointBorderWidth: 10,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: "rgb(0, 0, 0)",
-          pointHoverBorderColor: "rgba(220, 220, 220,1)",
-          pointHoverBorderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 10,
-          data: [10, 20, 22, 23, 56, 70, 110]
-        }
-      ]
-    }
-  };
-
-  render() {
-    return (
-      <MDBContainer>
-        <h3 className="mt-5">Total used Gigabytes over time</h3>
-        <Line data={this.state.dataLine} options={{ responsive: true }} />
-      </MDBContainer>
-    );
-  }
-}
+export default App;
 
 /*
 NB: dfx bootstrap's index.html generated looks like this:
