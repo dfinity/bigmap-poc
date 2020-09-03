@@ -1,13 +1,6 @@
 {
   "canisters": {
-    "tsreact_v2": {
-      "main": "src/tsreact_v2/main.mo",
-      "type": "motoko"
-    },
     "bigmap_ui": {
-      "dependencies": [
-        "tsreact_v2"
-      ],
       "frontend": {
         "entrypoint": "src/bigmap_ui/public/App.tsx"
       },

@@ -35,7 +35,7 @@ function generateWebpackConfigForCanister(name, info) {
   }
 
   return {
-    mode: "production",
+    mode: "development",  // SAT: changed from "production"
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint),
     },
@@ -50,7 +50,19 @@ function generateWebpackConfigForCanister(name, info) {
     },
     module: {
       rules: [
-        { test: /\.(js|ts)x?$/, loader: "ts-loader" },
+        { test: /\.(js|ts)x?$/, loader: "ts-loader", exclude: /node_modules/ },
+        {
+          test: /\.css$/i,
+          use: ['style-loader', 'css-loader']
+        },
+        {
+          test: /\.(png|svg|jpg|gif)$/,
+          use: [
+            {
+              loader: 'url-loader',
+            },
+          ],
+        },
       ]
     },
     output: {
