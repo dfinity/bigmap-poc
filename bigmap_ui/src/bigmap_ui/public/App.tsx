@@ -56,7 +56,7 @@ class App extends React.Component<AppProps, AppState> {
       <Container>
         <h2 className="pt-5 pb-5">BigMap Dashboard</h2>
         <Jumbotron className="pt-1" fluid>
-          <Navbar variant="dark" expand="lg" className="pb-5">
+          <Navbar bg="primary" variant="dark" expand="lg">
             {/* <Navbar.Brand href="#home">Home</Navbar.Brand> */}
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
@@ -67,10 +67,11 @@ class App extends React.Component<AppProps, AppState> {
               </Nav>
               <Form inline>
                 <FormControl type="text" placeholder="Search" className="mr-sm-2" />
-                <Button variant="outline-success">Search</Button>
+                <Button variant="info">Search</Button>
               </Form>
             </Navbar.Collapse>
           </Navbar>
+          <Jumbotron className="p-1"></Jumbotron>
           <HashRouter>
             <Route exact path="/" component={PageOverview} />
             <Route path="/details" component={PageDetails} />

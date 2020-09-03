@@ -38,11 +38,31 @@ class PageOverview extends React.Component {
       <Container>
         <Row>
           <Col>
-            <Card style={{ width: '18rem' }} className="m-5">
+            <Card className="m-1">
+              <Card.Body>
+                <Card.Title>Status</Card.Title>
+                <Card.Text>
+                  <h1><Badge variant="success">Good</Badge></h1>
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col>
+            <Card className="m-1">
+              <Card.Body>
+                <Card.Title>Data Bucket Canisters</Card.Title>
+                <Card.Text>
+                  <h1><Badge variant="secondary">1</Badge></h1>
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col>
+            <Card className="m-1">
               <Card.Body>
                 <Card.Title>Total Data Stored</Card.Title>
                 <Card.Text>
-                  <Badge variant="light">20 MB</Badge>
+                  <h1><Badge variant="primary">20 MB</Badge></h1>
                 </Card.Text>
               </Card.Body>
             </Card>
