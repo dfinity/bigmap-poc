@@ -4,7 +4,7 @@ use ic_cdk::println;
 use ic_cdk::storage;
 use ic_cdk_macros::*;
 
-#[update]
+#[query]
 async fn get(key: Key) -> Option<Val> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 

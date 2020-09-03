@@ -1,5 +1,5 @@
 service : {
-    "get": (key: vec nat8) -> (opt vec nat8);
+    "get": (key: vec nat8) -> (opt vec nat8) query;
     "put": (key: vec nat8, value: vec nat8) -> (bool);
     "initialize": () -> ();
     "reset": (nat) -> () oneway;
