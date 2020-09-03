@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './bigmap_ui/public/App';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootswatch/dist/darkly/bootstrap.min.css";
 
 // Updated required for "mobile web app" behavior
 // https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
