@@ -1,6 +1,6 @@
-declare module 'ic:canisters/tsreact_v2' {
+declare module 'ic:canisters/bigmap' {
   /*
-    "decrement": () -> (nat);
+  "decrement": () -> (nat);
   "increment": () -> (nat);
   "read": () -> (nat) query;
   "write": (nat) -> ();
