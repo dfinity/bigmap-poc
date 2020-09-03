@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Route } from 'react-router-dom';
 
-import { Container, Jumbotron, Navbar, Nav, Form, FormControl, Button, Row } from "react-bootstrap";
+import { Container, Jumbotron, Navbar, Nav, Form, FormControl, Button } from "react-bootstrap";
 import PageOverview from './PageOverview';
 import PageDetails from './PageDetails';
 import PageSearch from './PageSearch';
