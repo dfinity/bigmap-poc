@@ -1,51 +1,52 @@
 {
-    "version": 1,
-    "canisters": {
-        "bigmap": {
-            "type": "custom",
-            "candid": "src/bigmap_index.did",
-            "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
-            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
-        },
-        "bigmap_data_0": {
-            "type": "custom",
-            "candid": "src/bigmap_data.did",
-            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
-            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
-        },
-        "bigmap_data_1": {
-            "type": "custom",
-            "candid": "src/bigmap_data.did",
-            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
-            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
-        },
-        "bigmap_data_2": {
-            "type": "custom",
-            "candid": "src/bigmap_data.did",
-            "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
-            "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
-        }
+  "version": 1,
+  "canisters": {
+    "bigmap": {
+      "type": "custom",
+      "candid": "src/bigmap_index.did",
+      "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
     },
-    "networks": {
-      "tungsten": {
-        "providers": [
-          "https://gw.dfinity.network"
-        ],
-        "type": "persistent"
+    "bigmap_ui": {
+      "dependencies": [
+        "tsreact_v2"
+      ],
+      "frontend": {
+        "entrypoint": "src/bigmap_ui/public/App.tsx"
       },
-      "local": {
-        "bind": "0.0.0.0:8080",
-        "type": "ephemeral"
-      }
+      "source": [
+        "src/bigmap_ui/assets",
+        "dist/bigmap_ui/"
+      ],
+      "type": "assets"
     },
-    "defaults": {
-        "build": {
-            "output": "canisters/"
-        },
-        "start": {
-            "address": "127.0.0.1",
-            "port": 8000,
-            "serve_root": "canisters/eeoo/assets"
-        }
+    "bigmap_data": {
+      "type": "custom",
+      "candid": "src/bigmap_data.did",
+      "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
     }
+  },
+  "networks": {
+    "tungsten": {
+      "providers": [
+        "https://gw.dfinity.network"
+      ],
+      "type": "persistent"
+    },
+    "local": {
+      "bind": "0.0.0.0:8080",
+      "type": "ephemeral"
+    }
+  },
+  "defaults": {
+    "build": {
+      "output": "canisters/"
+    },
+    "start": {
+      "address": "127.0.0.1",
+      "port": 8000,
+      "serve_root": "canisters/eeoo/assets"
+    }
+  }
 }
