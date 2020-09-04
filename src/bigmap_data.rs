@@ -53,7 +53,7 @@ fn get_as_update(key: Key) -> Option<Val> {
 }
 
 #[update]
-fn put(key: Key, value: Val) -> bool {
+fn put(key: Key, value: Val) -> usize {
     let bm_data = storage::get_mut::<DataBucket>();
 
     let key_str = String::from_utf8_lossy(&key);
@@ -64,8 +64,8 @@ fn put(key: Key, value: Val) -> bool {
         key.len(),
         value.len()
     );
-    match bm_data.put(key.clone(), value) {
-        Ok(_) => true,
+    match bm_data.put(key.clone(), value, false) {
+        Ok(value_len) => value_len,
         Err(err) => {
             println!(
                 "BigMap Data {}: put key {} error: {}",
@@ -73,13 +73,43 @@ fn put(key: Key, value: Val) -> bool {
                 key_str,
                 err
             );
-            false
+            0
         }
     }
 }
 
 #[update]
-async fn put_from_index(key_value: (Key, Val)) -> bool {
+fn append(key: Key, value: Val) -> usize {
+    let bm_data = storage::get_mut::<DataBucket>();
+
+    let key_str = String::from_utf8_lossy(&key);
+    let appended_value_len = value.len();
+    match bm_data.put(key.clone(), value, true) {
+        Ok(total_value_len) => {
+            println!(
+                "BigMap Data {}: put_append key {} ({} bytes) value ({} bytes appended, {} bytes total)",
+                bm_data.canister_id(),
+                key_str,
+                key.len(),
+                appended_value_len,
+                total_value_len
+            );
+            total_value_len
+        }
+        Err(err) => {
+            println!(
+                "BigMap Data {}: put key {} error: {}",
+                bm_data.canister_id(),
+                key_str,
+                err
+            );
+            0
+        }
+    }
+}
+
+#[update]
+async fn put_from_index(key_value: (Key, Val)) -> usize {
     // There is an ugly bug at the moment, where arguments in
     // a function call function(arg1, arg2) from
     // a Canister A to Canister B get converted into function((arg1, arg2))
@@ -87,6 +117,12 @@ async fn put_from_index(key_value: (Key, Val)) -> bool {
     // Therefore, we do the splitting of the arguments here.
     let (key, value) = key_value;
     put(key, value)
+}
+
+#[update]
+async fn append_from_index(key_value: (Key, Val)) -> usize {
+    let (key, value) = key_value;
+    append(key, value)
 }
 
 #[update]
