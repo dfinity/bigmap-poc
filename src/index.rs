@@ -67,9 +67,15 @@ pub struct BigmapIdx {
 #[allow(dead_code)]
 impl BigmapIdx {
     pub fn new() -> Self {
-        Self {
+        let mut result: BigmapIdx = BigmapIdx::default();
+        result.reset();
+        result
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self {
             num_canisters_needed: 1,
-            used_bytes_threshold: 512 * 1024 * 1024,
+            used_bytes_threshold: 1 * 1024 * 1024,
             batch_limit_bytes: 512 * 1024,
             ..Default::default()
         }
