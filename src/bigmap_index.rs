@@ -12,8 +12,7 @@ async fn get(key: Key) -> Option<Val> {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
-                "BigMap Index {}: get key {} @CanisterId {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: get key {} @CanisterId {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
@@ -21,8 +20,7 @@ async fn get(key: Key) -> Option<Val> {
         }
         None => {
             println!(
-                "BigMap Index {}: no data canister holds the key {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: no data canister holds the key {}",
                 String::from_utf8_lossy(&key)
             );
             None
@@ -38,8 +36,7 @@ async fn put(key: Key, value: Val) -> u64 {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
-                "BigMap Index {}: put key {} @CanisterId {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: put key {} @CanisterId {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
@@ -52,8 +49,7 @@ async fn put(key: Key, value: Val) -> u64 {
         }
         None => {
             println!(
-                "BigMap Index {}: no data canister suitable for key {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: no data canister suitable for key {}",
                 String::from_utf8_lossy(&key)
             );
             0
@@ -69,8 +65,7 @@ async fn append(key: Key, value: Val) -> usize {
         Some(can_id) => {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
             println!(
-                "BigMap Index {}: append key {} @CanisterId {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: append key {} @CanisterId {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
@@ -83,8 +78,7 @@ async fn append(key: Key, value: Val) -> usize {
         }
         None => {
             println!(
-                "BigMap Index {}: no data canister suitable for key {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: no data canister suitable for key {}",
                 String::from_utf8_lossy(&key)
             );
             0
@@ -129,8 +123,7 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
         Some(can_id) => {
             let can_id = format!("{}", can_id);
             println!(
-                "BigMap Index {}: lookup_data_bucket_for_get key {} => {}",
-                bigmap_idx.canister_id(),
+                "BigMap Index: lookup_data_bucket_for_get key {} => {}",
                 String::from_utf8_lossy(&key),
                 can_id
             );
@@ -152,7 +145,8 @@ fn initialize() {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     let can_id = ic_cdk::reflection::id().into();
-    println!("BigMap Index {}: initialize", can_id);
+    println!("BigMap Index: initialize");
+    bigmap_idx.reset();
     bigmap_idx.set_canister_id(can_id);
     ic_cdk::setup();
 }
@@ -166,8 +160,7 @@ async fn total_used_bytes() -> usize {
 fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
     println!(
-        "BigMap Index {}: set_data_bucket_canister_wasm_binary ({} bytes)",
-        bigmap_idx.canister_id(),
+        "BigMap Index: set_data_bucket_canister_wasm_binary ({} bytes)",
         wasm_binary.len()
     );
 

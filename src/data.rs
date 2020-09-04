@@ -29,8 +29,7 @@ impl DataBucket {
 
     pub fn set_range(&mut self, range_start: &Sha256Digest, range_end: &Sha256Digest) {
         println!(
-            "BigMap Data {}: set_range {} .. {}",
-            self.id,
+            "BigMap Data: set_range {} .. {}",
             hex::encode(range_start),
             hex::encode(range_end)
         );
@@ -44,8 +43,7 @@ impl DataBucket {
 
     pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<u64, String> {
         // println!(
-        //     "BigMap Data {}: put {}",
-        //     self.id,
+        //     "BigMap Data: put {}",
         //     String::from_utf8_lossy(&key)
         // );
         let key_sha2 = calc_sha256(&key);
@@ -111,8 +109,7 @@ impl DataBucket {
                 put_count += 1;
             } else {
                 println!(
-                    "BigMap Data {}: key is not in the assigned data bucket range {}",
-                    self.id,
+                    "BigMap Data: key is not in the assigned data bucket range {}",
                     String::from_utf8_lossy(&key)
                 );
             }
@@ -137,8 +134,7 @@ impl DataBucket {
 
     pub fn get(&self, key: Key) -> Result<&Val, String> {
         // println!(
-        //     "BigMap Data {}: get {}",
-        //     self.id,
+        //     "BigMap Data: get {}",
         //     String::from_utf8_lossy(&key)
         // );
         let key_sha2 = calc_sha256(&key);

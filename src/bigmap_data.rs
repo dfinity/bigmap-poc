@@ -13,15 +13,13 @@ fn get(key: Key) -> Option<Val> {
     let res = bm_data.get(key.clone()).ok().cloned();
     match &res {
         Some(value) => println!(
-            "BigMap Data {}: get key {} ({} bytes) => value ({} bytes)",
-            bm_data.canister_id(),
+            "BigMap Data: get key {} ({} bytes) => value ({} bytes)",
             String::from_utf8_lossy(&key),
             key.len(),
             value.len()
         ),
         None => println!(
-            "BigMap Data {}: get key {} ({} bytes) => None",
-            bm_data.canister_id(),
+            "BigMap Data: get key {} ({} bytes) => None",
             String::from_utf8_lossy(&key),
             key.len()
         ),
@@ -36,15 +34,13 @@ fn get_as_update(key: Key) -> Option<Val> {
     let res = bm_data.get(key.clone()).ok().cloned();
     match &res {
         Some(value) => println!(
-            "BigMap Data {}: get_as_update key {} ({} bytes) => value ({} bytes)",
-            bm_data.canister_id(),
+            "BigMap Data: get_as_update key {} ({} bytes) => value ({} bytes)",
             String::from_utf8_lossy(&key),
             key.len(),
             value.len()
         ),
         None => println!(
-            "BigMap Data {}: get_as_update key {} ({} bytes) => None",
-            bm_data.canister_id(),
+            "BigMap Data: get_as_update key {} ({} bytes) => None",
             String::from_utf8_lossy(&key),
             key.len()
         ),
@@ -58,8 +54,7 @@ fn put(key: Key, value: Val) -> u64 {
 
     let key_str = String::from_utf8_lossy(&key);
     println!(
-        "BigMap Data {}: put key {} ({} bytes) value ({} bytes)",
-        bm_data.canister_id(),
+        "BigMap Data: put key {} ({} bytes) value ({} bytes)",
         key_str,
         key.len(),
         value.len()
@@ -67,12 +62,7 @@ fn put(key: Key, value: Val) -> u64 {
     match bm_data.put(key.clone(), value, false) {
         Ok(value_len) => value_len,
         Err(err) => {
-            println!(
-                "BigMap Data {}: put key {} error: {}",
-                bm_data.canister_id(),
-                key_str,
-                err
-            );
+            println!("BigMap Data: put key {} error: {}", key_str, err);
             0
         }
     }
@@ -87,8 +77,7 @@ fn append(key: Key, value: Val) -> u64 {
     match bm_data.put(key.clone(), value, true) {
         Ok(total_value_len) => {
             println!(
-                "BigMap Data {}: put_append key {} ({} bytes) value ({} bytes appended, {} bytes total)",
-                bm_data.canister_id(),
+                "BigMap Data: put_append key {} ({} bytes) value ({} bytes appended, {} bytes total)",
                 key_str,
                 key.len(),
                 appended_value_len,
@@ -97,12 +86,7 @@ fn append(key: Key, value: Val) -> u64 {
             total_value_len
         }
         Err(err) => {
-            println!(
-                "BigMap Data {}: put key {} error: {}",
-                bm_data.canister_id(),
-                key_str,
-                err
-            );
+            println!("BigMap Data: put key {} error: {}", key_str, err);
             0
         }
     }
@@ -123,16 +107,6 @@ async fn put_from_index(key_value: (Key, Val)) -> u64 {
 async fn append_from_index(key_value: (Key, Val)) -> u64 {
     let (key, value) = key_value;
     append(key, value)
-}
-
-#[update]
-fn reset() {
-    let bm_data = storage::get::<DataBucket>();
-
-    println!(
-        "BigMap Data {}: FIXME: implement reset",
-        bm_data.canister_id()
-    );
 }
 
 #[query]
@@ -186,8 +160,8 @@ fn delete_entries(keys_sha2: Vec<Vec<u8>>) {
 fn initialize() {
     let bm_data = storage::get_mut::<DataBucket>();
 
+    println!("BigMap Data: initialize");
     let can_id = ic_cdk::reflection::id().into();
-    println!("BigMap Data {}: initialize", can_id);
     bm_data.set_canister_id(can_id);
 }
 

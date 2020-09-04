@@ -97,24 +97,21 @@ impl BigmapIdx {
             for can_id_existing in &self.idx {
                 if &can_id == can_id_existing {
                     println!(
-                        "BigMap Index {}: Skipping already existing Data CanisterId {}",
-                        self.id, can_id
+                        "BigMap Index: Skipping already existing Data CanisterId {}",
+                        can_id
                     );
                 }
             }
             for can_id_existing in &self.canister_available_queue {
                 if &can_id == can_id_existing {
                     println!(
-                        "BigMap Index {}: Skipping already existing Data CanisterId {}",
-                        self.id, can_id
+                        "BigMap Index: Skipping already existing Data CanisterId {}",
+                        can_id
                     );
                 }
             }
 
-            println!(
-                "BigMap Index {}: Created Data CanisterId {}",
-                self.id, can_id
-            );
+            println!("BigMap Index: Created Data CanisterId {}", can_id);
 
             // Add all canisters to the available queue
             self.canister_available_queue.push_back(can_id);
@@ -132,19 +129,13 @@ impl BigmapIdx {
         if self.hash_ring.is_empty() {
             match self.create_data_bucket_canister().await {
                 Ok(can_id) => {
-                    println!(
-                        "BigMap Index {}: Activating Data CanisterId {}",
-                        self.id, can_id
-                    );
+                    println!("BigMap Index: Activating Data CanisterId {}", can_id);
 
                     let range = self.hash_ring_add_canister_id(&can_id);
                     self.update_dcan_set_range(&can_id, range.0, range.1).await;
                 }
                 Err(err) => {
-                    println!(
-                        "BigMap Index {}: Error creating a new Data Canister {}",
-                        self.id, err
-                    );
+                    println!("BigMap Index: Error creating a new Data Canister {}", err);
                 }
             }
         };
@@ -159,7 +150,7 @@ impl BigmapIdx {
             Some(v) => v,
             None => return None,
         };
-        // println!("BigMap Index {}: lookup_get @key {}", self.id, String::from_utf8_lossy(key));
+        // println!("BigMap Index: lookup_get @key {}", String::from_utf8_lossy(key));
 
         let can_id = self.can_ptr_to_canister_id(can_ptr);
         if self.query_dcan_holds_key(&can_id, key).await {
@@ -175,8 +166,7 @@ impl BigmapIdx {
                 let can_id = self.can_ptr_to_canister_id(&rebalance_dst_ptr);
                 if self.query_dcan_holds_key(&can_id, key).await {
                     println!(
-                        "BigMap Index {}: lookup_get @key {} from a relocation destination {}",
-                        self.id,
+                        "BigMap Index: lookup_get @key {} from a relocation destination {}",
                         String::from_utf8_lossy(key),
                         can_id
                     );
@@ -196,7 +186,7 @@ impl BigmapIdx {
             None => return None,
         };
 
-        // println!("BigMap Index {}: lookup_put @key {}", self.id, String::from_utf8_lossy(key));
+        // println!("BigMap Index: lookup_put @key {}", String::from_utf8_lossy(key));
         Some(self.can_ptr_to_canister_id(ring_node))
     }
 
@@ -395,20 +385,16 @@ impl BigmapIdx {
             Some(can_id) => Ok(can_id),
             None => match create_new_canister().await {
                 Ok(new_can_id) => {
-                    println!(
-                        "BigMap Index {}: Created new CanisterId {}",
-                        self.id, new_can_id
-                    );
+                    println!("BigMap Index: Created new CanisterId {}", new_can_id);
                     match install_canister_code(
                         new_can_id.clone(),
                         self.data_bucket_canister_wasm_binary.clone(),
                     )
                     .await
                     {
-                        Ok(_) => println!(
-                            "BigMap Index {}: Code install successful to {}",
-                            self.id, new_can_id
-                        ),
+                        Ok(_) => {
+                            println!("BigMap Index: Code install successful to {}", new_can_id)
+                        }
                         Err(err) => println!(
                             "CanisterId {}: code install failed with error {}",
                             new_can_id, err
