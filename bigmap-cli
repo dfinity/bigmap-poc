@@ -45,11 +45,11 @@ const yargs = require("yargs");
 
 const options = yargs
   .usage("Usage: $0 <cmd> [args]")
-  .option("add-data-buckets", { describe: "Add data buckets to BigMap", type: "array", demandOption: false })
-  .option("get", { describe: "Get key, start with @ to load from file", type: "string", demandOption: false })
-  .option("put", { describe: "Put value for given key", type: "array", demandOption: false })
-  .option("maintenance", { describe: "Run maintenance", type: "bool", demandOption: false })
-  .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", demandOption: false })
+  .option("add-data-buckets", { describe: "Add data buckets to BigMap", type: "array", requiresArg: true, demandOption: false })
+  .option("get", { describe: "Get key, start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
+  .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .showHelpOnFail(false, "Specify --help for available options")
   .argv;
 
@@ -89,4 +89,8 @@ if (options.setDataBucketWasmBinary) {
 
 if (options.maintenance) {
   cliMaintenance()
+}
+
+if (process.argv.length < 3) {
+  yargs.showHelp()
 }
