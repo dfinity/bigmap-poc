@@ -32,7 +32,7 @@ async fn get(key: Key) -> Option<Val> {
 }
 
 #[update]
-async fn put(key: Key, value: Val) -> bool {
+async fn put(key: Key, value: Val) -> usize {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_put(&key) {
@@ -57,7 +57,38 @@ async fn put(key: Key, value: Val) -> bool {
                 bigmap_idx.canister_id(),
                 String::from_utf8_lossy(&key)
             );
-            false
+            0
+        }
+    }
+}
+
+#[update]
+async fn append(key: Key, value: Val) -> usize {
+    let bigmap_idx = storage::get::<BigmapIdx>();
+
+    match bigmap_idx.lookup_put(&key) {
+        Some(can_id) => {
+            let can_id: ic_cdk::CanisterId = can_id.0.into();
+            println!(
+                "BigMap Index {}: append key {} @CanisterId {}",
+                bigmap_idx.canister_id(),
+                String::from_utf8_lossy(&key),
+                can_id
+            );
+            ic_cdk::call(can_id.clone(), "append_from_index", Some((key, value)))
+                .await
+                .expect(&format!(
+                    "BigMap index: append call to CanisterId {} failed",
+                    can_id
+                ))
+        }
+        None => {
+            println!(
+                "BigMap Index {}: no data canister suitable for key {}",
+                bigmap_idx.canister_id(),
+                String::from_utf8_lossy(&key)
+            );
+            0
         }
     }
 }
