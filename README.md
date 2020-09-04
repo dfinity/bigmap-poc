@@ -36,7 +36,7 @@ git clone git@github.com:dfinity/big-map-rs.git
 cd big-map-rs
 cargo build --release
 dfx build && dfx canister create --all && dfx canister install --all
-dfx canister call bigmap add_data_buckets "(vec { \"$(dfx canister id bigmap_data_0)\"; \"$(dfx canister id bigmap_data_1)\"; \"$(dfx canister id bigmap_data_2)\"; })"
+dfx canister call bigmap add_data_buckets "(vec { \"$(dfx canister id bigmap_data)\"; })"
 ```
 
 ## Test
@@ -44,11 +44,11 @@ dfx canister call bigmap add_data_buckets "(vec { \"$(dfx canister id bigmap_dat
 You can either take a look at `test.sh` for a complete set of test steps, or you can selectively run the below commands:
 
 ```bash
-dfx canister call bigmap_data_0 get '(vec { 97; 98; 99; })'
+dfx canister call bigmap_data get '(vec { 97; 98; 99; })'
 # (null)
-dfx canister call bigmap_data_0 put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
+dfx canister call bigmap_data put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
 # ()
-dfx canister call bigmap_data_0 get '(vec { 97; 98; 99; })'
+dfx canister call bigmap_data get '(vec { 97; 98; 99; })'
 # (opt vec { 4; 5; 6; })
 ```
 
