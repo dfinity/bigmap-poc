@@ -39,7 +39,6 @@ type FnPtrDeleteEntries = Box<dyn Fn(CanisterId, &Vec<Vec<u8>>)>;
 pub struct BigmapIdx {
     idx: Vec<CanisterId>, // indirection for CanisterId, to avoid many copies of CanisterIds
     hash_ring: hashring_sha256::HashRing<CanisterPtr>,
-    rebalance_queue: VecDeque<CanisterPtr>,
     now_rebalancing_src_dst: Option<(CanisterPtr, CanisterPtr)>,
     is_rebalancing: bool,
     batch_limit_bytes: u64,
@@ -216,113 +215,95 @@ impl BigmapIdx {
 
         self.ensure_at_least_one_data_canister().await;
 
-        let call_again_in;
+        println!("BigMap Index: starting maintenance");
 
-        match self.rebalance_queue.front() {
-            Some(src_canister_ptr) => {
-                // Some canister is ready to be rebalanced. We'll do these steps:
+        self.used_bytes_total = 0;
+
+        for i in 0..self.idx.len() {
+            let can_id = self.idx[i].clone();
+            let can_ptr = CanisterPtr { 0: i as u32 };
+            let used_bytes = self.query_dcan_used_bytes(&can_id).await as u64;
+            self.used_bytes_total += used_bytes;
+
+            self.print_canister_utilization(&can_id, used_bytes);
+
+            if used_bytes > self.used_bytes_threshold {
+                println!(
+                    "BigMap Index: CanisterId {} used bytes {} over threshold {}",
+                    can_id, used_bytes, self.used_bytes_threshold
+                );
+
+                // This canister should be rebalanced. We'll do these steps:
                 // - Create destination canister, to which half of the data from the source canister will go
                 // - Move batches of objects from source canister to the destination canister
-                if self.now_rebalancing_src_dst.is_none() {
-                    // We're just starting to rebalance, create the destination canister
-                    let src_canister_ptr = src_canister_ptr.clone();
-                    let src_canister = self.can_ptr_to_canister_id(&src_canister_ptr);
-                    let dst_canister = self
-                        .create_data_bucket_canister()
-                        .await
-                        .expect("create_data_bucket_canister failed");
+                // We're just starting to rebalance, create the destination canister
+                let src_canister_ptr = can_ptr.clone();
+                let src_canister = self.can_ptr_to_canister_id(&src_canister_ptr);
+                let dst_canister = self
+                    .create_data_bucket_canister()
+                    .await
+                    .expect("create_data_bucket_canister failed");
 
-                    let (dst_canister_ptr, range_dst, range_src) =
-                        self.hash_ring_add_before_this(&src_canister_ptr, &dst_canister.clone());
+                let (dst_canister_ptr, range_dst, range_src) =
+                    self.hash_ring_add_before_this(&src_canister_ptr, &dst_canister.clone());
 
-                    // Now the new canister has been created and added to the hash ring
+                // The new canister has been created and added to the hash ring
+                // Remember the canisters we're currently rebalancing
+                self.now_rebalancing_src_dst = Some((src_canister_ptr, dst_canister_ptr));
 
-                    // Update the range covered by Source and Destination canister
-                    self.update_dcan_set_range(&src_canister, range_src.0, range_src.1)
-                        .await;
-                    self.update_dcan_set_range(&dst_canister, range_dst.0, range_dst.1)
-                        .await;
+                // Update the range covered by Source and Destination canister
+                self.update_dcan_set_range(&dst_canister, range_dst.0, range_dst.1)
+                    .await;
+                self.update_dcan_set_range(&src_canister, range_src.0, range_src.1)
+                    .await;
 
-                    // Remember the canisters we're currently rebalancing, for future invocations
-                    self.now_rebalancing_src_dst = Some((src_canister_ptr, dst_canister_ptr))
-
-                    // And we're done adding the canister, now we only need to move the data
-                }
-
+                // Start moving data
                 let (rebalance_src_ptr, rebalance_dst_ptr) = self.now_rebalancing_src_dst.unwrap();
                 let src_canister = self.can_ptr_to_canister_id(&rebalance_src_ptr);
                 let dst_canister = self.can_ptr_to_canister_id(&rebalance_dst_ptr);
 
-                let batch = self
-                    .update_dcan_get_relocation_batch(&src_canister, self.batch_limit_bytes)
-                    .await;
-                if !batch.is_empty() {
-                    let put_count = self.update_dcan_put_batch(&dst_canister, &batch).await;
-                    if batch.len() as u64 != put_count {
-                        println!(
-                            "BigMap Index {}: Not all elements were moved from {} to {}",
-                            self.id, src_canister, dst_canister
-                        )
-                    }
-                    let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
-
-                    self.update_dcan_delete_entries(&src_canister, &batch_sha2)
+                loop {
+                    let batch = self
+                        .update_dcan_get_relocation_batch(&src_canister, self.batch_limit_bytes)
                         .await;
-                    call_again_in = 1;
-                } else {
-                    println!(
-                        "BigMap Index {}: All pending elements moved from {} to {}",
-                        self.id, src_canister, dst_canister
-                    );
-                    self.now_rebalancing_src_dst = None;
-                    self.rebalance_queue.pop_front();
-                    if self.rebalance_queue.is_empty() {
-                        self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
-                            .await;
-                        if self.rebalance_queue.is_empty() {
-                            call_again_in = 0;
-                        } else {
-                            call_again_in = 1;
-                        }
+
+                    if batch.is_empty() {
+                        // Finished rebalancing this canister
+                        self.now_rebalancing_src_dst = None;
+                        break;
                     } else {
-                        call_again_in = 1;
+                        let put_count = self.update_dcan_put_batch(&dst_canister, &batch).await;
+                        if batch.len() as u64 != put_count {
+                            println!(
+                                "BigMap Index: Not all elements were moved from {} to {}",
+                                src_canister, dst_canister
+                            )
+                        } else {
+                            println!(
+                                "BigMap Index: Moved {} elements from {} to {}",
+                                batch.len(),
+                                src_canister,
+                                dst_canister
+                            )
+                        }
+                        let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
+
+                        self.update_dcan_delete_entries(&src_canister, &batch_sha2)
+                            .await;
                     }
-                }
-            }
-            None => {
-                self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
-                    .await;
-                if self.rebalance_queue.is_empty() {
-                    call_again_in = 0; // Everything is balanced
-                } else {
-                    // We need to rebalance data, call me again ASAP
-                    call_again_in = 1;
                 }
             }
         }
+        println!("Total capacity used {}", ByteSize(self.used_bytes_total));
+
         self.is_rebalancing = false;
 
         return serde_json_wasm::to_string(&Status {
             status: "Good",
-            message: "Started rebalancing",
-            call_again_in,
+            message: "Finished rebalancing",
+            call_again_in: 1,
         })
         .unwrap();
-    }
-
-    async fn query_all_canisters_for_used_bytes_and_enqueue_rebalance(&mut self) {
-        self.used_bytes_total = 0;
-
-        for (i, can_id) in self.idx.iter().enumerate() {
-            let can_ptr = CanisterPtr { 0: i as u32 };
-            let used_bytes = self.query_dcan_used_bytes(can_id).await as u64;
-            self.print_canister_utilization(can_id, used_bytes);
-            if used_bytes > self.used_bytes_threshold {
-                self.rebalance_queue.push_back(can_ptr);
-            }
-            self.used_bytes_total += used_bytes;
-        }
-        println!("Total capacity used {}", ByteSize(self.used_bytes_total));
     }
 
     fn hash_ring_add_before_this(

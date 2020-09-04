@@ -15,7 +15,7 @@ async fn bigmap_put_get() {
 
     let (mut bm_idx, db_map) = alloc_bigmap_index_and_data(num_data_canisters_initial).await;
 
-    while bm_idx.maintenance().await.unwrap() != 0 {}
+    bm_idx.maintenance().await;
 
     for i in 0..1001 {
         let key = format!("key-{}", i).into_bytes();
@@ -41,7 +41,7 @@ async fn bigmap_put_get() {
         );
     }
 
-    while bm_idx.maintenance().await.unwrap() != 0 {}
+    bm_idx.maintenance().await;
 
     for i in 0..1001 {
         let key = format!("key-{}", i).into_bytes();
@@ -79,7 +79,7 @@ async fn bigmap_put_rebalance_get() {
         assert!(can_data.used_bytes() > 0);
     }
 
-    while bm_idx.maintenance().await.unwrap() != 0 {}
+    bm_idx.maintenance().await;
 
     // Check that all values are still retrievable from the BigMap
     for i in 0..num_entries {
