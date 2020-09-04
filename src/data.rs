@@ -42,7 +42,7 @@ impl DataBucket {
         key_sha2 >= &self.range_start && key_sha2 < &self.range_end
     }
 
-    pub fn put(&mut self, key: Key, value: Val) -> Result<(), String> {
+    pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<usize, String> {
         // println!(
         //     "BigMap Data {}: put {}",
         //     self.id,
@@ -56,13 +56,29 @@ impl DataBucket {
         self.used_bytes += key.len();
         self.used_bytes += value.len();
         self.used_bytes += 32; // for the Sha256 of the key (=32 bytes)
+        let value_len;
 
-        if let Some((_, (k, v))) = self.entries.get_key_value(&key_sha2) {
-            // previous value is getting overwritten, update the accounting
-            self.used_bytes -= k.len() + v.len() + 32;
+        if append {
+            match &self.entries.get_key_value(&key_sha2) {
+                Some((_, (_, val_old))) => {
+                    let value_new = [&val_old[..], &value[..]].concat();
+                    value_len = value_new.len();
+                    self.entries.insert(key_sha2, (key, value_new));
+                }
+                None => {
+                    value_len = value.len();
+                    self.entries.insert(key_sha2, (key, value));
+                }
+            }
+        } else {
+            if let Some((_, (k, v))) = self.entries.get_key_value(&key_sha2) {
+                // previous value is getting overwritten, update the accounting
+                self.used_bytes -= k.len() + v.len() + 32;
+            }
+            value_len = value.len();
+            self.entries.insert(key_sha2, (key, value));
         }
-        self.entries.insert(key_sha2, (key, value));
-        Ok(())
+        Ok(value_len)
     }
 
     pub fn get_relocation_batch(&self, batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {

@@ -10,7 +10,7 @@ async fn bm_data_put_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![i; 200_000];
 
-        d.put(key, value).expect("DataBucket put failed");
+        d.put(key, value, false).expect("DataBucket put failed");
         assert!(d.used_bytes() >= i as usize * 200_000);
     }
 
@@ -20,6 +20,29 @@ async fn bm_data_put_get() {
 
         assert_eq!(*d.get(key).unwrap(), value);
     }
+}
+
+#[actix_rt::test]
+async fn bm_data_append_get() {
+    // Insert key&value pairs and then get the value, and verify the correctness
+    let mut d = DataBucket::new(CanisterId::from(42));
+    d.set_range(&SHA256_DIGEST_MIN, &SHA256_DIGEST_MAX);
+    for i in 0..100 as u8 {
+        let key = b"key-0".to_vec();
+        let value = vec![i; 200_000];
+
+        d.put(key, value, true).expect("DataBucket append failed");
+        assert!(d.used_bytes() >= i as usize * 200_000);
+    }
+
+    let key = b"key-0".to_vec();
+    let mut value = Vec::new();
+
+    for i in 0..100 as u8 {
+        value.extend(vec![i; 200_000]);
+    }
+
+    assert_eq!(*d.get(key).unwrap(), value);
 }
 
 #[test]
@@ -35,7 +58,7 @@ fn bm_data_hash_range_get() {
         let value = vec![i; 200_000];
 
         key_hashes.push(calc_sha256(&key));
-        d.put(key, value).expect("DataBucket put failed");
+        d.put(key, value, false).expect("DataBucket put failed");
     }
 
     key_hashes.sort();

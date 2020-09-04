@@ -4,7 +4,7 @@ use crate::index::BigmapIdx;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
 
-#[derive(Clone, Default, Hash, Serialize, Deserialize, candid::CandidType)]
+#[derive(Clone, Default, Hash, Serialize, Deserialize, candid::CandidType, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct CanisterId(pub Vec<u8>);
 

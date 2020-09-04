@@ -1,6 +1,7 @@
 service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
-    "put": (key: vec nat8, value: vec nat8) -> (bool);
+    "put": (key: vec nat8, value: vec nat8) -> (int64);
+    "append": (key: vec nat8, value: vec nat8) -> (int64);
     "initialize": () -> ();
     "reset": (nat) -> () oneway;
     "needs_data_buckets": () -> (nat);
