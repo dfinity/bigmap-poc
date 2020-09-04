@@ -156,68 +156,6 @@ async function bigMapGet(encodedKey) {
   return res;
 }
 
-async function cliGet(key) {
-  console.time(`BigMap Data Canister get ${key}`);
-  let value = await bigMapGet(strToArr(key));
-  console.timeEnd(`BigMap Data Canister get ${key}`);
-  if (value === undefined) {
-    console.log(`BigMap key ${key} does not exist`);
-  } else {
-    console.log(`BigMap key ${key} ==> value ${arrToStr(value)}`);
-  }
-  return value;
-}
-
-async function cliPut(key, value) {
-  console.time(`BigMap Data Canister put ${key}`);
-  let success = await bigMapPut(strToArr(key), strToArr(value));
-  console.timeEnd(`BigMap Data Canister put ${key}`);
-  if (success) {
-    console.log(`Put ${key} succeeded`);
-  } else {
-    console.log(`Put ${key} failed ${success}`);
-  }
-}
-
 // Helpers
 
-module.exports = { getCanister, getCanisterId, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor };
-
-const yargs = require("yargs");
-
-const options = yargs
-  .usage("Usage: $0 <cmd> [args]")
-  .option("add-data-buckets", { describe: "Add data buckets to BigMap", type: "array", demandOption: false })
-  .option("get", { describe: "Get key, start with @ to load from file", type: "string", demandOption: false })
-  .option("put", { describe: "Put value for given key", type: "array", demandOption: false })
-  .argv;
-
-if (options.addDataBuckets) {
-  let data_buckets = options.addDataBuckets;
-  console.log(`Add data buckets ${data_buckets}`);
-  bigMapAddDataBuckets(data_buckets);
-}
-
-if (options.get) {
-  let key = options.get;
-  if (key[0] == '@') {
-    key = fs.readFileSync(key.substring(1));
-  }
-  cliGet(key);
-}
-
-if (options.put) {
-  if (options.put.length == 2) {
-    let key = options.put[0];
-    let value = options.put[1];
-    if (key[0] == '@') {
-      key = fs.readFileSync(key.substring(1));
-    }
-    if (value[0] == '@') {
-      value = fs.readFileSync(value.substring(1));
-    }
-    cliPut(key, value);
-  } else {
-    console.log("Put requires exactly two arguments: key value");
-  }
-}
+module.exports = { getCanister, getCanisterId, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };
