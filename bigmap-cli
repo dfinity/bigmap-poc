@@ -34,6 +34,13 @@ async function cliSetDataBucketWasmBinary(file_name_wasm_binary) {
   console.timeEnd(`BigMap set Data Canister wasm binary from file ${file_name_wasm_binary}`);
 }
 
+async function cliMaintenance() {
+  console.time(`BigMap maintenance`);
+  let res = (await cli.getBigMapActor().maintenance());
+  console.log(JSON.parse(res));
+  console.timeEnd(`BigMap maintenance`);
+}
+
 const yargs = require("yargs");
 
 const options = yargs
@@ -41,6 +48,7 @@ const options = yargs
   .option("add-data-buckets", { describe: "Add data buckets to BigMap", type: "array", demandOption: false })
   .option("get", { describe: "Get key, start with @ to load from file", type: "string", demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", demandOption: false })
+  .option("maintenance", { describe: "Run maintenance", type: "bool", demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", demandOption: false })
   .showHelpOnFail(false, "Specify --help for available options")
   .argv;
@@ -77,4 +85,8 @@ if (options.put) {
 
 if (options.setDataBucketWasmBinary) {
   cliSetDataBucketWasmBinary(options.setDataBucketWasmBinary)
+}
+
+if (options.maintenance) {
+  cliMaintenance()
 }

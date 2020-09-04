@@ -141,7 +141,7 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
 }
 
 #[update]
-async fn maintenance() -> Result<u8, String> {
+async fn maintenance() -> String {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     bigmap_idx.maintenance().await

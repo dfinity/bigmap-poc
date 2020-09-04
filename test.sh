@@ -2,35 +2,24 @@
 
 set -e
 
-#DFX=/home/sat/projects/sdk/target/x86_64-unknown-linux-musl/release/dfx
-DFX=$(which dfx)
-
 echo "Building the canister(s)"
 cargo build --release --target wasm32-unknown-unknown
 
 echo "Installing the canister(s)"
-rm -rf canisters && "$DFX" build
+rm -rf canisters
+dfx build
 
-"$DFX" canister create --all
-"$DFX" canister install --all --mode=reinstall
+dfx canister create bigmap
+dfx canister install bigmap --mode=reinstall
 
-# read -p "Press enter to add data buckets to the index"
-"$DFX" canister call bigmap add_data_buckets "(vec { \"$($DFX canister id bigmap_data)\"; })"
+./bigmap-cli --set-data-bucket-wasm-binary target/wasm32-unknown-unknown/release/bigmap_data.wasm
+./bigmap-cli --maintenance
 
-# read -p "Press enter to test get and put"
-
-echo 'key "abc" through the index:'
-"$DFX" canister call bigmap get '(vec { 97; 98; 99; })'
-"$DFX" canister call bigmap put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
-"$DFX" canister call bigmap get '(vec { 97; 98; 99; })'
-
-echo 'key "abc" directly with the data bucket:'
-"$DFX" canister call bigmap_data get '(vec { 97; 98; 99; })'
-
-echo 'add key "abc" with value "def"'
-"$DFX" canister call bigmap_data put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
-
-echo 'key "abc" now in the data bucket'
-"$DFX" canister call bigmap_data get '(vec { 97; 98; 99; })'
+echo 'Get key "abc" before adding it'
+./bigmap-cli --get abc
+echo 'Insert key "abc" ==> "def"'
+./bigmap-cli --put abc def
+echo 'Get key "abc" after adding it'
+./bigmap-cli --get abc
 
 echo "Test done!"

@@ -7,6 +7,7 @@ use crate::{
 use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
+use serde_json_wasm;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
@@ -199,20 +200,27 @@ impl BigmapIdx {
         Some(self.can_ptr_to_canister_id(ring_node))
     }
 
-    pub async fn maintenance(&mut self) -> Result<u8, String> {
-        // println!(
-        //     "BigMap Index {}: CanisterIds with pending rebalance {:?}",
-        //     self.id,
-        //     self.rebalance_queue
-        //         .iter()
-        //         .map(|can_ptr| self.can_ptr_to_canister_id(can_ptr))
-        //         .collect::<Vec<CanisterId>>()
-        // );
+    pub async fn maintenance(&mut self) -> String {
+        #[derive(serde::Serialize)]
+        struct Status {
+            status: &'static str,
+            message: &'static str,
+            call_again_in: u32,
+        };
+
         if self.is_rebalancing {
-            return Ok(10);
+            return serde_json_wasm::to_string(&Status {
+                status: "Good",
+                message: "Already rebalancing",
+                call_again_in: 10,
+            })
+            .unwrap();
         }
         self.is_rebalancing = true;
-        let result;
+
+        self.ensure_at_least_one_data_canister().await;
+
+        let call_again_in;
 
         match self.rebalance_queue.front() {
             Some(src_canister_ptr) => {
@@ -264,7 +272,7 @@ impl BigmapIdx {
 
                     self.update_dcan_delete_entries(&src_canister, &batch_sha2)
                         .await;
-                    result = Ok(1);
+                    call_again_in = 1;
                 } else {
                     println!(
                         "BigMap Index {}: All pending elements moved from {} to {}",
@@ -276,12 +284,12 @@ impl BigmapIdx {
                         self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
                             .await;
                         if self.rebalance_queue.is_empty() {
-                            result = Ok(0)
+                            call_again_in = 0;
                         } else {
-                            result = Ok(1)
+                            call_again_in = 1;
                         }
                     } else {
-                        result = Ok(1)
+                        call_again_in = 1;
                     }
                 }
             }
@@ -289,15 +297,21 @@ impl BigmapIdx {
                 self.query_all_canisters_for_used_bytes_and_enqueue_rebalance()
                     .await;
                 if self.rebalance_queue.is_empty() {
-                    result = Ok(0); // Everything is balanced
+                    call_again_in = 0; // Everything is balanced
                 } else {
                     // We need to rebalance data, call me again ASAP
-                    result = Ok(1);
+                    call_again_in = 1;
                 }
             }
         }
         self.is_rebalancing = false;
-        result
+
+        return serde_json_wasm::to_string(&Status {
+            status: "Good",
+            message: "Started rebalancing",
+            call_again_in,
+        })
+        .unwrap();
     }
 
     async fn query_all_canisters_for_used_bytes_and_enqueue_rebalance(&mut self) {

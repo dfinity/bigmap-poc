@@ -29,6 +29,7 @@ data-encoding = "2.3.0"
 generic-array = "0.14.4"
 lazy_static = "1.4.0"
 bytesize = "1.0.1"
+serde-json-wasm = "0.2.1"
 
 [lib]
 name = "bigmap"
