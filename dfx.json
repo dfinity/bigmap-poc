@@ -7,16 +7,6 @@
       "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
       "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
     },
-    "bigmap_ui": {
-      "frontend": {
-        "entrypoint": "bigmap_ui/src/public/App.tsx"
-      },
-      "source": [
-        "bigmap_ui/src/assets",
-        "bigmap_ui/dist/bigmap_ui/"
-      ],
-      "type": "assets"
-    },
     "bigmap_data": {
       "type": "custom",
       "candid": "src/bigmap_data.did",
