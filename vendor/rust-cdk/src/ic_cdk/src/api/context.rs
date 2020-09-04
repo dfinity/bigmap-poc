@@ -1,5 +1,5 @@
 use crate::{ic0, reflection};
-use candid::{Decode, Encode};
+use candid::{Decode, Encode, IDLArgs};
 
 /// Rejection code from calling another canister.
 /// These can be obtained either using `reject_code()` or `reject_result()`.
@@ -101,7 +101,21 @@ pub fn arg_data_is_empty() -> bool {
 
 /// Decodes 0 argument from the arguments data.
 pub fn arg_data_0() {
-    unsafe { Decode!(&arg_data_raw()).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 0 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 1 argument from the arguments data.
@@ -109,7 +123,21 @@ pub fn arg_data_1<A>() -> A
 where
     A: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 1 argument; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 2 argument from the arguments data.
@@ -118,7 +146,21 @@ where
     A: serde::de::DeserializeOwned,
     B: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 2 argument; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 3 argument from the arguments data.
@@ -128,7 +170,21 @@ where
     B: serde::de::DeserializeOwned,
     C: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 3 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 4 argument from the arguments data.
@@ -139,7 +195,21 @@ where
     C: serde::de::DeserializeOwned,
     D: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C, D).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C, D) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 4 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 5 argument from the arguments data.
@@ -151,7 +221,21 @@ where
     D: serde::de::DeserializeOwned,
     E: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C, D, E).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C, D, E) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 5 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 6 argument from the arguments data.
@@ -164,7 +248,21 @@ where
     E: serde::de::DeserializeOwned,
     F: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C, D, E, F).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C, D, E, F) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 6 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 7 argument from the arguments data.
@@ -178,7 +276,21 @@ where
     F: serde::de::DeserializeOwned,
     G: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C, D, E, F, G).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C, D, E, F, G) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 7 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
 
 /// Decodes 8 argument from the arguments data.
@@ -193,5 +305,19 @@ where
     G: serde::de::DeserializeOwned,
     H: serde::de::DeserializeOwned,
 {
-    unsafe { Decode!(&arg_data_raw(), A, B, C, D, E, F, G, H).unwrap() }
+    unsafe {
+        let raw_data = arg_data_raw();
+        match Decode!(&raw_data, A, B, C, D, E, F, G, H) {
+            Ok(res) => res,
+            Err(err) => {
+                let err_msg = format!(
+                    "Failed to deserialize {} = {} to 8 arguments; Decode error: {}",
+                    hex::encode(&raw_data),
+                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    err.to_string()
+                );
+                panic!(err_msg);
+            }
+        }
+    }
 }
