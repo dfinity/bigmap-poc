@@ -105,6 +105,10 @@ const bigMapDataCanisterIdToActor = async (canisterId) => {
   }
 }
 
+const getBigMapActor = () => {
+  return bigMap;
+}
+
 const getBigMapDataActor = (canisterId) => {
   const host = DEFAULT_HOST;
   const keypair = generateKeyPair();
@@ -158,4 +162,4 @@ async function bigMapGet(encodedKey) {
 
 // Helpers
 
-module.exports = { getCanister, getCanisterId, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };
+module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };

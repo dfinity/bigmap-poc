@@ -161,4 +161,16 @@ async fn total_used_bytes() -> usize {
     0
 }
 
+#[update]
+fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+    println!(
+        "BigMap Index {}: set_data_bucket_canister_wasm_binary ({} bytes)",
+        bigmap_idx.canister_id(),
+        wasm_binary.len()
+    );
+
+    bigmap_idx.set_data_bucket_canister_wasm_binary(wasm_binary)
+}
+
 fn main() {}

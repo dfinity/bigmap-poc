@@ -43,6 +43,7 @@ pub struct BigmapIdx {
     canister_available_queue: VecDeque<CanisterId>,
     used_bytes_threshold: u64,
     used_bytes_total: u64,
+    data_bucket_canister_wasm_binary: Vec<u8>,
     id: CanisterId,
     // Testing functions
     #[cfg(not(target_arch = "wasm32"))]
@@ -365,6 +366,10 @@ impl BigmapIdx {
             Some(can_id) => Ok(can_id),
             None => unimplemented!("create_data_bucket_canister"),
         }
+    }
+
+    pub fn set_data_bucket_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
+        self.data_bucket_canister_wasm_binary = wasm_binary;
     }
 
     fn print_canister_utilization(&self, can_id: &CanisterId, used_bytes: u64) {
