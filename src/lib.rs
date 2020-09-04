@@ -75,14 +75,14 @@ fn sha256_digest_from_vec(input: &Vec<u8>) -> Sha256Digest {
     *Sha256Digest::from_slice(&input)
 }
 
-#[allow(dead_code)]
-pub mod dfn_candid;
-#[allow(dead_code)]
-mod dfn_core;
-#[allow(dead_code)]
-mod dfn_futures;
-// pub use dfn_candid;
-pub use dfn_candid::call_candid;
+// #[allow(dead_code)]
+// pub mod dfn_candid;
+// #[allow(dead_code)]
+// mod dfn_core;
+// #[allow(dead_code)]
+// mod dfn_futures;
+// // pub use dfn_candid;
+// pub use dfn_candid::call_candid;
 
 #[derive(CandidType, serde::Deserialize, Debug)]
 struct CanisterIdRecord {
