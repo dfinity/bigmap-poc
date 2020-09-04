@@ -10,9 +10,9 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-candid = "0.2.6"
+candid = "0.5.4"
 syn = { version = "1.0", features = ["fold", "full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
-serde_tokenstream = "0.1.0"
-serde = "1.0.111"
+serde_tokenstream = "0.1.2"
+serde = "1.0.115"

@@ -154,6 +154,7 @@ fn initialize() {
     let can_id = ic_cdk::reflection::id().into();
     println!("BigMap Index {}: initialize", can_id);
     bigmap_idx.set_canister_id(can_id);
+    ic_cdk::setup();
 }
 
 #[query]

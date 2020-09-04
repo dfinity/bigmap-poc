@@ -42,6 +42,12 @@ impl Into<std::vec::Vec<u8>> for CanisterId {
     }
 }
 
+impl From<&[u8]> for CanisterId {
+    fn from(item: &[u8]) -> Self {
+        Self { 0: Vec::from(item) }
+    }
+}
+
 impl Into<ic_cdk::CanisterId> for CanisterId {
     fn into(self) -> ic_cdk::CanisterId {
         ic_cdk::CanisterId::from_str(std::str::from_utf8(&self.0).unwrap())

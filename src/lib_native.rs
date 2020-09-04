@@ -45,6 +45,12 @@ impl From<std::vec::Vec<u8>> for CanisterId {
     }
 }
 
+impl From<&[u8]> for CanisterId {
+    fn from(item: &[u8]) -> Self {
+        Self { 0: Vec::from(item) }
+    }
+}
+
 impl Into<std::vec::Vec<u8>> for CanisterId {
     fn into(self) -> std::vec::Vec<u8> {
         self.0

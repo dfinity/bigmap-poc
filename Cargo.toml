@@ -12,8 +12,7 @@ opt-level = 'z'
 [dependencies]
 ic_cdk = { path = "vendor/rust-cdk/src/ic_cdk" }
 ic_cdk_macros = { path = "vendor/rust-cdk/src/ic_cdk_macros" }
-candid = "0.5.3"
-# lazy_static = "1.4.0"
+candid = "0.5.4"
 hex = "0.4.2"
 bincode = "1.3.1"
 wyhash = "0.4.1"
@@ -44,5 +43,5 @@ name = "bigmap_index"
 path = "src/bigmap_index.rs"
 
 [dev-dependencies]  # Used in native/host testing
-indexmap = "1.5.1"
+indexmap = "1.5.2"
 actix-rt = "1.1.1"

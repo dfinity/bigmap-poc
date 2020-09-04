@@ -1,6 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::Sha2Vec;
-use crate::{calc_sha256, hashring_sha256, CanisterId, Key, Sha256Digest, Val};
+use crate::{
+    calc_sha256, create_new_canister, hashring_sha256, install_canister_code, CanisterId, Key,
+    Sha256Digest, Val,
+};
 use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
@@ -120,17 +123,29 @@ impl BigmapIdx {
             }
         }
 
+        self.ensure_at_least_one_data_canister().await;
+    }
+
+    pub async fn ensure_at_least_one_data_canister(&mut self) {
         // No Data canister in BigMap yet, take one from the available queue
-        if self.hash_ring.is_empty() && !self.canister_available_queue.is_empty() {
-            let can_id = self.canister_available_queue.pop_front().unwrap();
+        if self.hash_ring.is_empty() {
+            match self.create_data_bucket_canister().await {
+                Ok(can_id) => {
+                    println!(
+                        "BigMap Index {}: Activating Data CanisterId {}",
+                        self.id, can_id
+                    );
 
-            println!(
-                "BigMap Index {}: Activating Data CanisterId {}",
-                self.id, can_id
-            );
-
-            let range = self.hash_ring_add_canister_id(&can_id);
-            self.update_dcan_set_range(&can_id, range.0, range.1).await;
+                    let range = self.hash_ring_add_canister_id(&can_id);
+                    self.update_dcan_set_range(&can_id, range.0, range.1).await;
+                }
+                Err(err) => {
+                    println!(
+                        "BigMap Index {}: Error creating a new Data Canister {}",
+                        self.id, err
+                    );
+                }
+            }
         };
     }
 
@@ -364,7 +379,31 @@ impl BigmapIdx {
     async fn create_data_bucket_canister(&mut self) -> Result<CanisterId, String> {
         match self.canister_available_queue.pop_front() {
             Some(can_id) => Ok(can_id),
-            None => unimplemented!("create_data_bucket_canister"),
+            None => match create_new_canister().await {
+                Ok(new_can_id) => {
+                    println!(
+                        "BigMap Index {}: Created new CanisterId {}",
+                        self.id, new_can_id
+                    );
+                    match install_canister_code(
+                        new_can_id.clone(),
+                        self.data_bucket_canister_wasm_binary.clone(),
+                    )
+                    .await
+                    {
+                        Ok(_) => println!(
+                            "BigMap Index {}: Code install successful to {}",
+                            self.id, new_can_id
+                        ),
+                        Err(err) => println!(
+                            "CanisterId {}: code install failed with error {}",
+                            new_can_id, err
+                        ),
+                    };
+                    Ok(new_can_id)
+                }
+                Err(err) => Err(err),
+            },
         }
     }
 
