@@ -8,5 +8,4 @@ service : {
     "holds_key": (key: vec nat8) -> (bool);
     "reset": (nat) -> () oneway;
     "used_bytes": () -> (nat64);
-    "get_as_update": (key: vec nat8) -> (opt vec nat8);
 }

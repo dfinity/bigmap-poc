@@ -18,7 +18,6 @@ async fn get(key: Key) -> Option<Val> {
                 can_id
             );
             ic_cdk::call(can_id, "get", Some(key)).await.unwrap()
-            // call_candid(can_id.0, "get_as_update", key).await.unwrap()
         }
         None => {
             println!(
