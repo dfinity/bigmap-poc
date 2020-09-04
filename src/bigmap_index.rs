@@ -32,7 +32,7 @@ async fn get(key: Key) -> Option<Val> {
 }
 
 #[update]
-async fn put(key: Key, value: Val) -> usize {
+async fn put(key: Key, value: Val) -> u64 {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_put(&key) {

@@ -42,7 +42,7 @@ impl DataBucket {
         key_sha2 >= &self.range_start && key_sha2 < &self.range_end
     }
 
-    pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<usize, String> {
+    pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<u64, String> {
         // println!(
         //     "BigMap Data {}: put {}",
         //     self.id,
@@ -78,7 +78,7 @@ impl DataBucket {
             value_len = value.len();
             self.entries.insert(key_sha2, (key, value));
         }
-        Ok(value_len)
+        Ok(value_len as u64)
     }
 
     pub fn get_relocation_batch(&self, batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {

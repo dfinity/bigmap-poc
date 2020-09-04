@@ -1,7 +1,7 @@
 service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
-    "put": (key: vec nat8, value: vec nat8) -> (int64);
-    "append": (key: vec nat8, value: vec nat8) -> (int64);
+    "put": (key: vec nat8, value: vec nat8) -> (nat64);
+    "append": (key: vec nat8, value: vec nat8) -> (nat64);
     "reset": (nat) -> () oneway;
     "needs_data_buckets": () -> (nat);
     "add_data_buckets": (data_canister_ids: vec text) -> ();

@@ -53,7 +53,7 @@ fn get_as_update(key: Key) -> Option<Val> {
 }
 
 #[update]
-fn put(key: Key, value: Val) -> usize {
+fn put(key: Key, value: Val) -> u64 {
     let bm_data = storage::get_mut::<DataBucket>();
 
     let key_str = String::from_utf8_lossy(&key);
@@ -79,7 +79,7 @@ fn put(key: Key, value: Val) -> usize {
 }
 
 #[update]
-fn append(key: Key, value: Val) -> usize {
+fn append(key: Key, value: Val) -> u64 {
     let bm_data = storage::get_mut::<DataBucket>();
 
     let key_str = String::from_utf8_lossy(&key);
@@ -109,7 +109,7 @@ fn append(key: Key, value: Val) -> usize {
 }
 
 #[update]
-async fn put_from_index(key_value: (Key, Val)) -> usize {
+async fn put_from_index(key_value: (Key, Val)) -> u64 {
     // There is an ugly bug at the moment, where arguments in
     // a function call function(arg1, arg2) from
     // a Canister A to Canister B get converted into function((arg1, arg2))
@@ -120,7 +120,7 @@ async fn put_from_index(key_value: (Key, Val)) -> usize {
 }
 
 #[update]
-async fn append_from_index(key_value: (Key, Val)) -> usize {
+async fn append_from_index(key_value: (Key, Val)) -> u64 {
     let (key, value) = key_value;
     append(key, value)
 }
