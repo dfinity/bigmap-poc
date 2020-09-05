@@ -43,4 +43,5 @@ jobs:
         echo "dfx start --background"
         dfx start --background
         dfx canister create --all
+        npm install
         timeout 600 bash test.sh
