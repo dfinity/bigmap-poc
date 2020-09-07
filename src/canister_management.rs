@@ -6,7 +6,6 @@ struct CanisterIdRecord {
     canister_id: candid::Principal,
 }
 
-#[allow(dead_code)]
 pub async fn create_new_canister() -> Result<CanisterId, String> {
     let management_canister = ic_cdk::CanisterId::from(Vec::new());
     let new_can_id_record: CanisterIdRecord =
