@@ -15,5 +15,6 @@ service : {
     "lookup_data_bucket_for_put": (key: vec nat8) -> (opt text) query;
     "set_data_bucket_canister_wasm_binary": (wasm_binary: vec nat8) -> ();
     "get_random_key": () -> (text) query;
+    "set_used_bytes_threshold": (threshold: nat32) -> ();
     "maintenance": () -> (text);
 }

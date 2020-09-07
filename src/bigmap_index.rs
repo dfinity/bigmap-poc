@@ -141,6 +141,13 @@ async fn get_random_key() -> String {
 }
 
 #[update]
+fn set_used_bytes_threshold(threshold: u32) {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    bigmap_idx.set_used_bytes_threshold(threshold);
+}
+
+#[update]
 async fn maintenance() -> String {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
