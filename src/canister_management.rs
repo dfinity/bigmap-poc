@@ -6,7 +6,7 @@ struct CanisterIdRecord {
     canister_id: candid::Principal,
 }
 
-pub async fn create_new_canister() -> Result<CanisterId, String> {
+pub async fn subnet_create_new_canister() -> Result<CanisterId, String> {
     let management_canister = ic_cdk::CanisterId::from(Vec::new());
     let new_can_id_record: CanisterIdRecord =
         match ic_cdk::call(management_canister, "create_canister", Some(())).await {
@@ -47,7 +47,7 @@ pub struct InstallCodeArgs {
 }
 use std::convert::TryFrom;
 
-pub async fn install_canister_code(
+pub async fn subnet_install_canister_code(
     canister_id: CanisterId,
     wasm_module: Vec<u8>,
 ) -> Result<(), String> {
@@ -77,4 +77,17 @@ pub async fn install_canister_code(
     };
 
     Ok(())
+}
+
+pub async fn subnet_raw_rand() -> Result<Vec<u8>, String> {
+    let management_canister = ic_cdk::CanisterId::from(Vec::new());
+    let rnd_buffer: Vec<u8> = match ic_cdk::call(management_canister, "raw_rand", Some(())).await {
+        Ok(result) => result,
+        Err(err) => {
+            ic_cdk::println!("Error invoking raw_rand: {:?} {}", err.0, err.1);
+            return Err(err.1);
+        }
+    };
+
+    Ok(rnd_buffer.to_vec())
 }

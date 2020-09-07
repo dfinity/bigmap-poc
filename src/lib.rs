@@ -38,7 +38,9 @@ mod lib_wasm32;
 pub use lib_wasm32::*;
 
 mod canister_management;
-pub use canister_management::{create_new_canister, install_canister_code};
+pub use canister_management::{
+    subnet_create_new_canister, subnet_install_canister_code, subnet_raw_rand,
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 mod lib_native;

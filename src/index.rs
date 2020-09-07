@@ -1,8 +1,8 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::Sha2Vec;
 use crate::{
-    calc_sha256, create_new_canister, hashring_sha256, install_canister_code, CanisterId, Key,
-    Sha256Digest, Val,
+    calc_sha256, hashring_sha256, subnet_create_new_canister, subnet_install_canister_code,
+    CanisterId, Key, Sha256Digest, Val,
 };
 use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
@@ -370,10 +370,10 @@ impl BigmapIdx {
     async fn create_data_bucket_canister(&mut self) -> Result<CanisterId, String> {
         match self.canister_available_queue.pop_front() {
             Some(can_id) => Ok(can_id),
-            None => match create_new_canister().await {
+            None => match subnet_create_new_canister().await {
                 Ok(new_can_id) => {
                     println!("BigMap Index: Created new CanisterId {}", new_can_id);
-                    match install_canister_code(
+                    match subnet_install_canister_code(
                         new_can_id.clone(),
                         self.data_bucket_canister_wasm_binary.clone(),
                     )
