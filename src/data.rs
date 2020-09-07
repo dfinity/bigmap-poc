@@ -1,3 +1,4 @@
+use crate::hashring_sha256::{biguint_to_sha256_digest, sha256_digest_to_biguint};
 use crate::{calc_sha256, sha256_digest_from_vec, CanisterId, Key, Sha256Digest, Sha2Vec, Val};
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
@@ -171,6 +172,59 @@ impl DataBucket {
             _ => None,
         }
     }
+
+    // Returns a randomly generated and unused key that matches this data canister
+    pub fn get_random_key(&self) -> Vec<u8> {
+        // // Once replica & dfx both support raw_rand, we can try to seed from this instead from time
+        // let rand_key = match subnet_raw_rand().await {
+        //     Ok(result) => result,
+        //     Err(err) => {
+        //         println!("Error invoking raw_rand: {}", err);
+        //         Vec::new()
+        //     }
+        // };
+
+        let time_bytes = ic_cdk::time().to_be_bytes();
+        let mut rand_key = calc_sha256(&time_bytes.to_vec());
+        for i in 0..100 {
+            // Only try this a limited number of times
+            let rand_key_hash = calc_sha256(&rand_key);
+            if self.range_start <= rand_key
+                && rand_key < self.range_end
+                && !self.entries.contains_key(&rand_key_hash)
+            {
+                println!(
+                    "get_random_key: found {} after {} attempts",
+                    hex::encode(rand_key),
+                    i
+                );
+                return Vec::from(rand_key.as_slice());
+            }
+            rand_key = rand_key_hash;
+        }
+        println!("get_random_key: failed to find an unused key in the range");
+        Vec::new()
+    }
+
+    // fn find_unused_key_from_here(&self, key_start: Sha256Digest) -> Option<Sha256Digest> {
+    //     let biguint_start = sha256_digest_to_biguint(self.range_start);
+    //     let biguint_end = sha256_digest_to_biguint(self.range_end);
+    //     let mut biguint_key =
+    //         &biguint_start + sha256_digest_to_biguint(key_start) % (&biguint_end - &biguint_start);
+    //     for i in 0..100 {
+    //         // Make a limited number of attempts to find an unused entry
+    //         let key_sha256 = biguint_to_sha256_digest(&biguint_key);
+    //         if !self.entries.contains_key(&key_sha256) {
+    //             return Some(key_sha256);
+    //         }
+    //         if biguint_key >= biguint_end {
+    //             break;
+    //         } else {
+    //             biguint_key += 1u32;
+    //         }
+    //     }
+    //     None
+    // }
 }
 
 #[cfg(test)]

@@ -156,6 +156,13 @@ fn delete_entries(keys_sha2: Vec<Vec<u8>>) {
     bm_data.delete_entries(&keys_sha2)
 }
 
+#[query]
+fn get_random_key() -> Vec<u8> {
+    let bm_data = storage::get::<DataBucket>();
+
+    bm_data.get_random_key()
+}
+
 #[init]
 fn initialize() {
     let bm_data = storage::get_mut::<DataBucket>();

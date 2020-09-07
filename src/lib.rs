@@ -57,6 +57,20 @@ fn calc_sha256<T>(input: T) -> Sha256Digest
 where
     T: std::convert::AsRef<[u8]>,
 {
+    // if let Ok(input_string) = String::from_utf8(input.clone()) {
+    //     // If input is a string prefixed with "sha256:" then simply return the part after the "sha256:"
+    //     if input_string.starts_with("sha256:")
+    //         && input_string.len() == 71
+    //         && input_string.to_ascii_lowercase() == input_string
+    //     {
+    //         if let Ok(input_sha256) = hex::decode(input_string.split_at(7).1) {
+    //             if input_sha256.len() == 32 {
+    //                 return sha256_digest_from_vec(&input_sha256);
+    //             }
+    //         }
+    //     }
+    // }
+
     let mut digest = Sha256::new();
     digest.update(input);
     digest.finalize()

@@ -76,7 +76,11 @@ fn biguint_from_slice256(s: &[u8]) -> BigUint {
     BigUint::from_radix_be(s, 256).expect("Converting from Sha256 to BigUint failed")
 }
 
-fn biguint_to_sha256_digest(bigint: &BigUint) -> Sha256Digest {
+pub fn sha256_digest_to_biguint(val: Sha256Digest) -> BigUint {
+    biguint_from_slice256(val.as_slice())
+}
+
+pub fn biguint_to_sha256_digest(bigint: &BigUint) -> Sha256Digest {
     let mut key = bigint.to_radix_be(256);
     key.resize(32, 0);
     *Sha256Digest::from_slice(&key)
