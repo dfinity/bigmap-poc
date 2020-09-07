@@ -293,5 +293,10 @@ pub fn trap(message: &str) {
     }
 }
 
+/// Return the block time
+pub fn time() -> u64 {
+    unsafe { ic0::time() }
+}
+
 #[cfg(test)]
 mod tests;
