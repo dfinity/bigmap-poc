@@ -93,7 +93,7 @@ fn append(key: Key, value: Val) -> u64 {
 }
 
 #[update]
-async fn put_from_index(key_value: (Key, Val)) -> u64 {
+fn put_from_index(key_value: (Key, Val)) -> u64 {
     // There is an ugly bug at the moment, where arguments in
     // a function call function(arg1, arg2) from
     // a Canister A to Canister B get converted into function((arg1, arg2))
@@ -104,7 +104,7 @@ async fn put_from_index(key_value: (Key, Val)) -> u64 {
 }
 
 #[update]
-async fn append_from_index(key_value: (Key, Val)) -> u64 {
+fn append_from_index(key_value: (Key, Val)) -> u64 {
     let (key, value) = key_value;
     append(key, value)
 }
