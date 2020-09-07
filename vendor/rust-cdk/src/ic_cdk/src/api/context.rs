@@ -107,9 +107,9 @@ pub fn arg_data_0() {
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 0 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 0 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -129,9 +129,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 1 argument; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 1 argument; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -152,9 +152,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 2 argument; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 2 argument; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -176,9 +176,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 3 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 3 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -201,9 +201,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 4 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 4 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -227,9 +227,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 5 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 5 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -254,9 +254,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 6 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 6 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -282,9 +282,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 7 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 7 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
@@ -311,9 +311,9 @@ where
             Ok(res) => res,
             Err(err) => {
                 let err_msg = format!(
-                    "Failed to deserialize {} = {} to 8 arguments; Decode error: {}",
+                    "Failed to deserialize {} = {:?} to 8 arguments; Decode error: {}",
                     hex::encode(&raw_data),
-                    IDLArgs::from_bytes(&raw_data).unwrap(),
+                    IDLArgs::from_bytes(&raw_data),
                     err.to_string()
                 );
                 panic!(err_msg);
