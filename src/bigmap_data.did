@@ -8,4 +8,5 @@ service : {
     "holds_key": (key: vec nat8) -> (bool);
     "used_bytes": () -> (nat64);
     "get_random_key": () -> (text) query;
+    "seed_random_data": (num_entries: nat32, entry_size_bytes: nat32) -> (vec text);
 }

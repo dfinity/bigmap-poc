@@ -173,7 +173,7 @@ impl DataBucket {
     }
 
     // Returns a randomly generated and unused key that matches this data canister
-    pub fn get_random_key(&self) -> String {
+    pub fn get_random_key(&self, seed: Option<String>) -> String {
         // // Once replica & dfx both support raw_rand, we can try to seed from this instead from time
         // let rand_key = match subnet_raw_rand().await {
         //     Ok(result) => result,
@@ -183,8 +183,14 @@ impl DataBucket {
         //     }
         // };
 
-        let time_bytes = ic_cdk::time().to_be_bytes();
-        let mut rand_key = calc_sha256(&time_bytes.to_vec());
+        let mut rand_key = match seed {
+            Some(seed) => calc_sha256(seed),
+            None => {
+                let time_bytes = ic_cdk::time().to_be_bytes();
+                calc_sha256(&time_bytes.to_vec())
+            }
+        };
+
         for i in 0..100 {
             // Only try this a limited number of times
             let rand_key_hash = calc_sha256(&rand_key);
@@ -198,29 +204,30 @@ impl DataBucket {
             }
             rand_key = rand_key_hash;
         }
+
         println!("get_random_key: failed to find an unused key in the range");
         "".to_string()
     }
 
-    // fn find_unused_key_from_here(&self, key_start: Sha256Digest) -> Option<Sha256Digest> {
-    //     let biguint_start = sha256_digest_to_biguint(self.range_start);
-    //     let biguint_end = sha256_digest_to_biguint(self.range_end);
-    //     let mut biguint_key =
-    //         &biguint_start + sha256_digest_to_biguint(key_start) % (&biguint_end - &biguint_start);
-    //     for i in 0..100 {
-    //         // Make a limited number of attempts to find an unused entry
-    //         let key_sha256 = biguint_to_sha256_digest(&biguint_key);
-    //         if !self.entries.contains_key(&key_sha256) {
-    //             return Some(key_sha256);
-    //         }
-    //         if biguint_key >= biguint_end {
-    //             break;
-    //         } else {
-    //             biguint_key += 1u32;
-    //         }
-    //     }
-    //     None
-    // }
+    // Generates and inserts num_entries into the data bucket, each with entry_size_bytes
+    // Returns a vector of the inserted keys
+    pub fn seed_random_data(&mut self, num_entries: u32, entry_size_bytes: u32) -> Vec<String> {
+        let mut key = self.get_random_key(None);
+        let mut result = Vec::new();
+
+        for _ in 0..num_entries {
+            self.put(
+                Vec::from(key.as_bytes()),
+                vec![0u8; entry_size_bytes as usize],
+                false,
+            )
+            .expect("Put should never fail");
+
+            result.push(key.clone());
+            key = self.get_random_key(Some(key));
+        }
+        result
+    }
 }
 
 #[cfg(test)]
