@@ -133,6 +133,13 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     }
 }
 
+#[query]
+async fn get_random_key() -> String {
+    let bigmap_idx = storage::get::<BigmapIdx>();
+
+    bigmap_idx.get_random_key().await
+}
+
 #[update]
 async fn maintenance() -> String {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();

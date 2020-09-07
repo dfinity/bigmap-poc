@@ -405,6 +405,39 @@ impl BigmapIdx {
             ByteSize(used_bytes)
         );
     }
+
+    // Returns a randomly generated and unused key
+    pub async fn get_random_key(&self) -> String {
+        let time_bytes = ic_cdk::time().to_be_bytes();
+        let mut rand_key = calc_sha256(&time_bytes.to_vec());
+        for i in 0..100 {
+            // Only try this a limited number of times
+            let rand_key_hash = calc_sha256(&rand_key);
+            let (_, can_ptr) = match self.hash_ring.get_idx_node_for_key(&rand_key_hash) {
+                Some(v) => v,
+                None => return hex::encode(rand_key),
+            };
+
+            let can_id = self.can_ptr_to_canister_id(can_ptr);
+
+            let key_is_used = self
+                .query_dcan_holds_key(&can_id, &Vec::from(rand_key.as_slice()))
+                .await;
+
+            if !key_is_used {
+                let result = hex::encode(rand_key);
+                println!(
+                    "get_random_key: after {} attempts found {} which maps to {}",
+                    i, result, can_id
+                );
+                return result;
+            }
+
+            rand_key = rand_key_hash;
+        }
+        println!("get_random_key: failed to find an unused key in the range");
+        "".to_string()
+    }
 }
 
 #[cfg(target_arch = "wasm32")]

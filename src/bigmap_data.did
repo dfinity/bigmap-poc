@@ -7,5 +7,5 @@ service : {
     "set_range": (range_from: vec nat8, range_to: vec nat8) -> () oneway;
     "holds_key": (key: vec nat8) -> (bool);
     "used_bytes": () -> (nat64);
-    "get_random_key": () -> (vec nat8) query;
+    "get_random_key": () -> (text) query;
 }

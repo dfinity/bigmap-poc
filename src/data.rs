@@ -1,4 +1,3 @@
-use crate::hashring_sha256::{biguint_to_sha256_digest, sha256_digest_to_biguint};
 use crate::{calc_sha256, sha256_digest_from_vec, CanisterId, Key, Sha256Digest, Sha2Vec, Val};
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
@@ -174,7 +173,7 @@ impl DataBucket {
     }
 
     // Returns a randomly generated and unused key that matches this data canister
-    pub fn get_random_key(&self) -> Vec<u8> {
+    pub fn get_random_key(&self) -> String {
         // // Once replica & dfx both support raw_rand, we can try to seed from this instead from time
         // let rand_key = match subnet_raw_rand().await {
         //     Ok(result) => result,
@@ -193,17 +192,14 @@ impl DataBucket {
                 && rand_key < self.range_end
                 && !self.entries.contains_key(&rand_key_hash)
             {
-                println!(
-                    "get_random_key: found {} after {} attempts",
-                    hex::encode(rand_key),
-                    i
-                );
-                return Vec::from(rand_key.as_slice());
+                let result = hex::encode(rand_key);
+                println!("get_random_key: found {} after {} attempts", result, i);
+                return result;
             }
             rand_key = rand_key_hash;
         }
         println!("get_random_key: failed to find an unused key in the range");
-        Vec::new()
+        "".to_string()
     }
 
     // fn find_unused_key_from_here(&self, key_start: Sha256Digest) -> Option<Sha256Digest> {
