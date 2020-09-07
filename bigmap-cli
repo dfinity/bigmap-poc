@@ -41,20 +41,20 @@ async function cliMaintenance() {
   console.timeEnd(`BigMap maintenance`);
 }
 
-async function cliInvokeIndexCanisterFunction(functionName, ...args) {
+async function cliCallIndex(functionName, ...args) {
   args = args[0];
-  console.time(`BigMap Invoke Index Canister ${functionName}(${args})`);
+  console.time(`BigMap Call Index Canister ${functionName}(${args})`);
   let res = (await cli.getBigMapActor()[functionName](...args));
   console.log(res);
-  console.timeEnd(`BigMap Invoke Index Canister ${functionName}(${args})`);
+  console.timeEnd(`BigMap Call Index Canister ${functionName}(${args})`);
 }
 
-async function cliInvokeDataCanisterFunction(canisterId, functionName, ...args) {
+async function cliCallData(canisterId, functionName, ...args) {
   args = args[0];
-  console.time(`BigMap Invoke Data Canister ${functionName}(${args})`);
+  console.time(`BigMap Call Data Canister ${functionName}(${args})`);
   let res = (await cli.getBigMapDataActor(canisterId)[functionName](...args));
   console.log(res);
-  console.timeEnd(`BigMap Invoke Data Canister ${functionName}(${args})`);
+  console.timeEnd(`BigMap Call Data Canister ${functionName}(${args})`);
 }
 
 const yargs = require("yargs");
@@ -66,8 +66,8 @@ const options = yargs
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
-  .option("call-index-canister-function", { describe: "Call a function with the provided name, from the index canister", type: "array", requiresArg: true, demandOption: false })
-  .option("call-data-canister-function", { describe: "Call a function with the provided name, from the data canister", type: "array", requiresArg: true, demandOption: false })
+  .option("call-index", { describe: "Call an index canister function", type: "array", requiresArg: true, demandOption: false })
+  .option("call-data", { describe: "Call a data canister function", type: "array", requiresArg: true, demandOption: false })
   .showHelpOnFail(false, "Specify --help for available options")
   .argv;
 
@@ -109,19 +109,19 @@ if (options.maintenance) {
   cliMaintenance()
 }
 
-if (options.callIndexCanisterFunction) {
-  if (options.callIndexCanisterFunction.length >= 1) {
-    cliInvokeIndexCanisterFunction(options.callIndexCanisterFunction[0], options.callIndexCanisterFunction.slice(1))
+if (options.callIndex) {
+  if (options.callIndex.length >= 1) {
+    cliCallIndex(options.callIndex[0], options.callIndex.slice(1))
   } else {
-    console.log("--call-index-canister-function requires 1 or more arguments: <functionName> [arg1 [arg2 [...]]]");
+    console.log("--call-index requires 1 or more arguments: <functionName> [arg1 [arg2 [...]]]");
   }
 }
 
-if (options.callDataCanisterFunction) {
-  if (options.callDataCanisterFunction.length >= 2) {
-    cliInvokeDataCanisterFunction(options.callDataCanisterFunction[0], options.callDataCanisterFunction[1], options.callDataCanisterFunction.slice(2))
+if (options.callData) {
+  if (options.callData.length >= 2) {
+    cliCallData(options.callData[0], options.callData[1], options.callData.slice(2))
   } else {
-    console.log("--call-data-canister-function requires 2 or more arguments: <canisterId> <functionName> [arg1 [arg2 [...]]]");
+    console.log("--call-data requires 2 or more arguments: <canisterId> <functionName> [arg1 [arg2 [...]]]");
   }
 }
 
