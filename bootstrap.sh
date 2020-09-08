@@ -2,6 +2,9 @@
 
 set -e
 
+echo "Install dependencies"
+npm install
+
 echo "Building canisters"
 cargo build --release --target wasm32-unknown-unknown
 rm -rf canisters

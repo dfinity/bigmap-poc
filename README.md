@@ -31,26 +31,23 @@ rustup target add wasm32-unknown-unknown
 
 ## Build and install canisters
 
+Simply run `./bootstrap.sh`, or 
+
 ```bash
 git clone git@github.com:dfinity/big-map-rs.git
 cd big-map-rs
-cargo build --release
-dfx build && dfx canister create --all && dfx canister install --all
-dfx canister call bigmap add_data_buckets "(vec { \"$(dfx canister id bigmap_data)\"; })"
+
+npm install
+dfx build
+dfx canister create bigmap
+dfx canister install bigmap
+./bigmap-cli --set-data-bucket-wasm-binary target/wasm32-unknown-unknown/release/bigmap_data.wasm
+./bigmap-cli --maintenance
 ```
 
 ## Test
 
 You can either take a look at `test.sh` for a complete set of test steps, or you can selectively run the below commands:
-
-```bash
-dfx canister call bigmap_data get '(vec { 97; 98; 99; })'
-# (null)
-dfx canister call bigmap_data put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
-# ()
-dfx canister call bigmap_data get '(vec { 97; 98; 99; })'
-# (opt vec { 4; 5; 6; })
-```
 
 ```bash
 dfx canister call bigmap get '(vec { 97; 98; 99; })'
@@ -61,3 +58,15 @@ dfx canister call bigmap get '(vec { 97; 98; 99; })'
 # (opt vec { 4; 5; 6; })
 ```
 
+It is also possible to talk directly to the data bucket canisters, but this is likely only useful during development or debugging.
+In this case it's necessary to know the CanisterId, which is printed in the replica debug logs during creation.
+
+For example:
+```bash
+dfx canister call tup4c-ks6aa-aaaaa-aaaaa-aaaaa-aaaaa-aaaaa-q get '(vec { 97; 98; 99; })'
+# (null)
+dfx canister call tup4c-ks6aa-aaaaa-aaaaa-aaaaa-aaaaa-aaaaa-q put '(vec { 97; 98; 99; }, vec { 100; 101; 102; })'
+# ()
+dfx canister call tup4c-ks6aa-aaaaa-aaaaa-aaaaa-aaaaa-aaaaa-q get '(vec { 97; 98; 99; })'
+# (opt vec { 4; 5; 6; })
+```
