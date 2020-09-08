@@ -115,13 +115,6 @@ async fn delete(key: Key) -> u64 {
     }
 }
 
-#[query]
-fn needs_data_buckets() -> u32 {
-    let bigmap_idx = storage::get::<BigmapIdx>();
-
-    bigmap_idx.canisters_needed()
-}
-
 #[update]
 async fn add_data_buckets(can_vec: Vec<String>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();

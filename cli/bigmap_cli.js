@@ -84,8 +84,7 @@ async function callData(canisterId, functionName, ...args) {
 }
 
 const getIndexActor = bigmap_fn.getBigMapActor;
-const addDataBuckets = bigmap_fn.bigMapAddDataBuckets;
 const strToArr = bigmap_fn.strToArr;
 const arrToStr = bigmap_fn.arrToStr;
 
-module.exports = { get, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, addDataBuckets, strToArr, arrToStr };
+module.exports = { get, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, strToArr, arrToStr };

@@ -40,7 +40,6 @@ pub struct BigmapIdx {
     now_rebalancing_src_dst: Option<(CanisterPtr, CanisterPtr)>,
     is_rebalancing: bool,
     batch_limit_bytes: u64,
-    num_canisters_needed: u32,
     canister_available_queue: VecDeque<CanisterId>,
     used_bytes_threshold: u32,
     used_bytes_total: u64,
@@ -71,16 +70,10 @@ impl BigmapIdx {
 
     pub fn reset(&mut self) {
         *self = Self {
-            num_canisters_needed: 1,
             used_bytes_threshold: 1 * 1024 * 1024,
             batch_limit_bytes: 512 * 1024,
             ..Default::default()
         }
-    }
-
-    pub fn canisters_needed(&self) -> u32 {
-        // TODO: adjust this number as BigMap grows
-        self.num_canisters_needed
     }
 
     fn can_ptr_to_canister_id(&self, can_ptr: &CanisterPtr) -> CanisterId {
@@ -92,7 +85,6 @@ impl BigmapIdx {
         unimplemented!("add_data_canister_wasm_binary");
     }
 
-    // TODO: Convert to the proper canister creation
     pub async fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
         // let mut new_can_util_vec = Vec::new();
 
@@ -118,10 +110,6 @@ impl BigmapIdx {
 
             // Add all canisters to the available queue
             self.canister_available_queue.push_back(can_id);
-
-            if self.num_canisters_needed > 0 {
-                self.num_canisters_needed -= 1;
-            }
         }
 
         self.ensure_at_least_one_data_canister().await;

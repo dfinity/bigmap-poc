@@ -84,16 +84,6 @@ const bigMap = getCanister("bigmap");
 const DATA_CANISTER_IDS = [];
 const DATA_CANISTER_ACTORS = new Map(); // A map of CanisterId => DataCanisterActor
 
-const bigMapAddDataBuckets = async (dataCanisterNames) => {
-  dataCanisterNames.forEach(can_name => {
-    let can_id = getCanisterId(can_name);
-    let can_actor = getBigMapDataActor(can_id);
-    DATA_CANISTER_IDS.push(can_id);
-    DATA_CANISTER_ACTORS.set(can_id, can_actor);
-  });
-  await bigMap.add_data_buckets(DATA_CANISTER_IDS);
-}
-
 const bigMapDataCanisterIdToActor = async (canisterId) => {
   let cacheLookup = DATA_CANISTER_ACTORS.get(canisterId);
   if (cacheLookup) {
@@ -169,4 +159,4 @@ async function bigMapGet(encodedKey) {
 }
 
 
-module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };
+module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, getBigMapDataActor, strToArr, arrToStr };

@@ -8,8 +8,6 @@ service : {
     "put": (key: vec nat8, value: vec nat8) -> (nat64);
     "append": (key: vec nat8, value: vec nat8) -> (nat64);
     "delete": (key: vec nat8) -> (nat64);
-    "needs_data_buckets": () -> (nat);
-    "add_data_buckets": (data_canister_ids: vec text) -> ();
     "total_used_bytes": () -> (nat);
     "lookup_data_bucket_for_get": (key: vec nat8) -> (opt text) query;
     "lookup_data_bucket_for_put": (key: vec nat8) -> (opt text) query;
