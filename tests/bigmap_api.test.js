@@ -43,4 +43,14 @@ describe("BigMap", () => {
     console.log(results);
     expect(Math.max(...results)).toEqual(9);
   });
+
+  test("delete: should delete entry", async () => {
+    const key = "foo";
+    const val = "bar";
+
+    await bigmap.put(key, val);
+    const res = await bigmap.deleteKey(key);
+
+    expect(res.toNumber()).toEqual(3);
+  });
 });
