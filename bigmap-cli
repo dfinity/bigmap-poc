@@ -10,6 +10,7 @@ const options = yargs
   .option("add-data-buckets", { describe: "Add data buckets to BigMap", type: "array", requiresArg: true, demandOption: false })
   .option("get", { describe: "Get key, start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("call-index", { describe: "Call an index canister function", type: "array", requiresArg: true, demandOption: false })
@@ -44,6 +45,22 @@ if (options.put) {
     bigmap.put(key, value);
   } else {
     console.log("Put requires exactly two arguments: key value");
+  }
+}
+
+if (options.append) {
+  if (options.append.length == 2) {
+    let key = options.append[0];
+    let value = options.append[1];
+    if (key[0] == '@') {
+      key = fs.readFileSync(key.substring(1));
+    }
+    if (value[0] == '@') {
+      value = fs.readFileSync(value.substring(1));
+    }
+    bigmap.append(key, value);
+  } else {
+    console.log("Append requires exactly two arguments: key value");
   }
 }
 
