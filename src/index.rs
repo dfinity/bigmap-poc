@@ -70,8 +70,8 @@ impl BigmapIdx {
 
     pub fn reset(&mut self) {
         *self = Self {
-            used_bytes_threshold: 1 * 1024 * 1024,
-            batch_limit_bytes: 512 * 1024,
+            used_bytes_threshold: 3 * 1024 * 1024 * 1024,
+            batch_limit_bytes: 1024 * 1024,
             ..Default::default()
         }
     }
