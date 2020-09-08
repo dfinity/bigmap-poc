@@ -132,7 +132,18 @@ async function bigMapPut(encodedKey, encodedValue) {
   let res = bigMap.put(encodedKey, encodedValue);
 
   if (!res) {
-    console.error(`BigMap Data Canister ${data_can_id}: Error putting key "${key}"`);
+    console.error(`BigMap: Error putting key "${key}"`);
+  }
+  return res;
+}
+
+async function bigMapAppend(encodedKey, encodedValue) {
+  const key = arrToStr(encodedKey).substr(0, 100);
+
+  let res = bigMap.append(encodedKey, encodedValue);
+
+  if (!res) {
+    console.error(`BigMap: Error appending key "${key}"`);
   }
   return res;
 }
@@ -142,9 +153,9 @@ async function bigMapGet(encodedKey) {
   let res = bigMap.get(encodedKey);
 
   if (!res) {
-    console.error(`BigMap Data Canister ${data_can_id}: Error getting key "${key}"`);
+    console.error(`BigMap: Error getting key "${key}"`);
   }
   return res;
 }
 
-module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };
+module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };

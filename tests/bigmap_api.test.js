@@ -9,26 +9,38 @@ describe("BigMap", () => {
     await bigmap.setDataBucketWasmBinary('target/wasm32-unknown-unknown/release/bigmap_data.wasm');
   });
 
-  describe("put", () => {
-    test("should return the number of stored bytes when saving a value", async () => {
-      const key = "foo";
-      const val = "bar";
 
-      const res = await bigmap.put(key, val);
+  test("put: should return the number of stored bytes", async () => {
+    const key = "foo";
+    const val = "bar";
 
-      expect(res.toNumber()).toBe(3);
-    });
+    const res = await bigmap.put(key, val);
+
+    expect(res.toNumber()).toEqual(3);
   });
 
-  describe("get", () => {
-    test("should return a stored value", async () => {
-      const key = "bar";
-      const val = "baz";
+  test("get: should return a stored value", async () => {
+    const key = "bar";
+    const val = "baz";
 
-      await bigmap.put(key, val);
-      const res = await bigmap.get(key);
+    await bigmap.put(key, val);
+    const res = await bigmap.get(key);
 
-      expect(bigmap.arrToStr(res)).toBe(val);
-    });
+    expect(bigmap.arrToStr(res)).toBe(val);
+  });
+
+  test("append: should append bytes", async () => {
+    const key = "test_append";
+    const val = "baz";
+
+    await bigmap.put(key, val); // overwrite the old value if there was one
+
+    const results = await Promise.all([
+      await bigmap.append(key, val),
+      await bigmap.append(key, val)
+    ])
+
+    console.log(results);
+    expect(Math.max(...results)).toEqual(9);
   });
 });
