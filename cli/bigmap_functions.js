@@ -148,8 +148,17 @@ async function bigMapAppend(encodedKey, encodedValue) {
   return res;
 }
 
+async function bigMapDelete(encodedKey) {
+  let res = bigMap.delete(encodedKey);
+
+  if (!res) {
+    const key = arrToStr(encodedKey).substr(0, 100);
+    console.error(`BigMap: Error deleting key "${key}"`);
+  }
+  return res;
+}
+
 async function bigMapGet(encodedKey) {
-  const key = arrToStr(encodedKey).substr(0, 100);
   let res = bigMap.get(encodedKey);
 
   if (!res) {
@@ -158,4 +167,5 @@ async function bigMapGet(encodedKey) {
   return res;
 }
 
-module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };
+
+module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };

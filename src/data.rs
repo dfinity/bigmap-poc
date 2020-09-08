@@ -79,6 +79,23 @@ impl DataBucket {
         Ok(value_len as u64)
     }
 
+    pub fn delete(&mut self, key: Key) -> Result<u64, String> {
+        let key_sha2 = calc_sha256(&key);
+        if !self.is_in_range(&key_sha2) {
+            return Err("Provided key is not in the range assigned to this DataBucket".to_string());
+        }
+
+        Ok(match &self.entries.remove(&key_sha2) {
+            Some((_, value)) => {
+                let value_bytes = value.len();
+                let bytes_freed = key.len() + value.len() + 32;
+                self.used_bytes = self.used_bytes.saturating_sub(bytes_freed);
+                value_bytes as u64
+            }
+            None => 0,
+        })
+    }
+
     pub fn get_relocation_batch(&self, batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {
         let mut batch = Vec::new();
         let mut batch_size_bytes = 0;

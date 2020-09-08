@@ -39,6 +39,19 @@ async function append(key, value) {
   return bytes_written;
 }
 
+async function deleteKey(key) {
+  console.time(`BigMap delete key ${key}`);
+  let bytes_deleted = await bigmap_fn.bigMapDelete(bigmap_fn.strToArr(key));
+  console.timeEnd(`BigMap delete key ${key}`);
+
+  if (bytes_deleted) {
+    console.log(`BigMap delete key ${key} succeeded (${bytes_deleted} bytes)`);
+  } else {
+    console.log(`BigMap delete key ${key} failed`);
+  }
+  return bytes_deleted;
+}
+
 async function setDataBucketWasmBinary(file_name_wasm_binary) {
   console.time(`BigMap set Data Canister wasm binary from file ${file_name_wasm_binary}`);
   let wasm_binary = fs.readFileSync(file_name_wasm_binary);
@@ -75,4 +88,4 @@ const addDataBuckets = bigmap_fn.bigMapAddDataBuckets;
 const strToArr = bigmap_fn.strToArr;
 const arrToStr = bigmap_fn.arrToStr;
 
-module.exports = { get, put, append, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, addDataBuckets, strToArr, arrToStr };
+module.exports = { get, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, addDataBuckets, strToArr, arrToStr };

@@ -11,6 +11,7 @@ const options = yargs
   .option("get", { describe: "Get key, start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("call-index", { describe: "Call an index canister function", type: "array", requiresArg: true, demandOption: false })
@@ -62,6 +63,14 @@ if (options.append) {
   } else {
     console.log("Append requires exactly two arguments: key value");
   }
+}
+
+if (options.delete) {
+  let key = options.delete;
+  if (key[0] == '@') {
+    key = fs.readFileSync(key.substring(1));
+  }
+  bigmap.deleteKey(key);
 }
 
 if (options.setDataBucketWasmBinary) {

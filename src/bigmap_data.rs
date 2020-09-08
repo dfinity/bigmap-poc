@@ -109,6 +109,26 @@ fn append_from_index(key_value: (Key, Val)) -> u64 {
     append(key, value)
 }
 
+#[update]
+fn delete(key: Key) -> u64 {
+    let bm_data = storage::get_mut::<DataBucket>();
+
+    let key_str = String::from_utf8_lossy(&key);
+    match bm_data.delete(key.clone()) {
+        Ok(deleted_value_len) => {
+            println!(
+                "BigMap Data: delete key {} ({} bytes)",
+                key_str, deleted_value_len
+            );
+            deleted_value_len
+        }
+        Err(err) => {
+            println!("BigMap Data: delete key {} error: {}", key_str, err);
+            0
+        }
+    }
+}
+
 #[query]
 fn holds_key(key: Key) -> bool {
     let bm_data = storage::get::<DataBucket>();

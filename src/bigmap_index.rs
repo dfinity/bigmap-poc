@@ -58,7 +58,7 @@ async fn put(key: Key, value: Val) -> u64 {
 }
 
 #[update]
-async fn append(key: Key, value: Val) -> usize {
+async fn append(key: Key, value: Val) -> u64 {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
     match bigmap_idx.lookup_put(&key) {
@@ -73,6 +73,35 @@ async fn append(key: Key, value: Val) -> usize {
                 .await
                 .expect(&format!(
                     "BigMap index: append call to CanisterId {} failed",
+                    can_id
+                ))
+        }
+        None => {
+            println!(
+                "BigMap Index: no data canister suitable for key {}",
+                String::from_utf8_lossy(&key)
+            );
+            0
+        }
+    }
+}
+
+#[update]
+async fn delete(key: Key) -> u64 {
+    let bigmap_idx = storage::get::<BigmapIdx>();
+
+    match bigmap_idx.lookup_put(&key) {
+        Some(can_id) => {
+            let can_id: ic_cdk::CanisterId = can_id.0.into();
+            println!(
+                "BigMap Index: delete key {} @CanisterId {}",
+                String::from_utf8_lossy(&key),
+                can_id
+            );
+            ic_cdk::call(can_id.clone(), "delete", Some(key))
+                .await
+                .expect(&format!(
+                    "BigMap index: delete call to CanisterId {} failed",
                     can_id
                 ))
         }

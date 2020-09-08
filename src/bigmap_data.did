@@ -2,6 +2,7 @@ service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
     "put": (key: vec nat8, value: vec nat8) -> (nat64);
     "put_from_index": (key: vec nat8, value: vec nat8) -> (nat64);
+    "delete": (key: vec nat8) -> (nat64);
     "append": (key: vec nat8, value: vec nat8) -> (nat64);
     "append_from_index": (key: vec nat8, value: vec nat8) -> (nat64);
     "set_range": (range_from: vec nat8, range_to: vec nat8) -> () oneway;
