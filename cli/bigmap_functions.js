@@ -127,22 +127,22 @@ const getBigMapDataActor = (canisterId) => {
 };
 
 async function bigMapPut(encodedKey, encodedValue) {
-  const key = arrToStr(encodedKey).substr(0, 100);
 
   let res = bigMap.put(encodedKey, encodedValue);
 
   if (!res) {
+    const key = arrToStr(encodedKey).substr(0, 100);
     console.error(`BigMap: Error putting key "${key}"`);
   }
   return res;
 }
 
 async function bigMapAppend(encodedKey, encodedValue) {
-  const key = arrToStr(encodedKey).substr(0, 100);
 
   let res = bigMap.append(encodedKey, encodedValue);
 
   if (!res) {
+    const key = arrToStr(encodedKey).substr(0, 100);
     console.error(`BigMap: Error appending key "${key}"`);
   }
   return res;
@@ -162,6 +162,7 @@ async function bigMapGet(encodedKey) {
   let res = bigMap.get(encodedKey);
 
   if (!res) {
+    const key = arrToStr(encodedKey).substr(0, 100);
     console.error(`BigMap: Error getting key "${key}"`);
   }
   return res;
