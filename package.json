@@ -4,7 +4,7 @@
   "description": "BigMap Command Line Interface",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,18 @@
     "yargs": "^15.4.1"
   },
   "devDependencies": {
-    "node-fetch": "^2.6.0"
+    "jest": "^26.4.2",
+    "node-fetch": "^2.6.0",
+    "ts-jest": "^26.3.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.+(ts|tsx|js)",
+      "**/?(*.)+(spec|test).+(ts|tsx|js)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    }
   }
 }

@@ -134,9 +134,7 @@ async function bigMapPut(encodedKey, encodedValue) {
     return false;
   }
   let dataCan = await bigMapDataCanisterIdToActor(data_can_id);
-  // console.time(`BigMap Data Canister put ${key}`);
   let res = dataCan.put(encodedKey, encodedValue);
-  // console.timeEnd(`BigMap Data Canister put ${key}`);
 
   if (!res) {
     console.error(`BigMap Data Canister ${data_can_id}: Error putting key "${key}"`);
@@ -146,12 +144,6 @@ async function bigMapPut(encodedKey, encodedValue) {
 
 async function bigMapGet(encodedKey) {
   const key = arrToStr(encodedKey).substr(0, 100);
-  let data_can_id = String(await bigMap.lookup_data_bucket_for_get(encodedKey));
-  if (data_can_id == "") {
-    console.error(`BigMap no Data Canister available to get key "${key}"`);
-    return false;
-  }
-  let dataCan = await bigMapDataCanisterIdToActor(data_can_id);
   let res = bigMap.get(encodedKey);
 
   if (!res) {
@@ -159,7 +151,5 @@ async function bigMapGet(encodedKey) {
   }
   return res;
 }
-
-// Helpers
 
 module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapGet, bigMapAddDataBuckets, getBigMapDataActor, strToArr, arrToStr };

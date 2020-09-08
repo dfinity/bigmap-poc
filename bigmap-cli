@@ -1,61 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
-const cli = require('./cli/bigmap_functions.js');
-
-async function cliGet(key) {
-  console.time(`BigMap Data Canister get ${key}`);
-  let value = (await cli.bigMapGet(cli.strToArr(key)))[0];
-  console.timeEnd(`BigMap Data Canister get ${key}`);
-  if (value === undefined) {
-    console.log(`BigMap key ${key} does not exist`);
-  } else {
-    console.log(`BigMap key ${key} ==> value ${cli.arrToStr(value)}`);
-  }
-  return value;
-}
-
-async function cliPut(key, value) {
-  console.time(`BigMap Data Canister put ${key}`);
-  let bytes_written = await cli.bigMapPut(cli.strToArr(key), cli.strToArr(value));
-  console.timeEnd(`BigMap Data Canister put ${key}`);
-  if (bytes_written) {
-    console.log(`Put ${key} succeeded (${bytes_written} bytes)`);
-  } else {
-    console.log(`Put ${key} failed`);
-  }
-}
-
-async function cliSetDataBucketWasmBinary(file_name_wasm_binary) {
-  console.time(`BigMap set Data Canister wasm binary from file ${file_name_wasm_binary}`);
-  let wasm_binary = fs.readFileSync(file_name_wasm_binary);
-  let wasm_binary_array = Array.from(wasm_binary);
-  await cli.getBigMapActor().set_data_bucket_canister_wasm_binary(wasm_binary_array);
-  console.timeEnd(`BigMap set Data Canister wasm binary from file ${file_name_wasm_binary}`);
-}
-
-async function cliMaintenance() {
-  console.time(`BigMap maintenance`);
-  let res = (await cli.getBigMapActor().maintenance());
-  console.log(JSON.parse(res));
-  console.timeEnd(`BigMap maintenance`);
-}
-
-async function cliCallIndex(functionName, ...args) {
-  args = args[0];
-  console.time(`BigMap Call Index Canister ${functionName}(${args})`);
-  let res = (await cli.getBigMapActor()[functionName](...args));
-  console.log(res);
-  console.timeEnd(`BigMap Call Index Canister ${functionName}(${args})`);
-}
-
-async function cliCallData(canisterId, functionName, ...args) {
-  args = args[0];
-  console.time(`BigMap Call Data Canister ${functionName}(${args})`);
-  let res = (await cli.getBigMapDataActor(canisterId)[functionName](...args));
-  console.log(res);
-  console.timeEnd(`BigMap Call Data Canister ${functionName}(${args})`);
-}
+const bigmap = require('./cli/bigmap_cli.js');
 
 const yargs = require("yargs");
 
@@ -74,7 +20,7 @@ const options = yargs
 if (options.addDataBuckets) {
   let data_buckets = options.addDataBuckets;
   console.log(`Add data buckets ${data_buckets}`);
-  cli.bigMapAddDataBuckets(data_buckets);
+  bigmap.addDataBuckets(data_buckets);
 }
 
 if (options.get) {
@@ -82,7 +28,7 @@ if (options.get) {
   if (key[0] == '@') {
     key = fs.readFileSync(key.substring(1));
   }
-  cliGet(key);
+  bigmap.get(key);
 }
 
 if (options.put) {
@@ -95,23 +41,23 @@ if (options.put) {
     if (value[0] == '@') {
       value = fs.readFileSync(value.substring(1));
     }
-    cliPut(key, value);
+    bigmap.put(key, value);
   } else {
     console.log("Put requires exactly two arguments: key value");
   }
 }
 
 if (options.setDataBucketWasmBinary) {
-  cliSetDataBucketWasmBinary(options.setDataBucketWasmBinary)
+  bigmap.setDataBucketWasmBinary(options.setDataBucketWasmBinary)
 }
 
 if (options.maintenance) {
-  cliMaintenance()
+  bigmap.maintenance()
 }
 
 if (options.callIndex) {
   if (options.callIndex.length >= 1) {
-    cliCallIndex(options.callIndex[0], options.callIndex.slice(1))
+    bigmap.callIndex(options.callIndex[0], options.callIndex.slice(1))
   } else {
     console.log("--call-index requires 1 or more arguments: <functionName> [arg1 [arg2 [...]]]");
   }
@@ -119,7 +65,7 @@ if (options.callIndex) {
 
 if (options.callData) {
   if (options.callData.length >= 2) {
-    cliCallData(options.callData[0], options.callData[1], options.callData.slice(2))
+    bigmap.callData(options.callData[0], options.callData[1], options.callData.slice(2))
   } else {
     console.log("--call-data requires 2 or more arguments: <canisterId> <functionName> [arg1 [arg2 [...]]]");
   }
