@@ -198,14 +198,12 @@ impl BigmapIdx {
         struct Status {
             status: &'static str,
             message: &'static str,
-            call_again_in: u32,
         };
 
         if self.is_rebalancing {
             return serde_json_wasm::to_string(&Status {
                 status: "Good",
                 message: "Already rebalancing",
-                call_again_in: 10,
             })
             .unwrap();
         }
@@ -303,8 +301,7 @@ impl BigmapIdx {
 
         return serde_json_wasm::to_string(&Status {
             status: "Good",
-            message: "Finished rebalancing",
-            call_again_in: 1,
+            message: "Finished maintenance",
         })
         .unwrap();
     }
