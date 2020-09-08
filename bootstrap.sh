@@ -6,7 +6,8 @@ echo "Install dependencies"
 npm install
 
 echo "Building canisters"
-cargo build --release --target wasm32-unknown-unknown
+# This command is ran from dfx build:
+# cargo build --release --target wasm32-unknown-unknown
 rm -rf canisters
 dfx build
 
