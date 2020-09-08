@@ -7,7 +7,8 @@ const yargs = require("yargs");
 
 const options = yargs
   .usage("Usage: $0 <cmd> [args]")
-  .option("get", { describe: "Get key, start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("get", { describe: "Get key; prefix with @ to use file contents", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("o", { describe: "Output filename for the --get command", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
@@ -23,7 +24,11 @@ if (options.get) {
   if (key[0] == '@') {
     key = fs.readFileSync(key.substring(1));
   }
-  bigmap.get(key);
+  if (options.o) {
+    bigmap.getToFile(key, options.o);
+  } else {
+    bigmap.get(key);
+  }
 }
 
 if (options.put) {

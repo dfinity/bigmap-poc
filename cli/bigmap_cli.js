@@ -15,6 +15,18 @@ async function get(key) {
   return value;
 }
 
+async function getToFile(key, fileName) {
+  console.time(`BigMap get ${key}`);
+  let [value] = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
+  console.timeEnd(`BigMap get ${key}`);
+  if (value === undefined) {
+    console.log(`BigMap key ${key} does not exist`);
+  } else {
+    fs.writeFileSync(fileName, new Uint8Array(value));
+    console.log(`BigMap key ${key} ==> value written to file ${fileName}`);
+  }
+}
+
 async function put(key, value) {
   console.time(`BigMap put ${key}`);
   let bytes_written = await bigmap_fn.bigMapPut(bigmap_fn.strToArr(key), bigmap_fn.strToArr(value));
@@ -87,4 +99,4 @@ const getIndexActor = bigmap_fn.getBigMapActor;
 const strToArr = bigmap_fn.strToArr;
 const arrToStr = bigmap_fn.arrToStr;
 
-module.exports = { get, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, strToArr, arrToStr };
+module.exports = { get, getToFile, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, strToArr, arrToStr };
