@@ -128,13 +128,8 @@ const getBigMapDataActor = (canisterId) => {
 
 async function bigMapPut(encodedKey, encodedValue) {
   const key = arrToStr(encodedKey).substr(0, 100);
-  let data_can_id = String(await bigMap.lookup_data_bucket_for_put(encodedKey));
-  if (data_can_id == "") {
-    console.error(`BigMap no Data Canister available to put key "${key}"`);
-    return false;
-  }
-  let dataCan = await bigMapDataCanisterIdToActor(data_can_id);
-  let res = dataCan.put(encodedKey, encodedValue);
+
+  let res = bigMap.put(encodedKey, encodedValue);
 
   if (!res) {
     console.error(`BigMap Data Canister ${data_can_id}: Error putting key "${key}"`);

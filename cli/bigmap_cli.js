@@ -5,10 +5,7 @@ const bigmap_fn = require('./bigmap_functions');
 
 async function get(key) {
   console.time(`BigMap get ${key}`);
-  console.log(typeof key, typeof bigmap_fn.strToArr(key));
-  let result = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
-  console.log(result);
-  let value = (result)[0];
+  let [value] = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
   console.timeEnd(`BigMap get ${key}`);
   if (value === undefined) {
     console.log(`BigMap key ${key} does not exist`);
