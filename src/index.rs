@@ -294,6 +294,33 @@ impl BigmapIdx {
         .unwrap();
     }
 
+    pub async fn status(&self) -> String {
+        #[derive(serde::Serialize, Default)]
+        struct DataBucketStatus {
+            canister_id: String,
+            used_bytes: u32,
+        };
+
+        #[derive(serde::Serialize, Default)]
+        struct Status {
+            data_buckets: Vec<DataBucketStatus>,
+            used_bytes_total: u64,
+        };
+
+        let mut status = Status::default();
+
+        for can_id in self.idx.iter() {
+            let used_bytes = self.qcall_dcan_used_bytes(can_id).await as u32;
+            status.data_buckets.push(DataBucketStatus {
+                canister_id: can_id.to_string(),
+                used_bytes,
+            });
+            status.used_bytes_total += used_bytes as u64;
+        }
+
+        return serde_json_wasm::to_string(&status).unwrap();
+    }
+
     fn hash_ring_add_before_this(
         &mut self,
         can_ptr: &CanisterPtr,

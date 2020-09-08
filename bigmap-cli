@@ -7,12 +7,13 @@ const yargs = require("yargs");
 
 const options = yargs
   .usage("Usage: $0 <cmd> [args]")
-  .option("get", { describe: "Get key; prefix with @ to use file contents", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("get", { describe: "Get key; start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("o", { describe: "Output filename for the --get command", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
+  .option("status", { describe: "Get status of the BigMap deployment", type: "bool", nargs: 0, demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("call-index", { describe: "Call an index canister function", type: "array", requiresArg: true, demandOption: false })
   .option("call-data", { describe: "Call a data canister function", type: "array", requiresArg: true, demandOption: false })
@@ -77,6 +78,10 @@ if (options.setDataBucketWasmBinary) {
 
 if (options.maintenance) {
   bigmap.maintenance()
+}
+
+if (options.status) {
+  bigmap.status()
 }
 
 if (options.callIndex) {

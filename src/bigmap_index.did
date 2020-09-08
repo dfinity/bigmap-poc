@@ -15,4 +15,5 @@ service : {
     "get_random_key": () -> (text) query;
     "set_used_bytes_threshold": (threshold: nat32) -> ();
     "maintenance": () -> (text);
+    "status": () -> (text) query;
 }

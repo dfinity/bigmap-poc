@@ -176,6 +176,13 @@ async fn maintenance() -> String {
     bigmap_idx.maintenance().await
 }
 
+#[query]
+async fn status() -> String {
+    let bigmap_idx = storage::get::<BigmapIdx>();
+
+    bigmap_idx.status().await
+}
+
 #[init]
 fn initialize() {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();

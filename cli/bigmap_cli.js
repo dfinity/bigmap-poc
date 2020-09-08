@@ -75,8 +75,13 @@ async function setDataBucketWasmBinary(file_name_wasm_binary) {
 async function maintenance() {
   console.time(`BigMap maintenance`);
   let res = (await bigmap_fn.getBigMapActor().maintenance());
-  console.log(JSON.parse(res));
+  console.log(JSON.stringify(JSON.parse(res), null, 2));
   console.timeEnd(`BigMap maintenance`);
+}
+
+async function status() {
+  let res = (await bigmap_fn.getBigMapActor().status());
+  console.log(JSON.stringify(JSON.parse(res), null, 2));
 }
 
 async function callIndex(functionName, ...args) {
@@ -99,4 +104,4 @@ const getIndexActor = bigmap_fn.getBigMapActor;
 const strToArr = bigmap_fn.strToArr;
 const arrToStr = bigmap_fn.arrToStr;
 
-module.exports = { get, getToFile, put, append, deleteKey, setDataBucketWasmBinary, maintenance, callIndex, callData, getIndexActor, strToArr, arrToStr };
+module.exports = { get, getToFile, put, append, deleteKey, setDataBucketWasmBinary, maintenance, status, callIndex, callData, getIndexActor, strToArr, arrToStr };
