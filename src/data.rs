@@ -42,13 +42,14 @@ impl DataBucket {
     }
 
     pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<u64, String> {
-        // println!(
-        //     "BigMap Data: put {}",
-        //     String::from_utf8_lossy(&key)
-        // );
+        // println!("BigMap Data: put {}", String::from_utf8_lossy(&key));
         let key_sha2 = calc_sha256(&key);
         if !self.is_in_range(&key_sha2) {
-            return Err("Provided key is not in the range assigned to this DataBucket".to_string());
+            return Err(format!(
+                "Provided key {} with sha256 {} is not in the range assigned to this DataBucket",
+                String::from_utf8_lossy(&key),
+                hex::encode(&key_sha2)
+            ));
         }
 
         self.used_bytes += key.len();
@@ -191,7 +192,7 @@ impl DataBucket {
 
     // Returns a randomly generated and unused key that matches this data canister
     pub fn get_random_key(&self, seed: Option<String>) -> String {
-        // // Once replica & dfx both support raw_rand, we can try to seed from this instead from time
+        // // Once replica & dfx both support raw_rand, we can try seeding from raw_rand
         // let rand_key = match subnet_raw_rand().await {
         //     Ok(result) => result,
         //     Err(err) => {
@@ -201,25 +202,28 @@ impl DataBucket {
         // };
 
         let mut rand_key = match seed {
-            Some(seed) => calc_sha256(seed),
+            Some(seed) => hex::encode(calc_sha256(seed)),
             None => {
                 let time_bytes = ic_cdk::time().to_be_bytes();
-                calc_sha256(&time_bytes.to_vec())
+                hex::encode(calc_sha256(&time_bytes.to_vec()))
             }
         };
 
-        for i in 0..100 {
+        for _i in 0..100 {
             // Only try this a limited number of times
-            let rand_key_hash = calc_sha256(&rand_key);
-            if self.range_start <= rand_key
-                && rand_key < self.range_end
-                && !self.entries.contains_key(&rand_key_hash)
-            {
-                let result = hex::encode(rand_key);
-                println!("get_random_key: found {} after {} attempts", result, i);
-                return result;
+            let rand_key_hash = calc_sha256(&Vec::from(rand_key.as_bytes()));
+            if self.is_in_range(&rand_key_hash) && !self.entries.contains_key(&rand_key_hash) {
+                // if _i > 0 {
+                //     println!(
+                //         "get_random_key: {} ==> hash {}, after {} attempts",
+                //         &rand_key,
+                //         hex::encode(&rand_key_hash),
+                //         _i
+                //     );
+                // }
+                return rand_key;
             }
-            rand_key = rand_key_hash;
+            rand_key = hex::encode(rand_key_hash);
         }
 
         println!("get_random_key: failed to find an unused key in the range");
@@ -242,6 +246,10 @@ impl DataBucket {
 
             result.push(key.clone());
             key = self.get_random_key(Some(key));
+            if key.is_empty() {
+                println!("seed_random_data: failed to find a suitable random key");
+                break;
+            }
         }
         result
     }
