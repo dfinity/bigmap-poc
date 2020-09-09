@@ -2,6 +2,10 @@
 
 set -e
 
+# Support bootstrapping from any folder
+BASEDIR=$(cd "$(dirname "$0")"; pwd)
+cd "$BASEDIR"
+
 echo "Install dependencies"
 npm install
 
