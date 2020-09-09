@@ -10,7 +10,7 @@ class PageOverview extends React.Component {
   render() {
     return (
       <MDBContainer>
-        <h1 className="header">BigMap Entries</h1><br />
+        <h3 className="header">BigMap Entries</h3><br />
         <Table striped bordered hover>
           <thead>
             <tr>

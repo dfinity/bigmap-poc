@@ -2,36 +2,72 @@
 import React from 'react';
 import Card from 'react-bootstrap/Card';
 import { Container, Row, Col, Badge } from "react-bootstrap";
+import { getBigMapStatus } from '../utils';
+const prettyBytes = require('pretty-bytes');
+
+
+interface DataBucketUsage {
+  canister_id?: string;
+  used_bytes?: number;
+}
+
+interface BigMapStatus {
+  data_buckets?: DataBucketUsage[];
+  used_bytes_total?: number;
+}
 
 class PageOverview extends React.Component {
-  state = {
-    dataLine: {
-      labels: ["January", "February", "March", "April", "May", "June", "July"],
-      datasets: [
-        {
-          label: "Used Gigabytes",
-          fill: true,
-          lineTension: 0.3,
-          backgroundColor: "rgba(225, 204,230, .3)",
-          borderColor: "rgb(205, 130, 158)",
-          borderCapStyle: "butt",
-          borderDash: [],
-          borderDashOffset: 0.0,
-          borderJoinStyle: "miter",
-          pointBorderColor: "rgb(205, 130,1 58)",
-          pointBackgroundColor: "rgb(255, 255, 255)",
-          pointBorderWidth: 10,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: "rgb(0, 0, 0)",
-          pointHoverBorderColor: "rgba(220, 220, 220,1)",
-          pointHoverBorderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 10,
-          data: [10, 20, 22, 23, 56, 70, 110]
-        }
-      ]
-    }
+  public state: BigMapStatus = {
+    data_buckets: [],
+    used_bytes_total: 0,
   };
+
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      data_buckets: [],
+      used_bytes_total: 0
+    };
+  }
+
+  componentDidMount() {
+    getBigMapStatus()
+      .then(res => JSON.parse(res))
+      .then(json => {
+        console.log("got status json:", json);
+        this.setState({
+          data_buckets: json["data_buckets"],
+          used_bytes_total: json["used_bytes_total"]
+        });
+        console.log(this.state);
+      });
+  }
+
+  private statusAsText() {
+    if (this.state.data_buckets && this.state.data_buckets.length > 0)
+      return "Good";
+    else {
+      return "Unknown"
+    }
+  }
+
+  private statusAsVariant() {
+    if (this.statusAsText() === "Unknown") {
+      return "secondary"
+    } else {
+      return "success"
+    }
+  }
+
+  private numDataBuckets() {
+    // ts-ignore
+    return this.state.data_buckets && this.state.data_buckets.length;
+  }
+
+  private totalBytesUsed() {
+    // ts-ignore
+    return prettyBytes(this.state.used_bytes_total);
+  }
 
   render() {
     return (
@@ -41,8 +77,8 @@ class PageOverview extends React.Component {
             <Card className="m-1">
               <Card.Body>
                 <Card.Title>Status</Card.Title>
-                <Card.Text>
-                  <h1><Badge variant="success">Good</Badge></h1>
+                <Card.Text className="h5">
+                  <Badge variant={this.statusAsVariant()}>{this.statusAsText()}</Badge>
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -51,8 +87,8 @@ class PageOverview extends React.Component {
             <Card className="m-1">
               <Card.Body>
                 <Card.Title>Data Bucket Canisters</Card.Title>
-                <Card.Text>
-                  <h1><Badge variant="secondary">1</Badge></h1>
+                <Card.Text className="h5">
+                  <Badge variant="secondary">{this.numDataBuckets()}</Badge>
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -61,8 +97,8 @@ class PageOverview extends React.Component {
             <Card className="m-1">
               <Card.Body>
                 <Card.Title>Total Data Stored</Card.Title>
-                <Card.Text>
-                  <h1><Badge variant="primary">20 MB</Badge></h1>
+                <Card.Text className="h5">
+                  <Badge variant="primary">{this.totalBytesUsed()}</Badge>
                 </Card.Text>
               </Card.Body>
             </Card>

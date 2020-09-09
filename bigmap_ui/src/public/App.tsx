@@ -14,7 +14,7 @@ import "bootswatch/dist/darkly/bootstrap.min.css";
 // import 'bootstrap/dist/css/bootstrap.css';
 
 // import tsreact from 'ic:canisters/tsreact_v2';
-import { test } from './test';
+import './App.css';
 
 interface AppState {
   count: number;
@@ -28,7 +28,6 @@ class App extends React.Component<AppProps, AppState> {
 
   constructor(props: AppProps) {
     super(props);
-    test();
   }
 
   public increment = this._updateCount.bind(this, '+');

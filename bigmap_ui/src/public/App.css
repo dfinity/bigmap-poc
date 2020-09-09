@@ -28,6 +28,14 @@
   color: #61dafb;
 }
 
+.Card-title {
+  font-size: 42px;
+}
+
+.Card-text {
+  font-size: 33px;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

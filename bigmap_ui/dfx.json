@@ -9,6 +9,18 @@
         "dist/bigmap_ui/"
       ],
       "type": "assets"
+    },
+    "bigmap": {
+      "type": "custom",
+      "candid": "../src/bigmap_index.did",
+      "wasm": "../target/wasm32-unknown-unknown/release/bigmap_index.wasm",
+      "build": ""
+    },
+    "bigmap_data": {
+      "type": "custom",
+      "candid": "../src/bigmap_data.did",
+      "wasm": "../target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+      "build": ""
     }
   },
   "defaults": {

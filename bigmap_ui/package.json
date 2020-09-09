@@ -21,6 +21,7 @@
     "css-loader": "^4.2.2",
     "file-loader": "^6.1.0",
     "mdbreact": "^4.27.0",
+    "pretty-bytes": "^5.4.1",
     "react-chartjs-2": "^2.10.0",
     "style-loader": "^1.2.1",
     "terser-webpack-plugin": "^4.1.0",

@@ -12,7 +12,7 @@ const aliases = Object.entries(dfxJson.canisters).reduce(
     const networkName = process.env["DFX_NETWORK"] || "local";
     const outputRoot = path.join(
       __dirname,
-      ".dfx",
+      "../.dfx",
       networkName,
       "canisters",
       name
