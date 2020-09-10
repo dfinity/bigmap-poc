@@ -130,6 +130,13 @@ fn delete(key: Key) -> u64 {
 }
 
 #[query]
+fn list(key_prefix: Key) -> Vec<Key> {
+    let bm_data = storage::get::<DataBucket>();
+
+    bm_data.list(&key_prefix)
+}
+
+#[query]
 fn holds_key(key: Key) -> bool {
     let bm_data = storage::get::<DataBucket>();
 

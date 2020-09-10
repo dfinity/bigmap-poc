@@ -2,6 +2,7 @@ use crate::data::DataBucket;
 use crate::index::BigmapIdx;
 use crate::{CanisterId, Key, Sha256Digest, Sha2Vec, Val};
 use indexmap::IndexMap;
+use std::collections::BTreeSet;
 use std::sync::{Arc, RwLock};
 // use std::time::Instant;
 
@@ -53,6 +54,68 @@ async fn bigmap_put_get() {
         let can_data = can_data.get(&can_data_id).unwrap();
 
         assert_eq!(*can_data.get(key).unwrap(), value);
+    }
+}
+
+#[actix_rt::test]
+async fn bigmap_list() {
+    // Create N canisters, write keys to them, then list keys and verify the list is as expected
+
+    let num_data_canisters_initial = 20;
+
+    let (mut bm_idx, db_map) = alloc_bigmap_index_and_data(num_data_canisters_initial).await;
+
+    bm_idx.maintenance().await;
+
+    let mut keys_expected_no_prefix = BTreeSet::new();
+    let mut keys_expected_with_prefix = BTreeSet::new();
+    let key_prefix = "key-1".to_string();
+    for i in 0..1001 {
+        let key = format!("key-{}", i);
+        keys_expected_no_prefix.insert(key.clone());
+        if key.starts_with(&key_prefix) {
+            keys_expected_with_prefix.insert(key.clone());
+        }
+
+        let key = key.into_bytes();
+        let value = vec![(i % 256) as u8; 20];
+
+        let can_data_id = bm_idx.lookup_put(&key).unwrap();
+        assert_ne!(can_data_id, Default::default());
+        db_map
+            .write()
+            .unwrap()
+            .get_mut(&can_data_id)
+            .unwrap()
+            .put(key, value, false)
+            .expect("DataBucket put failed");
+        assert!(
+            db_map
+                .read()
+                .unwrap()
+                .get(&can_data_id)
+                .unwrap()
+                .used_bytes()
+                > 0
+        );
+    }
+
+    bm_idx.set_used_bytes_threshold(5000);
+
+    for _ in 0..5u32 {
+        bm_idx.maintenance().await;
+    }
+
+    let list_keys = bm_idx.list(&Vec::new()).await;
+    for (key, key_expected) in list_keys.iter().zip(keys_expected_no_prefix) {
+        let key = String::from_utf8_lossy(key);
+        assert_eq!(key, key_expected);
+    }
+
+    let list_keys = bm_idx.list(&key_prefix.into_bytes()).await;
+    for (key, key_expected) in list_keys.iter().zip(keys_expected_with_prefix) {
+        let key = String::from_utf8_lossy(key);
+        assert_eq!(key, key_expected);
     }
 }
 
@@ -131,6 +194,17 @@ async fn alloc_bigmap_index_and_data(num_data_canisters: u64) -> (BigmapIdx, Dat
             .holds_key(key)
     };
     bm_idx.set_fn_ptr_holds_key(Box::new(fn_ptr_holds_key));
+
+    let db_map_ref = db_map.clone();
+    let fn_ptr_list = move |can_id: CanisterId, key_prefix: &Key| {
+        db_map_ref
+            .read()
+            .unwrap()
+            .get(&can_id)
+            .unwrap()
+            .list(key_prefix)
+    };
+    bm_idx.set_fn_ptr_list(Box::new(fn_ptr_list));
 
     let db_map_ref = db_map.clone();
     let fn_ptr_set_range =

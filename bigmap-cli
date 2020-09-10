@@ -12,6 +12,7 @@ const options = yargs
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("list", { describe: "List keys with the given prefix", type: "array", requiresArg: false, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
   .option("status", { describe: "Get status of the BigMap deployment", type: "bool", nargs: 0, demandOption: false })
   .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
@@ -70,6 +71,15 @@ if (options.delete) {
     key = fs.readFileSync(key.substring(1));
   }
   bigmap.deleteKey(key);
+}
+
+if (options.list) {
+  // Take only the first argument to '--list'
+  let key_prefix = (options.list && options.list[0]) || "";
+  if (key_prefix[0] == '@') {
+    key_prefix = fs.readFileSync(key_prefix.substring(1));
+  }
+  bigmap.list(key_prefix);
 }
 
 if (options.setDataBucketWasmBinary) {

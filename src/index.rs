@@ -6,7 +6,7 @@ use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use serde_json_wasm;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
 
@@ -20,6 +20,8 @@ pub type DetHashMap<K, V> = HashMap<K, V, BuildHasherDefault<WyHash>>;
 type HashRingRange = (Sha256Digest, Sha256Digest);
 
 // Testing types
+#[cfg(not(target_arch = "wasm32"))]
+type FnPtrList = Box<dyn Fn(CanisterId, &Key) -> Vec<Key>>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrUsedBytes = Box<dyn Fn(CanisterId) -> usize>;
 #[cfg(not(target_arch = "wasm32"))]
@@ -46,6 +48,8 @@ pub struct BigmapIdx {
     data_bucket_canister_wasm_binary: Vec<u8>,
     id: CanisterId,
     // Testing functions
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_list: Option<FnPtrList>,
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_used_bytes: Option<FnPtrUsedBytes>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -179,6 +183,22 @@ impl BigmapIdx {
 
         // println!("BigMap Index: lookup_put @key {}", String::from_utf8_lossy(key));
         Some(self.can_ptr_to_canister_id(ring_node))
+    }
+
+    // List keys starting with key_prefix
+    pub async fn list(&self, key_prefix: &Key) -> Vec<Key> {
+        let mut result = BTreeSet::new();
+
+        for can_id in self.idx.iter() {
+            let sub_list: Vec<Key> = self.qcall_dcan_list(can_id, key_prefix).await;
+            result.extend(sub_list);
+            if result.len() > 10000 {
+                // Safety brake, don't return too many entries
+                break;
+            }
+        }
+
+        result.iter().cloned().collect()
     }
 
     pub async fn maintenance(&mut self) -> String {
@@ -457,6 +477,12 @@ impl BigmapIdx {
 
 #[cfg(target_arch = "wasm32")]
 impl BigmapIdx {
+    async fn qcall_dcan_list(&self, can_id: &CanisterId, key_prefix: &Vec<u8>) -> Vec<Key> {
+        ic_cdk::call(can_id.clone().0.into(), "list", Some(key_prefix))
+            .await
+            .expect("list call failed")
+    }
+
     async fn qcall_dcan_used_bytes(&self, can_id: &CanisterId) -> usize {
         ic_cdk::call(can_id.clone().0.into(), "used_bytes", Some(()))
             .await
@@ -531,6 +557,10 @@ impl BigmapIdx {
         self.fn_ptr_set_range = Some(fn_ptr);
     }
 
+    pub fn set_fn_ptr_list(&mut self, fn_ptr: FnPtrList) {
+        self.fn_ptr_list = Some(fn_ptr);
+    }
+
     pub fn set_fn_ptr_holds_key(&mut self, fn_ptr: FnPtrHoldsKey) {
         self.fn_ptr_holds_key = Some(fn_ptr);
     }
@@ -553,6 +583,11 @@ impl BigmapIdx {
             .as_ref()
             .expect("fn_ptr_used_bytes is not set");
         fn_ptr(can_id.clone())
+    }
+
+    async fn qcall_dcan_list(&self, can_id: &CanisterId, key_prefix: &Vec<u8>) -> Vec<Key> {
+        let fn_ptr = self.fn_ptr_list.as_ref().expect("fn_ptr_list is not set");
+        fn_ptr(can_id.clone(), key_prefix)
     }
 
     async fn qcall_dcan_holds_key(&self, can_id: &CanisterId, key: &Key) -> bool {

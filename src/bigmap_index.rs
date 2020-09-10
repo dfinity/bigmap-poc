@@ -115,6 +115,13 @@ async fn delete(key: Key) -> u64 {
     }
 }
 
+#[query]
+async fn list(key_prefix: Key) -> Vec<Key> {
+    let bigmap_idx = storage::get::<BigmapIdx>();
+
+    bigmap_idx.list(&key_prefix).await
+}
+
 #[update]
 async fn add_data_buckets(can_vec: Vec<String>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();

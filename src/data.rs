@@ -162,6 +162,24 @@ impl DataBucket {
         }
     }
 
+    pub fn list(&self, key_prefix: &Key) -> Vec<Key> {
+        let mut result = Vec::new();
+
+        for (key, _) in self.entries.values() {
+            if key.len() >= key_prefix.len() {
+                if &key[0..key_prefix.len()] == key_prefix.as_slice() {
+                    result.push(key.clone());
+                    if result.len() > 10000 {
+                        // Safety brake, don't return too many entries
+                        break;
+                    }
+                }
+            }
+        }
+
+        result
+    }
+
     pub fn holds_key(&self, key: &Key) -> bool {
         let key_sha2 = calc_sha256(&key);
         self.entries.get(&key_sha2).is_some()

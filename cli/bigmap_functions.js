@@ -158,5 +158,15 @@ async function bigMapGet(encodedKey) {
   return res;
 }
 
+async function bigMapList(encodedKeyPrefix) {
+  let res = bigMap.list(encodedKeyPrefix);
 
-module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, getBigMapDataActor, strToArr, arrToStr };
+  if (!res) {
+    const key = arrToStr(encodedKeyPrefix).substr(0, 100);
+    console.error(`BigMap: Error listing with key_prefix "${key}"`);
+  }
+  return res;
+}
+
+
+module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, bigMapList, getBigMapDataActor, strToArr, arrToStr };
