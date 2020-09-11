@@ -144,10 +144,10 @@ fn holds_key(key: Key) -> bool {
 }
 
 #[query]
-fn used_bytes(_: ()) -> usize {
+fn used_bytes(_: ()) -> u64 {
     let bm_data = storage::get::<DataBucket>();
 
-    bm_data.used_bytes()
+    bm_data.used_bytes() as u64
 }
 
 #[update]

@@ -44,10 +44,10 @@ fn search_by_query(query: String) -> Vec<Key> {
 }
 
 #[query]
-fn used_bytes() -> u32 {
+fn used_bytes() -> u64 {
     let search = storage::get::<SearchIndexer>();
 
-    search.used_bytes() as u32
+    search.used_bytes() as u64
 }
 
 fn main() {}
