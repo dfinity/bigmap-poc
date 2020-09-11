@@ -7,6 +7,8 @@
 // - Get or assign a unique ID for each token,
 // -
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use roaring::RoaringBitmap;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
@@ -23,6 +25,10 @@ use crate::Key;
 // Roaring Bitmaps only support 32-bit integers
 type DocumentId = u32;
 type Term = String;
+
+lazy_static! {
+    static ref RE_NOT_ALNUM: Regex = Regex::new(r"\W").unwrap();
+}
 
 #[derive(Default)]
 struct TermData {
@@ -58,7 +64,7 @@ impl SearchIndexer {
             }
         };
 
-        for term in document.split_whitespace() {
+        for term in RE_NOT_ALNUM.replace_all(document, " ").split_whitespace() {
             let term = SearchIndexer::normalize_to_string(term);
             let term_data = match self.terms.get_mut(&term) {
                 Some(t) => t,
@@ -82,7 +88,7 @@ impl SearchIndexer {
 
         let mut all_term_inverted_indexes = Vec::new();
 
-        for term in query.split_whitespace() {
+        for term in RE_NOT_ALNUM.replace_all(query, " ").split_whitespace() {
             let term = SearchIndexer::normalize_to_string(term);
 
             match self.terms.get(&term) {

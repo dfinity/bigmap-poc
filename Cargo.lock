@@ -132,6 +132,7 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "num-bigint",
+ "regex",
  "roaring",
  "serde",
  "serde-json-wasm",
