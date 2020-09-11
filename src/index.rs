@@ -80,6 +80,78 @@ impl BigmapIdx {
         }
     }
 
+    pub async fn get(&self, key: &Key) -> Option<Val> {
+        match self.lookup_get(&key).await {
+            Some(can_id) => {
+                let can_id: ic_cdk::CanisterId = can_id.0.into();
+                println!(
+                    "BigMap Index: get key {} @CanisterId {}",
+                    String::from_utf8_lossy(&key),
+                    can_id
+                );
+                ic_cdk::call(can_id, "get", Some(key)).await.unwrap()
+            }
+            None => {
+                println!(
+                    "BigMap Index: no data canister holds the key {}",
+                    String::from_utf8_lossy(&key)
+                );
+                None
+            }
+        }
+    }
+
+    pub async fn put(&mut self, key: &Key, value: &Val) -> u64 {
+        self.ensure_at_least_one_data_canister().await;
+
+        match self.lookup_put(&key) {
+            Some(can_id) => {
+                let can_id: ic_cdk::CanisterId = can_id.0.into();
+                ic_cdk::call(can_id.clone(), "put_from_index", Some((key, value)))
+                    .await
+                    .expect(&format!(
+                        "BigMap index: put call to CanisterId {} failed",
+                        can_id
+                    ))
+            }
+            None => {
+                println!(
+                    "BigMap Index: no data canister suitable for key {}",
+                    String::from_utf8_lossy(&key)
+                );
+                0
+            }
+        }
+    }
+
+    pub async fn append(&mut self, key: &Key, value: &Val) -> u64 {
+        self.ensure_at_least_one_data_canister().await;
+
+        match self.lookup_put(&key) {
+            Some(can_id) => {
+                let can_id: ic_cdk::CanisterId = can_id.0.into();
+                println!(
+                    "BigMap Index: append key {} @CanisterId {}",
+                    String::from_utf8_lossy(&key),
+                    can_id
+                );
+                ic_cdk::call(can_id.clone(), "append_from_index", Some((key, value)))
+                    .await
+                    .expect(&format!(
+                        "BigMap index: append call to CanisterId {} failed",
+                        can_id
+                    ))
+            }
+            None => {
+                println!(
+                    "BigMap Index: no data canister suitable for key {}",
+                    String::from_utf8_lossy(&key)
+                );
+                0
+            }
+        }
+    }
+
     fn can_ptr_to_canister_id(&self, can_ptr: &CanisterPtr) -> CanisterId {
         self.idx[can_ptr.0 as usize].clone()
     }
