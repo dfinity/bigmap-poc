@@ -158,4 +158,55 @@ fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
     bigmap_idx.set_data_bucket_canister_wasm_binary(wasm_binary)
 }
 
+#[update]
+fn set_search_canister_wasm_binary(wasm_binary: Vec<u8>) {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+    println!(
+        "BigMap Index: set_search_canister_wasm_binary ({} bytes)",
+        wasm_binary.len()
+    );
+
+    bigmap_idx.set_search_canister_wasm_binary(wasm_binary)
+}
+
+#[update]
+async fn put_and_fts_index(key: Key, document: String) -> u64 {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    if document.len() > 100 {
+        println!(
+            "BigMap Search Index: add key {} => document[0..100] {}",
+            String::from_utf8_lossy(&key),
+            &document[0..100]
+        );
+    } else {
+        println!(
+            "BigMap Search Index: add key {} => document {}",
+            String::from_utf8_lossy(&key),
+            document
+        );
+    }
+
+    bigmap_idx.put_and_fts_index(&key, &document).await
+}
+
+#[update]
+async fn remove_from_fts_index(key: Key) {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    println!(
+        "BigMap Search Index: remove key {}",
+        String::from_utf8_lossy(&key)
+    );
+
+    bigmap_idx.remove_from_fts_index(&key).await
+}
+
+#[query]
+async fn search_by_query(query: String) -> Vec<Key> {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    bigmap_idx.search_by_query(&query).await
+}
+
 fn main() {}

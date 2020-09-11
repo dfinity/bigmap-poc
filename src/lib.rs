@@ -5,6 +5,7 @@ pub(crate) mod hashring;
 #[allow(dead_code)]
 pub(crate) mod hashring_sha256;
 pub mod index;
+pub mod search;
 
 /********************************************************************
      ____  _         __  __

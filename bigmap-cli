@@ -10,12 +10,16 @@ const options = yargs
   .option("get", { describe: "Get key; start with @ to load from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("o", { describe: "Output filename for the --get command", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("put-and-fts-index", { describe: "Put value and add to the FTS index", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("remove_from-fts-index", { describe: "Remove key from the search index", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("list", { describe: "List keys with the given prefix", type: "array", requiresArg: false, demandOption: false })
   .option("maintenance", { describe: "Run maintenance", type: "bool", nargs: 0, demandOption: false })
   .option("status", { describe: "Get status of the BigMap deployment", type: "bool", nargs: 0, demandOption: false })
-  .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets from the provided file name", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("set-data-bucket-wasm-binary", { describe: "Set Wasm binary for the data buckets, from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("set-search-wasm-binary", { describe: "Set Wasm binary for the search canisters, from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
+  .option("search", { describe: "Search for the terms", type: "array", requiresArg: true, requiresArg: true, demandOption: false })
   .option("call-index", { describe: "Call an index canister function", type: "array", requiresArg: true, demandOption: false })
   .option("call-data", { describe: "Call a data canister function", type: "array", requiresArg: true, demandOption: false })
   .showHelpOnFail(false, "Specify --help for available options")
@@ -86,6 +90,10 @@ if (options.setDataBucketWasmBinary) {
   bigmap.setDataBucketWasmBinary(options.setDataBucketWasmBinary)
 }
 
+if (options.setSearchWasmBinary) {
+  bigmap.setSearchWasmBinary(options.setSearchWasmBinary)
+}
+
 if (options.maintenance) {
   bigmap.maintenance()
 }
@@ -108,6 +116,34 @@ if (options.callData) {
   } else {
     console.log("--call-data requires 2 or more arguments: <canisterId> <functionName> [arg1 [arg2 [...]]]");
   }
+}
+
+if (options.putAndFtsIndex) {
+  if (options.putAndFtsIndex.length == 2) {
+    let key = options.putAndFtsIndex[0];
+    let value = options.putAndFtsIndex[1];
+    if (key[0] == '@') {
+      key = fs.readFileSync(key.substring(1));
+    }
+    if (value[0] == '@') {
+      value = fs.readFileSync(value.substring(1));
+    }
+    bigmap.put_and_fts_index(key, value);
+  } else {
+    console.log("putAndFtsIndex requires exactly two arguments: key value");
+  }
+}
+
+if (options.removeFromFtsIndex) {
+  let key = options.removeFromFtsIndex;
+  if (key[0] == '@') {
+    key = fs.readFileSync(key.substring(1));
+  }
+  bigmap.remove_from_fts_index(key);
+}
+
+if (options.search) {
+  bigmap.search(options.search);
 }
 
 if (process.argv.length < 3) {

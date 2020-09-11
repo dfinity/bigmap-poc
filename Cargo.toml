@@ -1,6 +1,6 @@
 [package]
 name = "bigmap"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Saša Tomić <sasa.tomic@dfinity.org>"]
 edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -30,6 +30,7 @@ generic-array = "0.14.4"
 lazy_static = "1.4.0"
 bytesize = "1.0.1"
 serde-json-wasm = "0.2.1"
+roaring = "0.6.1"
 
 [lib]
 name = "bigmap"
@@ -42,6 +43,10 @@ path = "src/bigmap_data.rs"
 [[bin]]
 name = "bigmap_index"
 path = "src/bigmap_index.rs"
+
+[[bin]]
+name = "bigmap_search"
+path = "src/bigmap_search.rs"
 
 [dev-dependencies]  # Used in native/host testing
 indexmap = "1.6.0"

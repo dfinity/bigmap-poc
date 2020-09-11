@@ -21,6 +21,12 @@ type HashRingRange = (Sha256Digest, Sha256Digest);
 
 // Testing types
 #[cfg(not(target_arch = "wasm32"))]
+type FnPtrAddToSearchIndex = Box<dyn Fn(CanisterId, &Key, &String)>;
+#[cfg(not(target_arch = "wasm32"))]
+type FnPtrSearchByQuery = Box<dyn Fn(CanisterId, &String) -> Vec<Key>>;
+#[cfg(not(target_arch = "wasm32"))]
+type FnPtrRemoveFromSearchIndex = Box<dyn Fn(CanisterId, &Key)>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrList = Box<dyn Fn(CanisterId, &Key) -> Vec<Key>>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrUsedBytes = Box<dyn Fn(CanisterId) -> usize>;
@@ -45,9 +51,17 @@ pub struct BigmapIdx {
     canister_available_queue: VecDeque<CanisterId>,
     used_bytes_threshold: u32,
     used_bytes_total: u64,
+    search_canisters: Vec<CanisterId>,
     data_bucket_canister_wasm_binary: Vec<u8>,
+    search_canister_wasm_binary: Vec<u8>,
     id: CanisterId,
     // Testing functions
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_add_to_search_index: Option<FnPtrAddToSearchIndex>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_search_by_query: Option<FnPtrSearchByQuery>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_remove_from_search_index: Option<FnPtrRemoveFromSearchIndex>,
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_list: Option<FnPtrList>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -192,8 +206,8 @@ impl BigmapIdx {
     }
 
     pub async fn ensure_at_least_one_data_canister(&mut self) {
-        // No Data canister in BigMap yet, take one from the available queue
         if self.hash_ring.is_empty() {
+            println!("BigMap Index: No Data Canisters, creating one!");
             match self.create_data_bucket_canister().await {
                 Ok(can_id) => {
                     println!("BigMap Index: Activating Data CanisterId {}", can_id);
@@ -203,6 +217,21 @@ impl BigmapIdx {
                 }
                 Err(err) => {
                     println!("BigMap Index: Error creating a new Data Canister {}", err);
+                }
+            }
+        };
+    }
+
+    pub async fn ensure_at_least_one_search_canister(&mut self) {
+        if self.search_canisters.is_empty() {
+            println!("BigMap Index: No Search Canisters, creating one!");
+            match self.create_search_canister().await {
+                Ok(can_id) => {
+                    println!("BigMap Index: Activating Search CanisterId {}", can_id);
+                    self.search_canisters.push(can_id);
+                }
+                Err(err) => {
+                    println!("BigMap Index: Error creating a new Search Canister {}", err);
                 }
             }
         };
@@ -298,7 +327,7 @@ impl BigmapIdx {
         for i in 0..self.idx.len() {
             let can_id = self.idx[i].clone();
             let can_ptr = CanisterPtr { 0: i as u32 };
-            let used_bytes = self.qcall_dcan_used_bytes(&can_id).await as u64;
+            let used_bytes = self.qcall_canister_used_bytes(&can_id).await as u64;
             self.used_bytes_total += used_bytes;
 
             self.print_canister_utilization(&can_id, used_bytes);
@@ -375,6 +404,15 @@ impl BigmapIdx {
                 }
             }
         }
+
+        // FIXME: Check the utilization of the Search canisters, split if necessary
+        // FIXME: Remove and/or update the indexes in the Search canisters
+
+        for can_id in self.search_canisters.iter() {
+            let used_bytes = self.qcall_canister_used_bytes(can_id).await as u32;
+            self.used_bytes_total += used_bytes as u64;
+        }
+
         println!("Total capacity used {}", ByteSize(self.used_bytes_total));
 
         self.is_rebalancing = false;
@@ -394,16 +432,32 @@ impl BigmapIdx {
         };
 
         #[derive(serde::Serialize, Default)]
+        struct SearchCanisterStatus {
+            canister_id: String,
+            used_bytes: u32,
+        };
+
+        #[derive(serde::Serialize, Default)]
         struct Status {
             data_buckets: Vec<DataBucketStatus>,
+            search_canisters: Vec<SearchCanisterStatus>,
             used_bytes_total: u64,
         };
 
         let mut status = Status::default();
 
         for can_id in self.idx.iter() {
-            let used_bytes = self.qcall_dcan_used_bytes(can_id).await as u32;
+            let used_bytes = self.qcall_canister_used_bytes(can_id).await as u32;
             status.data_buckets.push(DataBucketStatus {
+                canister_id: can_id.to_string(),
+                used_bytes,
+            });
+            status.used_bytes_total += used_bytes as u64;
+        }
+
+        for can_id in self.search_canisters.iter() {
+            let used_bytes = self.qcall_canister_used_bytes(can_id).await as u32;
+            status.search_canisters.push(SearchCanisterStatus {
                 canister_id: can_id.to_string(),
                 used_bytes,
             });
@@ -501,8 +555,34 @@ impl BigmapIdx {
         }
     }
 
+    async fn create_search_canister(&mut self) -> Result<CanisterId, String> {
+        match subnet_create_new_canister().await {
+            Ok(new_can_id) => {
+                println!("BigMap Index: Created new CanisterId {}", new_can_id);
+                match subnet_install_canister_code(
+                    new_can_id.clone(),
+                    self.search_canister_wasm_binary.clone(),
+                )
+                .await
+                {
+                    Ok(_) => println!("BigMap Index: Code install successful to {}", new_can_id),
+                    Err(err) => println!(
+                        "CanisterId {}: code install failed with error {}",
+                        new_can_id, err
+                    ),
+                };
+                Ok(new_can_id)
+            }
+            Err(err) => Err(err),
+        }
+    }
+
     pub fn set_data_bucket_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
         self.data_bucket_canister_wasm_binary = wasm_binary;
+    }
+
+    pub fn set_search_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
+        self.search_canister_wasm_binary = wasm_binary;
     }
 
     fn print_canister_utilization(&self, can_id: &CanisterId, used_bytes: u64) {
@@ -545,17 +625,97 @@ impl BigmapIdx {
         println!("get_random_key: failed to find an unused key in the range");
         "".to_string()
     }
+
+    //
+    // Search functions
+    //
+
+    pub async fn put_and_fts_index(&mut self, key: &Key, document: &String) -> u64 {
+        self.ensure_at_least_one_search_canister().await;
+
+        let value_vec = Vec::from(document.as_bytes());
+
+        let result = self.put(key, &value_vec).await;
+
+        // FIXME: Ensure the search canister has enough space and allocate a new one if necessary
+        let search_can_id = &self.search_canisters[0].clone();
+        self.ucall_s_can_add_to_search_index(&search_can_id, key, document)
+            .await;
+
+        result
+    }
+
+    pub async fn remove_from_fts_index(&mut self, key: &Key) {
+        self.ensure_at_least_one_search_canister().await;
+
+        for can_id in self.search_canisters.iter() {
+            self.ucall_s_can_remove_from_search_index(can_id, key).await
+        }
+    }
+
+    pub async fn search_by_query(&self, search_query: &String) -> Vec<Key> {
+        if self.search_canisters.is_empty() {
+            return Vec::new();
+        }
+
+        let mut result = Vec::new();
+
+        for can_id in self.search_canisters.iter() {
+            result.extend(self.qcall_s_can_search_by_query(can_id, search_query).await)
+        }
+
+        result
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
 impl BigmapIdx {
+    async fn ucall_s_can_add_to_search_index(
+        &self,
+        can_id: &CanisterId,
+        key: &Key,
+        document: &String,
+    ) {
+        ic_cdk::call_no_return(
+            can_id.clone().0.into(),
+            "add_to_search_index",
+            Some((key, document)),
+        )
+        .await
+        .expect("add_to_search_index call failed")
+    }
+
+    async fn ucall_s_can_remove_from_search_index(&self, can_id: &CanisterId, key: &Key) {
+        ic_cdk::call_no_return(
+            can_id.clone().0.into(),
+            "remove_from_search_index",
+            Some(key),
+        )
+        .await
+        .expect("remove_from_search_index call failed")
+    }
+
+    async fn qcall_s_can_search_by_query(
+        &self,
+        can_id: &CanisterId,
+        search_query: &String,
+    ) -> Vec<Key> {
+        ic_cdk::call(
+            can_id.clone().0.into(),
+            "search_by_query",
+            Some(search_query),
+        )
+        .await
+        .expect("search_by_query call failed")
+    }
+
     async fn qcall_dcan_list(&self, can_id: &CanisterId, key_prefix: &Vec<u8>) -> Vec<Key> {
         ic_cdk::call(can_id.clone().0.into(), "list", Some(key_prefix))
             .await
             .expect("list call failed")
     }
 
-    async fn qcall_dcan_used_bytes(&self, can_id: &CanisterId) -> usize {
+    async fn qcall_canister_used_bytes(&self, can_id: &CanisterId) -> usize {
         ic_cdk::call(can_id.clone().0.into(), "used_bytes", Some(()))
             .await
             .expect("used_bytes call failed")
@@ -621,6 +781,18 @@ impl BigmapIdx {
     //
     //////////////////////////////////////////////////////////////////////////
 
+    pub fn set_fn_ptr_add_to_search_index(&mut self, fn_ptr: FnPtrAddToSearchIndex) {
+        self.fn_ptr_add_to_search_index = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_remove_from_search_index(&mut self, fn_ptr: FnPtrRemoveFromSearchIndex) {
+        self.fn_ptr_remove_from_search_index = Some(fn_ptr);
+    }
+
+    pub fn set_fn_ptr_search_by_query(&mut self, fn_ptr: FnPtrSearchByQuery) {
+        self.fn_ptr_search_by_query = Some(fn_ptr);
+    }
+
     pub fn set_fn_ptr_used_bytes(&mut self, fn_ptr: FnPtrUsedBytes) {
         self.fn_ptr_used_bytes = Some(fn_ptr);
     }
@@ -649,7 +821,40 @@ impl BigmapIdx {
         self.fn_ptr_delete_entries = Some(fn_ptr);
     }
 
-    async fn qcall_dcan_used_bytes(&self, can_id: &CanisterId) -> usize {
+    async fn ucall_s_can_add_to_search_index(
+        &self,
+        can_id: &CanisterId,
+        key: &Vec<u8>,
+        doc: &String,
+    ) {
+        let fn_ptr = self
+            .fn_ptr_add_to_search_index
+            .as_ref()
+            .expect("fn_ptr_add_to_search_index is not set");
+        fn_ptr(can_id.clone(), key, doc)
+    }
+
+    async fn ucall_s_can_remove_from_search_index(&self, can_id: &CanisterId, key: &Vec<u8>) {
+        let fn_ptr = self
+            .fn_ptr_remove_from_search_index
+            .as_ref()
+            .expect("fn_ptr_remove_from_search_index is not set");
+        fn_ptr(can_id.clone(), key)
+    }
+
+    async fn qcall_s_can_search_by_query(
+        &self,
+        can_id: &CanisterId,
+        search_query: &String,
+    ) -> Vec<Key> {
+        let fn_ptr = self
+            .fn_ptr_search_by_query
+            .as_ref()
+            .expect("fn_ptr_search_by_query is not set");
+        fn_ptr(can_id.clone(), search_query)
+    }
+
+    async fn qcall_canister_used_bytes(&self, can_id: &CanisterId) -> usize {
         let fn_ptr = self
             .fn_ptr_used_bytes
             .as_ref()

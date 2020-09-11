@@ -7,6 +7,7 @@ jest.setTimeout(30 * 1000);
 describe("BigMap", () => {
   beforeAll(async () => {
     await bigmap.setDataBucketWasmBinary('target/wasm32-unknown-unknown/release/bigmap_data.wasm');
+    await bigmap.setSearchWasmBinary('target/wasm32-unknown-unknown/release/bigmap_search.wasm');
   });
 
 

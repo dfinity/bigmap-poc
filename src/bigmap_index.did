@@ -13,8 +13,14 @@ service : {
     "lookup_data_bucket_for_get": (key: vec nat8) -> (opt text) query;
     "lookup_data_bucket_for_put": (key: vec nat8) -> (opt text) query;
     "set_data_bucket_canister_wasm_binary": (wasm_binary: vec nat8) -> ();
+    "set_search_canister_wasm_binary": (wasm_binary: vec nat8) -> ();
     "get_random_key": () -> (text) query;
     "set_used_bytes_threshold": (threshold: nat32) -> ();
+
+    "put_and_fts_index": (key: vec nat8, value: text) -> (nat64);
+    "remove_from_fts_index": (key: vec nat8, document: text) -> ();
+    "search_by_query": (query_string: text) -> (vec vec nat8) query;
+
     "maintenance": () -> (text);
     "status": () -> (text) query;
 }

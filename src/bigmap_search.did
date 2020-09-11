@@ -1,0 +1,6 @@
+service : {
+    "add_to_search_index": (key: vec nat8, document: text) -> ();
+    "remove_from_search_index": (key: vec nat8) -> ();
+    "search_by_query": (query_string: text) -> (vec vec nat8) query;
+    "used_bytes": () -> (nat32) query;
+}

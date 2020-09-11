@@ -13,6 +13,12 @@
       "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
       "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
     },
+    "bigmap_search": {
+      "type": "custom",
+      "candid": "src/bigmap_search.did",
+      "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+    },
     "bigmap_ui": {
       "type": "custom",
       "candid": "src/bigmap_data.did",

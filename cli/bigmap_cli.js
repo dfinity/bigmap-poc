@@ -3,6 +3,9 @@
 const fs = require("fs");
 const bigmap_fn = require('./bigmap_functions');
 
+const strToArr = bigmap_fn.strToArr;
+const arrToStr = bigmap_fn.arrToStr;
+
 async function get(key) {
   console.time(`BigMap get ${key}`);
   let [value] = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
@@ -79,6 +82,14 @@ async function setDataBucketWasmBinary(file_name_wasm_binary) {
   console.timeEnd(`BigMap set Data Canister wasm binary from file ${file_name_wasm_binary}`);
 }
 
+async function setSearchWasmBinary(file_name_wasm_binary) {
+  console.time(`BigMap set Search Canister wasm binary from file ${file_name_wasm_binary}`);
+  let wasm_binary = fs.readFileSync(file_name_wasm_binary);
+  let wasm_binary_array = Array.from(wasm_binary);
+  await bigmap_fn.getBigMapActor().set_search_canister_wasm_binary(wasm_binary_array);
+  console.timeEnd(`BigMap set Search Canister wasm binary from file ${file_name_wasm_binary}`);
+}
+
 async function maintenance() {
   console.time(`BigMap maintenance`);
   let res = (await bigmap_fn.getBigMapActor().maintenance());
@@ -107,8 +118,28 @@ async function callData(canisterId, functionName, ...args) {
   console.timeEnd(`BigMap Call Data Canister ${functionName}(${args})`);
 }
 
-const getIndexActor = bigmap_fn.getBigMapActor;
-const strToArr = bigmap_fn.strToArr;
-const arrToStr = bigmap_fn.arrToStr;
+async function put_and_fts_index(key, value) {
+  console.time(`BigMap put_and_fts_index ${key}`);
+  await bigmap_fn.getBigMapActor().put_and_fts_index(strToArr(key), value);
+  console.timeEnd(`BigMap put_and_fts_index ${key}`);
+}
 
-module.exports = { get, getToFile, put, append, deleteKey, list, setDataBucketWasmBinary, maintenance, status, callIndex, callData, getIndexActor, strToArr, arrToStr };
+async function remove_from_fts_index(key) {
+  await bigmap_fn.getBigMapActor().remove_from_search_index(key);
+}
+
+async function search(search_query) {
+  let keys = await bigmap_fn.getBigMapActor().search_by_query(search_query.join(' '));
+  let keys_str = keys.map(k => arrToStr(k));
+  console.log(JSON.stringify(keys_str, null, 2));
+  return keys_str;
+}
+
+const getIndexActor = bigmap_fn.getBigMapActor;
+
+module.exports = {
+  get, getToFile, put, append, deleteKey, list, setDataBucketWasmBinary,
+  setSearchWasmBinary, maintenance, status, callIndex, callData, getIndexActor,
+  put_and_fts_index, remove_from_fts_index, search,
+  strToArr, arrToStr
+};
