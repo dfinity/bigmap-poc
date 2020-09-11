@@ -8,19 +8,19 @@ const arrToStr = bigmap_fn.arrToStr;
 
 async function get(key) {
   console.time(`BigMap get ${key}`);
-  let [value] = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
+  let [value] = await bigmap_fn.bigMapGet(strToArr(key));
   console.timeEnd(`BigMap get ${key}`);
   if (value === undefined) {
     console.log(`BigMap key ${key} does not exist`);
   } else {
-    console.log(`BigMap key ${key} ==> value ${bigmap_fn.arrToStr(value)}`);
+    console.log(`BigMap key ${key} ==> value ${arrToStr(value)}`);
   }
   return value;
 }
 
 async function getToFile(key, fileName) {
   console.time(`BigMap get ${key}`);
-  let [value] = await bigmap_fn.bigMapGet(bigmap_fn.strToArr(key));
+  let [value] = await bigmap_fn.bigMapGet(strToArr(key));
   console.timeEnd(`BigMap get ${key}`);
   if (value === undefined) {
     console.log(`BigMap key ${key} does not exist`);
@@ -32,7 +32,7 @@ async function getToFile(key, fileName) {
 
 async function put(key, value) {
   console.time(`BigMap put ${key}`);
-  let bytes_written = await bigmap_fn.bigMapPut(bigmap_fn.strToArr(key), bigmap_fn.strToArr(value));
+  let bytes_written = await bigmap_fn.bigMapPut(strToArr(key), strToArr(value));
   console.timeEnd(`BigMap put ${key}`);
   if (bytes_written) {
     console.log(`BigMap put ${key} succeeded (${bytes_written} bytes)`);
@@ -44,7 +44,7 @@ async function put(key, value) {
 
 async function append(key, value) {
   console.time(`BigMap append ${key}`);
-  let bytes_written = await bigmap_fn.bigMapAppend(bigmap_fn.strToArr(key), bigmap_fn.strToArr(value));
+  let bytes_written = await bigmap_fn.bigMapAppend(strToArr(key), strToArr(value));
   console.timeEnd(`BigMap append ${key}`);
   if (bytes_written) {
     console.log(`BigMap append ${key} succeeded (${bytes_written} bytes)`);
@@ -56,7 +56,7 @@ async function append(key, value) {
 
 async function deleteKey(key) {
   console.time(`BigMap delete key ${key}`);
-  let bytes_deleted = await bigmap_fn.bigMapDelete(bigmap_fn.strToArr(key));
+  let bytes_deleted = await bigmap_fn.bigMapDelete(strToArr(key));
   console.timeEnd(`BigMap delete key ${key}`);
 
   if (bytes_deleted) {
@@ -68,8 +68,8 @@ async function deleteKey(key) {
 }
 
 async function list(key_prefix) {
-  let keys = await bigmap_fn.bigMapList(bigmap_fn.strToArr(key_prefix));
-  let keys_str = keys.map(k => bigmap_fn.arrToStr(k));
+  let keys = await bigmap_fn.bigMapList(strToArr(key_prefix));
+  let keys_str = keys.map(k => arrToStr(k));
   console.log(JSON.stringify(keys_str, null, 2));
   return keys_str;
 }
