@@ -142,11 +142,6 @@ fn initialize() {
     ic_cdk::setup();
 }
 
-#[query]
-async fn total_used_bytes() -> usize {
-    0
-}
-
 #[update]
 fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
