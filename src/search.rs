@@ -28,7 +28,7 @@ type DocumentId = u32;
 type Term = String;
 
 lazy_static! {
-    static ref RE_NOT_ALNUM: Regex = Regex::new(r"\W").unwrap();
+    static ref RE_NOT_ALPHANUM: Regex = Regex::new(r"\W").unwrap();
 }
 
 #[derive(Default)]
@@ -37,7 +37,6 @@ struct TermData {
     inverted_index: RoaringBitmap,
 }
 
-#[derive(Default)]
 pub struct SearchIndexer {
     key_to_doc_id: DetHashMap<Key, DocumentId>,
     doc_id_to_key: DetHashMap<DocumentId, Key>,
@@ -61,12 +60,7 @@ impl SearchIndexer {
         Self::default()
     }
 
-    pub fn add_to_index(&mut self, key: &Key, document: &String) {
-        // println!(
-        //     "ingest_document: {} => {}",
-        //     String::from_utf8_lossy(key),
-        //     document
-        // );
+    pub fn add_to_index(&mut self, key: &Key, doc: &String) {
         let doc_id = match self.key_to_doc_id.get(key) {
             Some(doc_id) => *doc_id,
             None => {
