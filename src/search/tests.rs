@@ -16,7 +16,7 @@ fn search_basic_test() {
         let key_expected = format!("key-{}", i).into_bytes();
         let search_string = format!("VALUE-{}", i);
 
-        let search_result = s.search_by_query(&search_string);
+        let search_result = s.search_keys_by_query(&search_string);
 
         assert_eq!(search_result[0], key_expected);
         assert_eq!(search_result.len(), 1);
@@ -39,7 +39,7 @@ fn search_contain_all_terms() {
         let key_expected = format!("key-{}", i).into_bytes();
         let search_string = format!("some term-{} before value-{}", i, i);
 
-        let search_result = s.search_by_query(&search_string);
+        let search_result = s.search_keys_by_query(&search_string);
 
         assert_eq!(search_result[0], key_expected);
         assert_eq!(search_result.len(), 1);
@@ -66,20 +66,20 @@ fn search_with_stemming() {
 
     s.add_to_index(&key, &value);
 
-    let search_result = s.search_by_query(&"Sushi".to_string());
+    let search_result = s.search_keys_by_query(&"Sushi".to_string());
     assert_eq!(search_result[0], b"key-stem".to_vec());
     assert_eq!(search_result.len(), 1);
 
-    let search_result = s.search_by_query(&"love".to_string());
+    let search_result = s.search_keys_by_query(&"love".to_string());
     assert_eq!(search_result[0], b"key-stem".to_vec());
     assert_eq!(search_result.len(), 1);
 
-    let search_result = s.search_by_query(&"computing".to_string());
+    let search_result = s.search_keys_by_query(&"computing".to_string());
     assert_eq!(search_result[0], b"key-stem".to_vec());
     assert_eq!(search_result.len(), 1);
 
-    let search_result = s.search_by_query(&"Stemming".to_string());
+    let search_result = s.search_keys_by_query(&"Stemming".to_string());
     assert_eq!(search_result.len(), 2);
-    let search_result = s.search_by_query(&"stem".to_string());
+    let search_result = s.search_keys_by_query(&"stem".to_string());
     assert_eq!(search_result.len(), 2);
 }

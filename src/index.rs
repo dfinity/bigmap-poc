@@ -23,7 +23,7 @@ type HashRingRange = (Sha256Digest, Sha256Digest);
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrAddToSearchIndex = Box<dyn Fn(CanisterId, &Key, &String)>;
 #[cfg(not(target_arch = "wasm32"))]
-type FnPtrSearchByQuery = Box<dyn Fn(CanisterId, &String) -> Vec<Key>>;
+type FnPtrSearchKeysByQuery = Box<dyn Fn(CanisterId, &String) -> Vec<Key>>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrRemoveFromSearchIndex = Box<dyn Fn(CanisterId, &Key)>;
 #[cfg(not(target_arch = "wasm32"))]
@@ -59,7 +59,7 @@ pub struct BigmapIdx {
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_add_to_search_index: Option<FnPtrAddToSearchIndex>,
     #[cfg(not(target_arch = "wasm32"))]
-    fn_ptr_search_by_query: Option<FnPtrSearchByQuery>,
+    fn_ptr_search_keys_by_query: Option<FnPtrSearchKeysByQuery>,
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_remove_from_search_index: Option<FnPtrRemoveFromSearchIndex>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -653,7 +653,7 @@ impl BigmapIdx {
         }
     }
 
-    pub async fn search_by_query(&self, search_query: &String) -> Vec<Key> {
+    pub async fn search(&self, search_query: &String) -> Vec<(Key, Val)> {
         if self.search_canisters.is_empty() {
             return Vec::new();
         }
@@ -661,7 +661,23 @@ impl BigmapIdx {
         let mut result = Vec::new();
 
         for can_id in self.search_canisters.iter() {
-            result.extend(self.qcall_s_can_search_by_query(can_id, search_query).await)
+            for key in self
+                .qcall_s_can_search_keys_by_query(can_id, search_query)
+                .await
+            {
+                match self.get(&key).await {
+                    Some(value) => {
+                        println!(
+                            "search {} => key {} value {}",
+                            search_query,
+                            String::from_utf8_lossy(&key),
+                            String::from_utf8_lossy(&value)
+                        );
+                        result.push((key, value));
+                    }
+                    None => continue,
+                }
+            }
         }
 
         result
@@ -695,18 +711,18 @@ impl BigmapIdx {
         .expect("remove_from_search_index call failed")
     }
 
-    async fn qcall_s_can_search_by_query(
+    async fn qcall_s_can_search_keys_by_query(
         &self,
         can_id: &CanisterId,
         search_query: &String,
     ) -> Vec<Key> {
         ic_cdk::call(
             can_id.clone().0.into(),
-            "search_by_query",
+            "search_keys_by_query",
             Some(search_query),
         )
         .await
-        .expect("search_by_query call failed")
+        .expect("search_keys_by_query call failed")
     }
 
     async fn qcall_dcan_list(&self, can_id: &CanisterId, key_prefix: &Vec<u8>) -> Vec<Key> {
@@ -789,8 +805,8 @@ impl BigmapIdx {
         self.fn_ptr_remove_from_search_index = Some(fn_ptr);
     }
 
-    pub fn set_fn_ptr_search_by_query(&mut self, fn_ptr: FnPtrSearchByQuery) {
-        self.fn_ptr_search_by_query = Some(fn_ptr);
+    pub fn set_fn_ptr_search_keys_by_query(&mut self, fn_ptr: FnPtrSearchKeysByQuery) {
+        self.fn_ptr_search_keys_by_query = Some(fn_ptr);
     }
 
     pub fn set_fn_ptr_used_bytes(&mut self, fn_ptr: FnPtrUsedBytes) {
@@ -842,15 +858,15 @@ impl BigmapIdx {
         fn_ptr(can_id.clone(), key)
     }
 
-    async fn qcall_s_can_search_by_query(
+    async fn qcall_s_can_search_keys_by_query(
         &self,
         can_id: &CanisterId,
         search_query: &String,
     ) -> Vec<Key> {
         let fn_ptr = self
-            .fn_ptr_search_by_query
+            .fn_ptr_search_keys_by_query
             .as_ref()
-            .expect("fn_ptr_search_by_query is not set");
+            .expect("fn_ptr_search_keys_by_query is not set");
         fn_ptr(can_id.clone(), search_query)
     }
 

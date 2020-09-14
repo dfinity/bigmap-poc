@@ -37,10 +37,10 @@ fn remove_from_search_index(key: Key) {
 }
 
 #[query]
-fn search_by_query(query: String) -> Vec<Key> {
+fn search_keys_by_query(query: String) -> Vec<Key> {
     let search = storage::get::<SearchIndexer>();
 
-    search.search_by_query(&query)
+    search.search_keys_by_query(&query)
 }
 
 #[query]

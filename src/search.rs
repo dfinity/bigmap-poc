@@ -90,7 +90,7 @@ impl SearchIndexer {
         }
     }
 
-    pub fn search_by_query(&self, query: &String) -> Vec<Key> {
+    pub fn search_keys_by_query(&self, query: &String) -> Vec<Key> {
         let mut result = Vec::new();
 
         let mut all_term_inverted_indexes = Vec::new();
