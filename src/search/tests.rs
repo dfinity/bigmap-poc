@@ -24,6 +24,29 @@ fn search_basic_test() {
 }
 
 #[test]
+fn search_by_key() {
+    // Insert key&value pairs and then get the value, and verify the correctness
+    let mut s = SearchIndexer::new();
+
+    for i in 0..100 as u8 {
+        let key = format!("some text before key-{} some text after", i).into_bytes();
+        let value = format!("some text before value-{} some text after", i);
+
+        s.add_to_index(&key, &value);
+    }
+
+    for i in 0..100 as u8 {
+        let key_expected = format!("some text before key-{} some text after", i).into_bytes();
+        let search_string = format!("key-{}", i);
+
+        let search_result = s.search_keys_by_query(&search_string);
+
+        assert_eq!(search_result[0], key_expected);
+        assert_eq!(search_result.len(), 1);
+    }
+}
+
+#[test]
 fn search_contain_all_terms() {
     // Insert key&value pairs and then get the value, and verify the correctness
     let mut s = SearchIndexer::new();

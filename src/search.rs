@@ -71,7 +71,9 @@ impl SearchIndexer {
             }
         };
 
-        for term in RE_NOT_ALPHANUM.replace_all(doc, " ").split_whitespace() {
+        let doc = format!("{} {}", String::from_utf8_lossy(key), doc);
+
+        for term in RE_NOT_ALPHANUM.replace_all(&doc, " ").split_whitespace() {
             let term = self.normalize_to_string(term);
             let term_data = match self.terms.get_mut(&term) {
                 Some(t) => t,
