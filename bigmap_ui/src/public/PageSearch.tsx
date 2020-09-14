@@ -44,7 +44,7 @@ class PageOverview extends React.Component<{}, Search> {
         <Table striped bordered hover>
           <tbody>
             {
-              this.state.results.map((item, index) => <tr key={index}><td>{index}</td><td>{item.key}</td><td>{item.value}</td></tr>)
+              this.state.results.map((item, index) => <tr key={index}><td>{item.key}</td><td>{item.value}</td></tr>)
             }
           </tbody>
         </Table>
