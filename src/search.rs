@@ -10,6 +10,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use roaring::RoaringBitmap;
+use rust_stemmers::{Algorithm, Stemmer};
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
@@ -41,6 +42,18 @@ pub struct SearchIndexer {
     key_to_doc_id: DetHashMap<Key, DocumentId>,
     doc_id_to_key: DetHashMap<DocumentId, Key>,
     terms: DetHashMap<Term, TermData>,
+    stemmer: Stemmer,
+}
+
+impl Default for SearchIndexer {
+    fn default() -> Self {
+        Self {
+            key_to_doc_id: DetHashMap::default(),
+            doc_id_to_key: DetHashMap::default(),
+            terms: DetHashMap::default(),
+            stemmer: Stemmer::create(Algorithm::English),
+        }
+    }
 }
 
 impl SearchIndexer {
@@ -64,8 +77,8 @@ impl SearchIndexer {
             }
         };
 
-        for term in RE_NOT_ALNUM.replace_all(document, " ").split_whitespace() {
-            let term = SearchIndexer::normalize_to_string(term);
+        for term in RE_NOT_ALPHANUM.replace_all(doc, " ").split_whitespace() {
+            let term = self.normalize_to_string(term);
             let term_data = match self.terms.get_mut(&term) {
                 Some(t) => t,
                 None => {
@@ -88,8 +101,8 @@ impl SearchIndexer {
 
         let mut all_term_inverted_indexes = Vec::new();
 
-        for term in RE_NOT_ALNUM.replace_all(query, " ").split_whitespace() {
-            let term = SearchIndexer::normalize_to_string(term);
+        for term in RE_NOT_ALPHANUM.replace_all(query, " ").split_whitespace() {
+            let term = self.normalize_to_string(term);
 
             match self.terms.get(&term) {
                 Some(term_data) => {
@@ -135,8 +148,8 @@ impl SearchIndexer {
         std::mem::size_of_val(self)
     }
 
-    fn normalize_to_string(input: &str) -> String {
-        String::from(input.to_lowercase())
+    fn normalize_to_string(&self, input: &str) -> String {
+        String::from(self.stemmer.stem(&input.to_lowercase()))
     }
 }
 

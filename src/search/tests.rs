@@ -45,3 +45,41 @@ fn search_contain_all_terms() {
         assert_eq!(search_result.len(), 1);
     }
 }
+
+#[test]
+fn search_with_stemming() {
+    // Insert key&value pairs and then get the value, and verify the correctness
+    let mut s = SearchIndexer::new();
+
+    let key = b"key-stem".to_vec();
+    let value =
+        "Stemming is funnier than a bummer says the sushi loving computer scientist".to_string();
+    // Stemmed with https://snowballstem.org/demo.html to:
+    // stem is funnier than a bummer say the sushi love comput scientist
+
+    s.add_to_index(&key, &value);
+
+    let key = b"key-wiki".to_vec();
+    let value =
+        "In linguistic morphology and information retrieval, stemming is the process of reducing inflected (or sometimes derived) words to their word stem, base or root form—generally a written word form.".to_string();
+    // in linguist morpholog and inform retriev, stem is the process of reduc inflect (or sometim deriv) word to their word stem, base or root form—gener a written word form.
+
+    s.add_to_index(&key, &value);
+
+    let search_result = s.search_by_query(&"Sushi".to_string());
+    assert_eq!(search_result[0], b"key-stem".to_vec());
+    assert_eq!(search_result.len(), 1);
+
+    let search_result = s.search_by_query(&"love".to_string());
+    assert_eq!(search_result[0], b"key-stem".to_vec());
+    assert_eq!(search_result.len(), 1);
+
+    let search_result = s.search_by_query(&"computing".to_string());
+    assert_eq!(search_result[0], b"key-stem".to_vec());
+    assert_eq!(search_result.len(), 1);
+
+    let search_result = s.search_by_query(&"Stemming".to_string());
+    assert_eq!(search_result.len(), 2);
+    let search_result = s.search_by_query(&"stem".to_string());
+    assert_eq!(search_result.len(), 2);
+}

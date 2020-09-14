@@ -134,6 +134,7 @@ dependencies = [
  "num-bigint",
  "regex",
  "roaring",
+ "rust-stemmers",
  "serde",
  "serde-json-wasm",
  "sha2 0.9.1",
@@ -1126,6 +1127,16 @@ dependencies = [
  "blake2b_simd",
  "constant_time_eq",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "rust-stemmers"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e46a2036019fdb888131db7a4c847a1063a7493f971ed94ea82c67eada63ca54"
+dependencies = [
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
