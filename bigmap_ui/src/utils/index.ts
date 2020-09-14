@@ -1,5 +1,5 @@
 import BigMap from 'ic:canisters/bigmap';
-import BigMapData from 'ic:idl/bigmap_data';
+// import BigMapData from 'ic:idl/bigmap_data';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -38,7 +38,6 @@ export function decode<T extends object | string>(obj: number[], fallback?: T): 
     return fallback;
   }
 }
-
 
 // const getBigMapActor = () => {
 //   // @ts-ignore
@@ -96,5 +95,22 @@ export async function getBigMapStatus(): Promise<string> {
   } else {
     console.error("BigMap status get failed");
     return "ERROR retrieving";
+  }
+}
+
+export async function bigMapSearch(query: string): Promise<SearchResultItem[]> {
+
+  console.time("BigMap search");
+  const results = await BigMap.search(query);
+  console.timeEnd("BigMap search");
+
+  let results_str = results.map(e => { return <SearchResultItem>{ key: arrToStr(e[0]), value: arrToStr(e[1]) } });
+
+  if (results_str) {
+    console.log("results string", results_str);
+    return results_str;
+  } else {
+    console.error("BigMap search failed");
+    return [<SearchResultItem>{ key: "ERROR", value: "ERROR" }];
   }
 }

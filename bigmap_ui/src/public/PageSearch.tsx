@@ -1,41 +1,54 @@
 
 import React from 'react';
-import Table from 'react-bootstrap/Table';
-import { MDBContainer } from "mdbreact";
+import { Container, Table, Form, FormControl, Button } from 'react-bootstrap';
+import { bigMapSearch } from '../utils';
 
-class PageOverview extends React.Component {
-  state = {
+interface Search {
+  query: string;
+  results: SearchResultItem[]
+}
+
+class PageOverview extends React.Component<{}, Search> {
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      query: '',
+      results: []
+    }
+    this.handleQueryChange = this.handleQueryChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  private handleQueryChange(event: React.ChangeEvent<HTMLInputElement>) {
+    let q: string = event.target.value;
+    this.setState({ query: q });
+  }
+
+  private async handleSubmit(event: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log("Start query: " + this.state.query);
+    this.setState({ results: await bigMapSearch(this.state.query) });
   };
 
   render() {
     return (
-      <MDBContainer>
-        <h3 className="header">BigMap Entries</h3><br />
+      <Container>
+        <Form inline onSubmit={this.handleSubmit} action="#">
+          <FormControl type="text" placeholder="Search" style={{ width: '80%' }} onChange={this.handleQueryChange} />
+          <Button variant="info" type="submit">Search</Button>
+        </Form>
+
+        <h3 className="header p-3">Search results</h3><br />
+
         <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Username</th>
-            </tr>
-          </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td>Mark</td>
-              <td>Otto</td>
-              <td>@mdo</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td>Jacob</td>
-              <td>Thornton</td>
-              <td>@fat</td>
-            </tr>
+            {
+              this.state.results.map((item, index) => <tr key={index}><td>{index}</td><td>{item.key}</td><td>{item.value}</td></tr>)
+            }
           </tbody>
         </Table>
-      </MDBContainer>
+      </Container>
     );
   }
 }

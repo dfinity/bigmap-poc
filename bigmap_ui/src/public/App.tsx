@@ -64,10 +64,6 @@ class App extends React.Component<AppProps, AppState> {
                 <Nav.Link href="#details">Details</Nav.Link>
                 <Nav.Link href="#search">Search</Nav.Link>
               </Nav>
-              <Form inline>
-                <FormControl type="text" placeholder="Search" className="mr-sm-2" />
-                <Button variant="info">Search</Button>
-              </Form>
             </Navbar.Collapse>
           </Navbar>
           <Jumbotron className="p-1"></Jumbotron>
