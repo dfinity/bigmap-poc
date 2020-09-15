@@ -674,6 +674,9 @@ impl BigmapIdx {
                             String::from_utf8_lossy(&value)
                         );
                         result.push((key, value));
+                        if result.len() >= 20 {
+                            return result;
+                        }
                     }
                     None => continue,
                 }
