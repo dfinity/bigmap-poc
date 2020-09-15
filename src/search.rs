@@ -11,17 +11,17 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use roaring::RoaringBitmap;
 use rust_stemmers::{Algorithm, Stemmer};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
 
 pub type DetHashMap<K, V> = HashMap<K, V, BuildHasherDefault<WyHash>>;
+pub type DetHashSet<K> = HashSet<K, BuildHasherDefault<WyHash>>;
 
 // #[cfg(target_arch = "wasm32")]
 // use ic_cdk::println;
 
 use crate::Key;
-// use std::convert::TryInto;
 
 // Roaring Bitmaps only support 32-bit integers
 type DocumentId = u32;
@@ -29,6 +29,11 @@ type Term = String;
 
 lazy_static! {
     static ref RE_NOT_ALPHANUM: Regex = Regex::new(r"\W").unwrap();
+    static ref STOP_WORDS: HashSet<String> = include_str!("search/stop_words.txt")
+        .split_whitespace()
+        .into_iter()
+        .map(String::from)
+        .collect();
 }
 
 #[derive(Default)]
@@ -75,6 +80,9 @@ impl SearchIndexer {
 
         for term in RE_NOT_ALPHANUM.replace_all(&doc, " ").split_whitespace() {
             let term = self.normalize_to_string(term);
+            if STOP_WORDS.contains(&term) {
+                continue;
+            }
             let term_data = match self.terms.get_mut(&term) {
                 Some(t) => t,
                 None => {
@@ -99,6 +107,9 @@ impl SearchIndexer {
 
         for term in RE_NOT_ALPHANUM.replace_all(query, " ").split_whitespace() {
             let term = self.normalize_to_string(term);
+            if STOP_WORDS.contains(&term) {
+                continue;
+            }
 
             match self.terms.get(&term) {
                 Some(term_data) => {
