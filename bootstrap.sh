@@ -36,3 +36,6 @@ dfx canister install bigmap --mode=reinstall
 ./bigmap-cli --set-data-bucket-wasm-binary target/wasm32-unknown-unknown/release/bigmap_data.wasm
 ./bigmap-cli --set-search-wasm-binary target/wasm32-unknown-unknown/release/bigmap_search.wasm
 ./bigmap-cli --maintenance
+
+./bigmap-cli --put-and-fts-index bigsearch-works "BigSearch written in Rust works!"
+
