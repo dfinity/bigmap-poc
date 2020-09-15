@@ -46,7 +46,9 @@ pub struct BigmapIdx {
     idx: Vec<CanisterId>, // indirection for CanisterId, to avoid many copies of CanisterIds
     hash_ring: hashring_sha256::HashRing<CanisterPtr>,
     now_rebalancing_src_dst: Option<(CanisterPtr, CanisterPtr)>,
-    is_rebalancing: bool,
+    is_maintenance_active: bool,
+    creating_data_canister: bool,
+    creating_search_canister: bool,
     batch_limit_bytes: u64,
     canister_available_queue: VecDeque<CanisterId>,
     used_bytes_threshold: u32,
@@ -116,7 +118,14 @@ impl BigmapIdx {
     }
 
     pub async fn put(&mut self, key: &Key, value: &Val) -> u64 {
-        self.ensure_at_least_one_data_canister().await;
+        if let Err(err) = self.ensure_at_least_one_data_canister().await {
+            println!(
+                "Error putting key {} => {}",
+                String::from_utf8_lossy(key),
+                err
+            );
+            return 0;
+        }
 
         match self.lookup_put(&key) {
             Some(can_id) => {
@@ -139,7 +148,14 @@ impl BigmapIdx {
     }
 
     pub async fn append(&mut self, key: &Key, value: &Val) -> u64 {
-        self.ensure_at_least_one_data_canister().await;
+        if let Err(err) = self.ensure_at_least_one_data_canister().await {
+            println!(
+                "Error appending key {} => {}",
+                String::from_utf8_lossy(key),
+                err
+            );
+            return 0;
+        }
 
         match self.lookup_put(&key) {
             Some(can_id) => {
@@ -170,11 +186,6 @@ impl BigmapIdx {
         self.idx[can_ptr.0 as usize].clone()
     }
 
-    // TODO: implement
-    pub fn add_data_canister_wasm_binary(&mut self, _wasm_binary: &[u8]) {
-        unimplemented!("add_data_canister_wasm_binary");
-    }
-
     pub async fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
         // let mut new_can_util_vec = Vec::new();
 
@@ -202,11 +213,20 @@ impl BigmapIdx {
             self.canister_available_queue.push_back(can_id);
         }
 
-        self.ensure_at_least_one_data_canister().await;
+        if let Err(err) = self.ensure_at_least_one_data_canister().await {
+            self.is_maintenance_active = false;
+            println!("Error adding canisters: {}", err);
+        }
     }
 
-    pub async fn ensure_at_least_one_data_canister(&mut self) {
+    pub async fn ensure_at_least_one_data_canister(&mut self) -> Result<(), String> {
         if self.hash_ring.is_empty() {
+            if self.creating_data_canister {
+                return Err(
+                    "Already creating data canister, concurrent calls are not allowed".to_string(),
+                );
+            }
+            self.creating_data_canister = true;
             println!("BigMap Index: No Data Canisters, creating one!");
             match self.create_data_bucket_canister().await {
                 Ok(can_id) => {
@@ -219,11 +239,20 @@ impl BigmapIdx {
                     println!("BigMap Index: Error creating a new Data Canister {}", err);
                 }
             }
+            self.creating_data_canister = false;
         };
+        Ok(())
     }
 
-    pub async fn ensure_at_least_one_search_canister(&mut self) {
+    pub async fn ensure_at_least_one_search_canister(&mut self) -> Result<(), String> {
         if self.search_canisters.is_empty() {
+            if self.creating_search_canister {
+                return Err(
+                    "Already creating search canister, concurrent calls are not allowed"
+                        .to_string(),
+                );
+            }
+            self.creating_search_canister = true;
             println!("BigMap Index: No Search Canisters, creating one!");
             match self.create_search_canister().await {
                 Ok(can_id) => {
@@ -234,7 +263,9 @@ impl BigmapIdx {
                     println!("BigMap Index: Error creating a new Search Canister {}", err);
                 }
             }
+            self.creating_search_canister = false;
         };
+        Ok(())
     }
 
     // Returns the data bucket canister which should hold the key
@@ -309,16 +340,23 @@ impl BigmapIdx {
             message: &'static str,
         };
 
-        if self.is_rebalancing {
+        if self.is_maintenance_active {
             return serde_json_wasm::to_string(&Status {
                 status: "Good",
                 message: "Already rebalancing",
             })
             .unwrap();
         }
-        self.is_rebalancing = true;
+        self.is_maintenance_active = true;
 
-        self.ensure_at_least_one_data_canister().await;
+        if let Err(_) = self.ensure_at_least_one_data_canister().await {
+            self.is_maintenance_active = false;
+            return serde_json_wasm::to_string(&Status {
+                status: "Unknown",
+                message: "Error trying to ensure at least one data canister",
+            })
+            .unwrap();
+        }
 
         println!("BigMap Index: starting maintenance");
 
@@ -415,7 +453,7 @@ impl BigmapIdx {
 
         println!("Total capacity used {}", ByteSize(self.used_bytes_total));
 
-        self.is_rebalancing = false;
+        self.is_maintenance_active = false;
 
         return serde_json_wasm::to_string(&Status {
             status: "Good",
@@ -631,7 +669,14 @@ impl BigmapIdx {
     //
 
     pub async fn put_and_fts_index(&mut self, key: &Key, document: &String) -> u64 {
-        self.ensure_at_least_one_search_canister().await;
+        if let Err(err) = self.ensure_at_least_one_search_canister().await {
+            println!(
+                "Error putting key {} => {}",
+                String::from_utf8_lossy(key),
+                err
+            );
+            return 0;
+        }
 
         let value_vec = Vec::from(document.as_bytes());
 
@@ -646,7 +691,14 @@ impl BigmapIdx {
     }
 
     pub async fn remove_from_fts_index(&mut self, key: &Key) {
-        self.ensure_at_least_one_search_canister().await;
+        if let Err(err) = self.ensure_at_least_one_search_canister().await {
+            println!(
+                "Error removing key {} => {}",
+                String::from_utf8_lossy(key),
+                err
+            );
+            return;
+        }
 
         for can_id in self.search_canisters.iter() {
             self.ucall_s_can_remove_from_search_index(can_id, key).await
