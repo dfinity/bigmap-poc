@@ -11,6 +11,7 @@ const options = yargs
   .option("o", { describe: "Output filename for the --get command", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("put", { describe: "Put value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("put-and-fts-index", { describe: "Put value and add to the FTS index", type: "array", requiresArg: true, nargs: 2, demandOption: false })
+  .option("put-and-fts-index-file", { describe: "Put and FTS index data from file", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("remove_from-fts-index", { describe: "Remove key from the search index", type: "string", requiresArg: true, nargs: 1, demandOption: false })
   .option("append", { describe: "Append to the value for given key", type: "array", requiresArg: true, nargs: 2, demandOption: false })
   .option("delete", { describe: "Delete the given key", type: "string", requiresArg: true, nargs: 1, demandOption: false })
@@ -132,6 +133,10 @@ if (options.putAndFtsIndex) {
   } else {
     console.log("putAndFtsIndex requires exactly two arguments: key value");
   }
+}
+
+if (options.putAndFtsIndexFile) {
+  bigmap.put_and_fts_index_file(options.putAndFtsIndexFile);
 }
 
 if (options.removeFromFtsIndex) {

@@ -135,11 +135,28 @@ async function search(search_query) {
   return results_str;
 }
 
+async function put_and_fts_index_file(filename) {
+  let puts = [];
+  let data = fs.readFileSync(filename, 'utf8').split(/\r?\n/);
+  console.time(`BigMap put_and_fts_index_file ${filename}`);
+  data.forEach(function (line) {
+    if (!line) {
+      return;
+    };
+    let key = line.split(/(\s)/, 1)[0].trim();
+    let value = line.slice(key.length).trim();
+    puts.push(bigmap_fn.getBigMapActor().put_and_fts_index(strToArr(key), value));
+  });
+  let result = Promise.all(puts);
+  console.timeEnd(`BigMap put_and_fts_index_file ${filename}`);
+  return result;
+}
+
 const getIndexActor = bigmap_fn.getBigMapActor;
 
 module.exports = {
   get, getToFile, put, append, deleteKey, list, setDataBucketWasmBinary,
   setSearchWasmBinary, maintenance, status, callIndex, callData, getIndexActor,
-  put_and_fts_index, remove_from_fts_index, search,
+  put_and_fts_index, put_and_fts_index_file, remove_from_fts_index, search,
   strToArr, arrToStr
 };
