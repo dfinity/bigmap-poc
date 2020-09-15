@@ -143,8 +143,8 @@ async function put_and_fts_index_file(filename) {
     if (!line) {
       return;
     };
-    let key = line.split(/(\s)/, 1)[0].trim();
-    let value = line.slice(key.length).trim();
+    let key = line.split(":", 1)[0].trim();
+    let value = line.slice(key.length + 1).trim();
     puts.push(bigmap_fn.getBigMapActor().put_and_fts_index(strToArr(key), value));
   });
   let result = Promise.all(puts);
