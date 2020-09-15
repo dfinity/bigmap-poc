@@ -6,6 +6,7 @@ import { Container, Jumbotron, Navbar, Nav, Form, FormControl, Button } from "re
 import PageOverview from './PageOverview';
 import PageDetails from './PageDetails';
 import PageSearch from './PageSearch';
+import { updateHead } from './Head';
 
 // A wide choice of themes available at https://bootswatch.com/
 // Here is a shortlist
@@ -80,6 +81,8 @@ class App extends React.Component<AppProps, AppState> {
 }
 
 export default App;
+
+updateHead(document);
 
 /*
 NB: dfx bootstrap's index.html generated looks like this:
