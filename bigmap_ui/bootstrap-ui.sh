@@ -8,14 +8,14 @@ BASEDIR=$(cd "$(dirname "$0")"; pwd)
 
 "$BASEDIR/../bootstrap.sh"
 
-rsync -aP ../.dfx/local/ .dfx/local/
-rsync -aP ../.dfx/tungsten/ .dfx/tungsten/
-
 cd "$BASEDIR/.."
 address=$(dfx config defaults.start.address | tr -d '"')
 port=$(dfx config defaults.start.port)
 
 cd "$BASEDIR"
+
+rsync -aP ../.dfx/local/ .dfx/local/
+rsync -aP ../.dfx/tungsten/ .dfx/tungsten/
 
 echo "Bootstraping BigMap UI..."
 
