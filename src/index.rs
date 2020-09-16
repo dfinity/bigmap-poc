@@ -23,6 +23,8 @@ type HashRingRange = (Sha256Digest, Sha256Digest);
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrAddToSearchIndex = Box<dyn Fn(CanisterId, &Key, &String)>;
 #[cfg(not(target_arch = "wasm32"))]
+type FnPtrBatchAddToSearchIndex = Box<dyn Fn(CanisterId, &Vec<(Key, String)>) -> u64>;
+#[cfg(not(target_arch = "wasm32"))]
 type FnPtrSearchKeysByQuery = Box<dyn Fn(CanisterId, &String) -> Vec<Key>>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrRemoveFromSearchIndex = Box<dyn Fn(CanisterId, &Key)>;
@@ -60,6 +62,8 @@ pub struct BigmapIdx {
     // Testing functions
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_add_to_search_index: Option<FnPtrAddToSearchIndex>,
+    #[cfg(not(target_arch = "wasm32"))]
+    fn_ptr_batch_add_to_search_index: Option<FnPtrBatchAddToSearchIndex>,
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_search_keys_by_query: Option<FnPtrSearchKeysByQuery>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -117,16 +121,7 @@ impl BigmapIdx {
         }
     }
 
-    pub async fn put(&mut self, key: &Key, value: &Val) -> u64 {
-        if let Err(err) = self.ensure_at_least_one_data_canister().await {
-            println!(
-                "Error putting key {} => {}",
-                String::from_utf8_lossy(key),
-                err
-            );
-            return 0;
-        }
-
+    pub async fn put(&self, key: Key, value: Val) -> u64 {
         match self.lookup_put(&key) {
             Some(can_id) => {
                 let can_id: ic_cdk::CanisterId = can_id.0.into();
@@ -502,7 +497,7 @@ impl BigmapIdx {
             status.used_bytes_total += used_bytes as u64;
         }
 
-        return serde_json_wasm::to_string(&status).unwrap();
+        serde_json_wasm::to_string(&status).unwrap()
     }
 
     fn hash_ring_add_before_this(
@@ -680,7 +675,7 @@ impl BigmapIdx {
 
         let value_vec = Vec::from(document.as_bytes());
 
-        let result = self.put(key, &value_vec).await;
+        let result = self.put(key.clone(), value_vec).await;
 
         // FIXME: Ensure the search canister has enough space and allocate a new one if necessary
         let search_can_id = &self.search_canisters[0].clone();
@@ -688,6 +683,33 @@ impl BigmapIdx {
             .await;
 
         result
+    }
+
+    pub async fn batch_put_and_fts_index(&mut self, doc_vec: &Vec<(Key, String)>) -> u64 {
+        if let Err(err) = self.ensure_at_least_one_search_canister().await {
+            println!(
+                "Error putting a batch of length {} => {}",
+                doc_vec.len(),
+                err
+            );
+            return 0;
+        }
+        let mut put_handles = Vec::new();
+        let doc_clone: Vec<_> = doc_vec
+            .iter()
+            .map(|(k, v)| (k, Vec::from(v.as_bytes())))
+            .collect();
+        for (key, doc) in doc_clone.into_iter() {
+            put_handles.push(self.put(key.clone(), doc));
+        }
+        futures::future::join_all(put_handles).await;
+
+        // FIXME: Ensure the search canister has enough space and allocate a new one if necessary
+        let search_can_id = &self.search_canisters[0].clone();
+        self.ucall_s_can_batch_add_to_search_index(&search_can_id, doc_vec)
+            .await;
+
+        doc_vec.len() as u64
     }
 
     pub async fn remove_from_fts_index(&mut self, key: &Key) {
@@ -741,6 +763,20 @@ impl BigmapIdx {
 
 #[cfg(target_arch = "wasm32")]
 impl BigmapIdx {
+    async fn ucall_s_can_batch_add_to_search_index(
+        &self,
+        can_id: &CanisterId,
+        doc_vec: &Vec<(Key, String)>,
+    ) -> u64 {
+        ic_cdk::call(
+            can_id.clone().0.into(),
+            "batch_add_to_search_index",
+            Some(doc_vec),
+        )
+        .await
+        .expect("batch_add_to_search_index call failed")
+    }
+
     async fn ucall_s_can_add_to_search_index(
         &self,
         can_id: &CanisterId,
@@ -890,6 +926,18 @@ impl BigmapIdx {
 
     pub fn set_fn_ptr_delete_entries(&mut self, fn_ptr: FnPtrDeleteEntries) {
         self.fn_ptr_delete_entries = Some(fn_ptr);
+    }
+
+    async fn ucall_s_can_batch_add_to_search_index(
+        &self,
+        can_id: &CanisterId,
+        doc_vec: &Vec<(Key, String)>,
+    ) -> u64 {
+        let fn_ptr = self
+            .fn_ptr_batch_add_to_search_index
+            .as_ref()
+            .expect("fn_ptr_batch_add_to_search_index is not set");
+        fn_ptr(can_id.clone(), doc_vec)
     }
 
     async fn ucall_s_can_add_to_search_index(

@@ -8,6 +8,11 @@ type KeyValue = record {
   vec nat8;
 };
 
+type KeyString = record {
+  vec nat8;
+  text;
+};
+
 service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
     "put": (key: vec nat8, value: vec nat8) -> (nat64);
@@ -24,6 +29,7 @@ service : {
     "put_and_fts_index": (key: vec nat8, value: text) -> (nat64);
     "remove_from_fts_index": (key: vec nat8, document: text) -> ();
     "search": (query_string: text) -> (vec KeyValue) query;
+    "batch_put_and_fts_index": (doc_vec: vec KeyString) -> (nat64);
 
     "maintenance": () -> (text);
     "status": () -> (text) query;

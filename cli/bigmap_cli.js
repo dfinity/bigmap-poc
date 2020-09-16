@@ -5,6 +5,9 @@ const bigmap_fn = require('./bigmap_functions');
 
 const strToArr = bigmap_fn.strToArr;
 const arrToStr = bigmap_fn.arrToStr;
+async function sleep(millis) {
+  return new Promise(resolve => setTimeout(resolve, millis));
+}
 
 async function get(key) {
   console.time(`BigMap get ${key}`);
@@ -136,18 +139,25 @@ async function search(search_query) {
 }
 
 async function put_and_fts_index_file(filename) {
-  let puts = [];
   let data = fs.readFileSync(filename, 'utf8').split(/\r?\n/);
   console.time(`BigMap put_and_fts_index_file ${filename}`);
+  let doc_vec = [];
   data.forEach(function (line) {
     if (!line) {
       return;
     };
     let key = line.split(":", 1)[0].trim();
     let value = line.slice(key.length + 1).trim();
-    puts.push(bigmap_fn.getBigMapActor().put_and_fts_index(strToArr(key), value));
+    doc_vec.push([strToArr(key), value]);
   });
-  let result = Promise.all(puts);
+  var batch_size = 30; // We have to send data in relatively small batches
+  let result = 0;
+  for (i = 0, j = doc_vec.length; i < j; i += batch_size) {
+    let doc_vec_batch = doc_vec.slice(i, i + batch_size);
+    result += bigmap_fn.getBigMapActor().batch_put_and_fts_index(doc_vec_batch);
+    // We have to send data in
+    await sleep(1000);
+  }
   console.timeEnd(`BigMap put_and_fts_index_file ${filename}`);
   return result;
 }

@@ -26,6 +26,17 @@ fn add_to_search_index(key_doc: (Key, String)) {
 }
 
 #[update]
+fn batch_add_to_search_index(doc_vec: Vec<(Key, String)>) -> u64 {
+    let search = storage::get_mut::<SearchIndexer>();
+
+    println!(
+        "BigMap Search Index: batch_put_and_fts_index {} entries",
+        doc_vec.len()
+    );
+    search.batch_add_to_index(&doc_vec)
+}
+
+#[update]
 fn remove_from_search_index(key: Key) {
     let search = storage::get_mut::<SearchIndexer>();
 

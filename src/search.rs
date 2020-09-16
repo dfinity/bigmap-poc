@@ -100,6 +100,14 @@ impl SearchIndexer {
         }
     }
 
+    pub fn batch_add_to_index(&mut self, doc_vec: &Vec<(Key, String)>) -> u64 {
+        let result = doc_vec.len() as u64;
+        for (key, doc) in doc_vec.into_iter() {
+            self.add_to_index(key, doc);
+        }
+        result
+    }
+
     pub fn search_keys_by_query(&self, query: &String) -> Vec<Key> {
         let mut result = Vec::new();
 

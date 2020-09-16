@@ -17,7 +17,7 @@ async fn put(key: Key, value: Val) -> u64 {
 
     println!("BigMap Index: put key {}", String::from_utf8_lossy(&key));
 
-    bigmap_idx.put(&key, &value).await
+    bigmap_idx.put(key, value).await
 }
 
 #[update]
@@ -183,6 +183,13 @@ async fn put_and_fts_index(key: Key, document: String) -> u64 {
     }
 
     bigmap_idx.put_and_fts_index(&key, &document).await
+}
+
+#[update]
+async fn batch_put_and_fts_index(doc_vec: Vec<(Key, String)>) -> u64 {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+
+    bigmap_idx.batch_put_and_fts_index(&doc_vec).await
 }
 
 #[update]
