@@ -38,7 +38,7 @@ fn put(key: Key, value: Val) -> u64 {
         key.len(),
         value.len()
     );
-    match bm_data.put(key.clone(), value, false) {
+    match bm_data.put(&key, &value, false) {
         Ok(value_len) => value_len,
         Err(err) => {
             println!("BigMap Data: put key {} error: {}", key_str, err);
@@ -53,7 +53,7 @@ fn append(key: Key, value: Val) -> u64 {
 
     let key_str = String::from_utf8_lossy(&key);
     let appended_value_len = value.len();
-    match bm_data.put(key.clone(), value, true) {
+    match bm_data.put(&key, &value, true) {
         Ok(total_value_len) => {
             println!(
                 "BigMap Data: put_append key {} ({} bytes) value ({} bytes appended, {} bytes total)",

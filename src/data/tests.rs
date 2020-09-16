@@ -10,7 +10,7 @@ async fn bm_data_put_get() {
         let key = format!("key-{}", i).into_bytes();
         let value = vec![i; 200_000];
 
-        d.put(key, value, false).expect("DataBucket put failed");
+        d.put(&key, &value, false).expect("DataBucket put failed");
         assert!(d.used_bytes() >= i as usize * 200_000);
     }
 
@@ -31,7 +31,7 @@ async fn bm_data_append_get() {
         let key = b"key-0".to_vec();
         let value = vec![i; 200_000];
 
-        d.put(key, value, true).expect("DataBucket append failed");
+        d.put(&key, &value, true).expect("DataBucket append failed");
         assert!(d.used_bytes() >= i as usize * 200_000);
     }
 
@@ -58,7 +58,7 @@ fn bm_data_hash_range_get() {
         let value = vec![i; 200_000];
 
         key_hashes.push(calc_sha256(&key));
-        d.put(key, value, false).expect("DataBucket put failed");
+        d.put(&key, &value, false).expect("DataBucket put failed");
     }
 
     key_hashes.sort();

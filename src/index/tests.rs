@@ -29,7 +29,7 @@ async fn bigmap_put_get() {
             .unwrap()
             .get_mut(&can_data_id)
             .unwrap()
-            .put(key, value, false)
+            .put(&key, &value, false)
             .expect("DataBucket put failed");
         assert!(
             db_map
@@ -87,7 +87,7 @@ async fn bigmap_list() {
             .unwrap()
             .get_mut(&can_data_id)
             .unwrap()
-            .put(key, value, false)
+            .put(&key, &value, false)
             .expect("DataBucket put failed");
         assert!(
             db_map
@@ -137,7 +137,7 @@ async fn bigmap_put_rebalance_get() {
         let can_data = can_data.get_mut(&can_data_id).unwrap();
 
         can_data
-            .put(key, value, false)
+            .put(&key, &value, false)
             .expect("DataBucket put failed");
         assert!(can_data.used_bytes() > 0);
     }

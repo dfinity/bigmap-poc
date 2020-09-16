@@ -41,7 +41,7 @@ impl DataBucket {
         key_sha2 >= &self.range_start && key_sha2 < &self.range_end
     }
 
-    pub fn put(&mut self, key: Key, value: Val, append: bool) -> Result<u64, String> {
+    pub fn put(&mut self, key: &Key, value: &Val, append: bool) -> Result<u64, String> {
         // println!("BigMap Data: put {}", String::from_utf8_lossy(&key));
         let key_sha2 = calc_sha256(&key);
         if !self.is_in_range(&key_sha2) {
@@ -62,11 +62,11 @@ impl DataBucket {
                 Some((_, (_, val_old))) => {
                     let value_new = [&val_old[..], &value[..]].concat();
                     value_len = value_new.len();
-                    self.entries.insert(key_sha2, (key, value_new));
+                    self.entries.insert(key_sha2, (key.clone(), value_new));
                 }
                 None => {
                     value_len = value.len();
-                    self.entries.insert(key_sha2, (key, value));
+                    self.entries.insert(key_sha2, (key.clone(), value.clone()));
                 }
             }
         } else {
@@ -75,7 +75,7 @@ impl DataBucket {
                 self.used_bytes -= k.len() + v.len() + 32;
             }
             value_len = value.len();
-            self.entries.insert(key_sha2, (key, value));
+            self.entries.insert(key_sha2, (key.clone(), value.clone()));
         }
         Ok(value_len as u64)
     }
@@ -254,8 +254,8 @@ impl DataBucket {
 
         for _ in 0..num_entries {
             self.put(
-                Vec::from(key.as_bytes()),
-                vec![0u8; entry_size_bytes as usize],
+                &Vec::from(key.as_bytes()),
+                &vec![0u8; entry_size_bytes as usize],
                 false,
             )
             .expect("Put should never fail");
