@@ -11,7 +11,7 @@
     "eject": "craco eject"
   },
   "devDependencies": {
-    "@dfinity/agent": "0.6.7",
+    "@dfinity/agent": "0.6.6",
     "@types/react": "16.9.46",
     "@types/react-bootstrap": "^0.32.22",
     "@types/react-dom": "16.9.8",
