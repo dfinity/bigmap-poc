@@ -17,7 +17,24 @@ async fn put(key: Key, value: Val) -> u64 {
 
     println!("BigMap Index: put key {}", String::from_utf8_lossy(&key));
 
-    bigmap_idx.put(key, value).await
+    bigmap_idx.put(&key, &value).await
+}
+
+#[update]
+// Returns the number of successful puts
+async fn batch_put(batch: Vec<(Key, Val)>) -> u64 {
+    let bigmap_idx = storage::get_mut::<BigmapIdx>();
+    if batch.len() == 1 {
+        let (key, value) = batch.get(0).unwrap();
+        println!("BigMap Index: put key {}", String::from_utf8_lossy(key));
+
+        bigmap_idx.put(key, value).await;
+        1
+    } else {
+        println!("BigMap Data: put batch of {} entryies", batch.len());
+
+        bigmap_idx.batch_put(&batch).await
+    }
 }
 
 #[update]

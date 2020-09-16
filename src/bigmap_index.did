@@ -16,6 +16,7 @@ type KeyString = record {
 service : {
     "get": (key: vec nat8) -> (opt vec nat8) query;
     "put": (key: vec nat8, value: vec nat8) -> (nat64);
+    "batch_put": (batch: vec KeyValue) -> (nat64);
     "append": (key: vec nat8, value: vec nat8) -> (nat64);
     "delete": (key: vec nat8) -> (nat64);
     "list": (key_prefix: vec nat8) -> (vec vec nat8) query;

@@ -120,16 +120,19 @@ impl BigmapIdx {
         }
     }
 
-    pub async fn put(&self, key: Key, value: Val) -> u64 {
+    pub async fn put(&self, key: &Key, value: &Val) -> u64 {
         match self.lookup_put(&key) {
             Some(can_id) => {
                 let can_id: ic_cdk::CanisterId = can_id.0.into();
-                ic_cdk::call(can_id.clone(), "put_from_index", Some((key, value)))
+                match ic_cdk::call(can_id.clone(), "batch_put", Some(vec![(key, value)]))
                     .await
                     .expect(&format!(
                         "BigMap index: put call to CanisterId {} failed",
                         can_id
-                    ))
+                    )) {
+                    1u64 => value.len() as u64,
+                    _ => 0,
+                }
             }
             None => {
                 println!(
@@ -139,6 +142,42 @@ impl BigmapIdx {
                 0
             }
         }
+    }
+
+    pub async fn batch_put(&self, batch: &Vec<(Key, Val)>) -> u64 {
+        let mut result = 0;
+        let mut batches: DetHashMap<CanisterId, Vec<(Key, Val)>> = DetHashMap::default();
+        for (key, value) in batch.into_iter() {
+            match self.lookup_put(&key) {
+                Some(can_id) => {
+                    if batches.contains_key(&can_id) {
+                        batches
+                            .get_mut(&can_id)
+                            .unwrap()
+                            .push((key.clone(), value.clone()));
+                    } else {
+                        batches.insert(can_id, vec![(key.clone(), value.clone())]);
+                    };
+                }
+                None => {
+                    println!(
+                        "BigMap Index: no data canister suitable for key {}",
+                        String::from_utf8_lossy(&key)
+                    );
+                }
+            }
+        }
+        for (can_id, batch) in batches.into_iter() {
+            let can_id: ic_cdk::CanisterId = can_id.0.into();
+            let batch_result: u64 = ic_cdk::call(can_id.clone(), "batch_put", Some(batch))
+                .await
+                .expect(&format!(
+                    "BigMap index: put call to CanisterId {} failed",
+                    can_id
+                ));
+            result += batch_result;
+        }
+        result
     }
 
     pub async fn append(&mut self, key: &Key, value: &Val) -> u64 {
@@ -451,11 +490,11 @@ impl BigmapIdx {
 
         self.is_maintenance_active = false;
 
-        return serde_json_wasm::to_string(&Status {
+        serde_json_wasm::to_string(&Status {
             status: "Good",
             message: "Finished maintenance",
         })
-        .unwrap();
+        .unwrap()
     }
 
     pub async fn status(&self) -> String {
@@ -676,7 +715,7 @@ impl BigmapIdx {
 
         let value_vec = Vec::from(document.as_bytes());
 
-        let result = self.put(key.clone(), value_vec).await;
+        let result = self.put(&key, &value_vec).await;
 
         // FIXME: Ensure the search canister has enough space and allocate a new one if necessary
         let search_can_id = &self.search_canisters[0].clone();
@@ -686,31 +725,25 @@ impl BigmapIdx {
         result
     }
 
-    pub async fn batch_put_and_fts_index(&mut self, doc_vec: &Vec<(Key, String)>) -> u64 {
+    pub async fn batch_put_and_fts_index(&mut self, batch: &Vec<(Key, String)>) -> u64 {
         if let Err(err) = self.ensure_at_least_one_search_canister().await {
-            println!(
-                "Error putting a batch of length {} => {}",
-                doc_vec.len(),
-                err
-            );
+            println!("Error putting a batch of length {} => {}", batch.len(), err);
             return 0;
         }
-        let mut put_handles = Vec::new();
-        let doc_clone: Vec<_> = doc_vec
+
+        let batch_as_bytes: Vec<_> = batch
             .iter()
-            .map(|(k, v)| (k, Vec::from(v.as_bytes())))
+            .map(|(k, v)| (k.clone(), Vec::from(v.as_bytes())))
             .collect();
-        for (key, doc) in doc_clone.into_iter() {
-            put_handles.push(self.put(key.clone(), doc));
-        }
-        futures::future::join_all(put_handles).await;
+
+        self.batch_put(&batch_as_bytes).await;
 
         // FIXME: Ensure the search canister has enough space and allocate a new one if necessary
         let search_can_id = &self.search_canisters[0].clone();
-        self.ucall_s_can_batch_add_to_search_index(&search_can_id, doc_vec)
+        self.ucall_s_can_batch_add_to_search_index(&search_can_id, batch)
             .await;
 
-        doc_vec.len() as u64
+        batch.len() as u64
     }
 
     pub async fn remove_from_fts_index(&mut self, key: &Key) {

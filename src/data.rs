@@ -80,6 +80,21 @@ impl DataBucket {
         Ok(value_len as u64)
     }
 
+    pub fn batch_put(&mut self, batch: &Vec<(Key, Val)>) -> u64 {
+        let mut result = 0;
+
+        for (key, value) in batch {
+            match self.put(key, value, false) {
+                Ok(_) => result += 1,
+                Err(err) => {
+                    let key_str = String::from_utf8_lossy(&key);
+                    println!("BigMap Data: put key {} error: {}", key_str, err);
+                }
+            }
+        }
+        result
+    }
+
     pub fn delete(&mut self, key: Key) -> Result<u64, String> {
         let key_sha2 = calc_sha256(&key);
         if !self.is_in_range(&key_sha2) {

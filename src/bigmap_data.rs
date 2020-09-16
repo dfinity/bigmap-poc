@@ -48,6 +48,15 @@ fn put(key: Key, value: Val) -> u64 {
 }
 
 #[update]
+// Returns the number of successful puts
+fn batch_put(batch: Vec<(Key, Val)>) -> u64 {
+    let bm_data = storage::get_mut::<DataBucket>();
+    println!("BigMap Data: put batch of {} entry(ies)", batch.len());
+
+    bm_data.batch_put(&batch)
+}
+
+#[update]
 fn append(key: Key, value: Val) -> u64 {
     let bm_data = storage::get_mut::<DataBucket>();
 
