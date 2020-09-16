@@ -149,10 +149,10 @@ fn get_relocation_batch(batch_limit_bytes: u64) -> Vec<(Sha2Vec, Key, Val)> {
 }
 
 #[update]
-fn put_batch(batch: Vec<(Sha2Vec, Key, Val)>) -> u64 {
+fn put_relocation_batch(batch: Vec<(Sha2Vec, Key, Val)>) -> u64 {
     let bm_data = storage::get_mut::<DataBucket>();
 
-    bm_data.put_batch(&batch)
+    bm_data.put_relocation_batch(&batch)
 }
 
 #[update]

@@ -236,9 +236,9 @@ async fn alloc_bigmap_index_and_data(num_data_canisters: u64) -> (BigmapIdx, Dat
             .unwrap()
             .get_mut(&can_id)
             .unwrap()
-            .put_batch(batch)
+            .put_relocation_batch(batch)
     };
-    bm_idx.set_fn_ptr_put_batch(Box::new(fn_ptr));
+    bm_idx.set_fn_ptr_put_relocation_batch(Box::new(fn_ptr));
 
     let db_map_ref = db_map.clone();
     let fn_ptr = move |can_id: CanisterId, keys_sha2: &Vec<Vec<u8>>| {

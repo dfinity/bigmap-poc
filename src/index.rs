@@ -39,7 +39,7 @@ type FnPtrSetRange = Box<dyn Fn(CanisterId, Sha256Digest, Sha256Digest)>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrGetRelocationBatch = Box<dyn Fn(CanisterId, u64) -> Vec<(Sha2Vec, Key, Val)>>;
 #[cfg(not(target_arch = "wasm32"))]
-type FnPtrPutBatch = Box<dyn Fn(CanisterId, &Vec<(Sha2Vec, Key, Val)>) -> u64>;
+type FnPtrPutRelocationBatch = Box<dyn Fn(CanisterId, &Vec<(Sha2Vec, Key, Val)>) -> u64>;
 #[cfg(not(target_arch = "wasm32"))]
 type FnPtrDeleteEntries = Box<dyn Fn(CanisterId, &Vec<Vec<u8>>)>;
 
@@ -79,7 +79,7 @@ pub struct BigmapIdx {
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_get_relocation_batch: Option<FnPtrGetRelocationBatch>,
     #[cfg(not(target_arch = "wasm32"))]
-    fn_ptr_put_batch: Option<FnPtrPutBatch>,
+    fn_ptr_put_relocation_batch: Option<FnPtrPutRelocationBatch>,
     #[cfg(not(target_arch = "wasm32"))]
     fn_ptr_delete_entries: Option<FnPtrDeleteEntries>,
 }
@@ -415,7 +415,9 @@ impl BigmapIdx {
                         self.now_rebalancing_src_dst = None;
                         break;
                     } else {
-                        let put_count = self.ucall_dcan_put_batch(&dst_canister, &batch).await;
+                        let put_count = self
+                            .ucall_dcan_put_relocation_batch(&dst_canister, &batch)
+                            .await;
                         if batch.len() as u64 != put_count {
                             println!(
                                 "BigMap Index: Not all elements were moved from {} to {}",
@@ -863,14 +865,14 @@ impl BigmapIdx {
         .expect("get_relocation_batch call failed")
     }
 
-    async fn ucall_dcan_put_batch(
+    async fn ucall_dcan_put_relocation_batch(
         &self,
         can_id: &CanisterId,
         batch: &Vec<(Sha2Vec, Key, Val)>,
     ) -> u64 {
-        ic_cdk::call(can_id.clone().0.into(), "put_batch", Some(batch))
+        ic_cdk::call(can_id.clone().0.into(), "put_relocation_batch", Some(batch))
             .await
-            .expect("put_batch call failed")
+            .expect("put_relocation_batch call failed")
     }
 
     async fn ucall_dcan_delete_entries(&self, can_id: &CanisterId, keys_sha2: &Vec<Vec<u8>>) {
@@ -920,8 +922,8 @@ impl BigmapIdx {
         self.fn_ptr_get_relocation_batch = Some(fn_ptr);
     }
 
-    pub fn set_fn_ptr_put_batch(&mut self, fn_ptr: FnPtrPutBatch) {
-        self.fn_ptr_put_batch = Some(fn_ptr);
+    pub fn set_fn_ptr_put_relocation_batch(&mut self, fn_ptr: FnPtrPutRelocationBatch) {
+        self.fn_ptr_put_relocation_batch = Some(fn_ptr);
     }
 
     pub fn set_fn_ptr_delete_entries(&mut self, fn_ptr: FnPtrDeleteEntries) {
@@ -1019,15 +1021,15 @@ impl BigmapIdx {
         fn_ptr(can_id.clone(), batch_limit_bytes)
     }
 
-    async fn ucall_dcan_put_batch(
+    async fn ucall_dcan_put_relocation_batch(
         &self,
         can_id: &CanisterId,
         batch: &Vec<(Sha2Vec, Key, Val)>,
     ) -> u64 {
         let fn_ptr = self
-            .fn_ptr_put_batch
+            .fn_ptr_put_relocation_batch
             .as_ref()
-            .expect("fn_ptr_put_batch is not set");
+            .expect("fn_ptr_put_relocation_batch is not set");
         fn_ptr(can_id.clone(), batch)
     }
 

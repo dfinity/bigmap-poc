@@ -114,7 +114,7 @@ impl DataBucket {
         batch
     }
 
-    pub fn put_batch(&mut self, batch: &Vec<(Sha2Vec, Key, Val)>) -> u64 {
+    pub fn put_relocation_batch(&mut self, batch: &Vec<(Sha2Vec, Key, Val)>) -> u64 {
         let mut put_count = 0;
 
         for (key_sha2, key, value) in batch.iter() {
