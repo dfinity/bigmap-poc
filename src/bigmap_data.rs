@@ -28,27 +28,6 @@ fn get(key: Key) -> Option<Val> {
 }
 
 #[update]
-fn get_as_update(key: Key) -> Option<Val> {
-    let bm_data = storage::get::<DataBucket>();
-
-    let res = bm_data.get(key.clone()).ok().cloned();
-    match &res {
-        Some(value) => println!(
-            "BigMap Data: get_as_update key {} ({} bytes) => value ({} bytes)",
-            String::from_utf8_lossy(&key),
-            key.len(),
-            value.len()
-        ),
-        None => println!(
-            "BigMap Data: get_as_update key {} ({} bytes) => None",
-            String::from_utf8_lossy(&key),
-            key.len()
-        ),
-    };
-    res
-}
-
-#[update]
 fn put(key: Key, value: Val) -> u64 {
     let bm_data = storage::get_mut::<DataBucket>();
 
