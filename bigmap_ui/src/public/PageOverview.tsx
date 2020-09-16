@@ -22,6 +22,8 @@ class PageOverview extends React.Component {
     used_bytes_total: 0,
   };
 
+  private timerID: any;
+
   constructor(props: any) {
     super(props);
     this.state = {
@@ -31,6 +33,15 @@ class PageOverview extends React.Component {
   }
 
   componentDidMount() {
+    this.refreshData();
+    this.timerID = setInterval(() => this.refreshData(), 5000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  private refreshData() {
     getBigMapStatus()
       .then(res => JSON.parse(res))
       .then(json => {
