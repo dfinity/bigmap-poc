@@ -14,10 +14,13 @@ port=$(dfx config defaults.start.port)
 
 cd "$BASEDIR"
 
-rsync -aP ../.dfx/local/ .dfx/local/
-rsync -aP ../.dfx/tungsten/ .dfx/tungsten/
+mkdir -p .dfx
+test -d ../.dfx/local && rsync -aP ../.dfx/local/ .dfx/local/
+test -d ../.dfx/tungsten && rsync -aP ../.dfx/tungsten/ .dfx/tungsten/
 
 echo "Bootstraping BigMap UI..."
+
+npm install
 
 echo "dfx build"
 dfx build
