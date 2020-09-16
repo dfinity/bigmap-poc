@@ -166,13 +166,11 @@ impl DataBucket {
         let mut result = Vec::new();
 
         for (key, _) in self.entries.values() {
-            if key.len() >= key_prefix.len() {
-                if &key[0..key_prefix.len()] == key_prefix.as_slice() {
-                    result.push(key.clone());
-                    if result.len() > 10000 {
-                        // Safety brake, don't return too many entries
-                        break;
-                    }
+            if key.len() >= key_prefix.len() && &key[0..key_prefix.len()] == key_prefix.as_slice() {
+                result.push(key.clone());
+                if result.len() > 10000 {
+                    // Safety brake, don't return too many entries
+                    break;
                 }
             }
         }

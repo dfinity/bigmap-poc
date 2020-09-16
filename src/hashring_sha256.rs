@@ -201,7 +201,7 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
         if idx == 0 {
             return (*SHA256_DIGEST_MIN, self.ring[0].key);
         }
-        return (self.ring[idx - 1].key, self.ring[idx].key);
+        (self.ring[idx - 1].key, self.ring[idx].key)
     }
 
     /// Get the Option<(key,node)> responsible for `key`.

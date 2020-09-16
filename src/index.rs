@@ -5,7 +5,6 @@ use crate::{
 use bytesize::ByteSize;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
-use serde_json_wasm;
 use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
