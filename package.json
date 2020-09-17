@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/dfinity/bigmap-rs#readme",
   "dependencies": {
-    "@dfinity/agent": "^0.6.6",
+    "@dfinity/agent": "0.6.7",
     "btoa": "^1.2.1",
     "node-webcrypto-ossl": "^2.1.1",
     "yargs": "^15.4.1"
