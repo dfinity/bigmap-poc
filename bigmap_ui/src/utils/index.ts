@@ -39,20 +39,6 @@ export function decode<T extends object | string>(obj: number[], fallback?: T): 
   }
 }
 
-// const getBigMapActor = () => {
-//   // @ts-ignore
-//   const factory = makeActorFactory(BigMapData);
-//   const actor = factory({ canister_ids });
-//   return actor;
-// };
-
-// const getBigMapDataActor = (canisterId: string) => {
-//   // @ts-ignore
-//   const factory = makeActorFactory(BigMapData);
-//   const actor = factory({ canisterId });
-//   return actor;
-// };
-
 export async function bigMapGet(key: string): Promise<number[]> {
   const encodedKey = encode(key);
 

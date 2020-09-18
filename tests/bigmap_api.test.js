@@ -1,4 +1,4 @@
-
+const bigmap_fn = require('../cli/bigmap_functions');
 const bigmap = require('../cli/bigmap_cli');
 
 // These tests require more time than the default 10 seconds
@@ -6,8 +6,7 @@ jest.setTimeout(30 * 1000);
 
 describe("BigMap", () => {
   beforeAll(async () => {
-    await bigmap.setDataBucketWasmBinary('target/wasm32-unknown-unknown/release/bigmap_data.wasm');
-    await bigmap.setSearchWasmBinary('target/wasm32-unknown-unknown/release/bigmap_search.wasm');
+    bigmap_fn.bigMapInitWithSearch();
   });
 
 

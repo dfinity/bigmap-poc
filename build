@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -e
+
+BASEDIR=$(cd "$(dirname "$0")"; pwd)
+cd "$BASEDIR"
+
+function wasm_optimize() {
+  T=$(mktemp)
+  ./vendor/rust-cdk/target/debug/ic_cdk_optimizer -o $T "$1"
+  mv $T "$1"
+}
+
+#
+# Search if some files updated and only rebuild if some files in /src changed.
+# Otherwise, we'll just keep optimizing the same wasm files in every call.
+#
+
+TARGETS=(
+target/wasm32-unknown-unknown/release/bigmap_index.wasm
+target/wasm32-unknown-unknown/release/bigmap_data.wasm
+target/wasm32-unknown-unknown/release/bigmap_search.wasm
+)
+
+# Allow only a single build execution at a time
+exec 200>/tmp/bigmap-rs-build.lock
+flock -x 200
+
+REBUILD=false
+for target in ${TARGETS[@]};
+do
+  if ! [[ -s "$target" ]] || [[ -n "$(find src/ -newer $target)" ]]; then
+    REBUILD=true
+  fi
+done
+
+if $REBUILD; then
+  if type cargo > /dev/null; then
+    rustup target add wasm32-unknown-unknown
+
+    cd vendor/rust-cdk/
+    cargo build -p ic_cdk_optimizer
+    cd -
+
+    cargo build --target wasm32-unknown-unknown --package bigmap --release
+
+    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_index.wasm
+    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_data.wasm
+    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_search.wasm
+    echo "All targets finished building"
+  else
+    echo "Rust `cargo` not installed. Please run:"
+    echo "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+  fi
+else
+  echo "No rebuilding is necessary"
+fi
+
+exec 200>&-
+
+exit 0

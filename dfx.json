@@ -5,19 +5,19 @@
       "type": "custom",
       "candid": "src/bigmap_index.did",
       "wasm": "target/wasm32-unknown-unknown/release/bigmap_index.wasm",
-      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+      "build": "./build"
     },
     "bigmap_data": {
       "type": "custom",
       "candid": "src/bigmap_data.did",
       "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
-      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+      "build": "./build"
     },
     "bigmap_search": {
       "type": "custom",
       "candid": "src/bigmap_search.did",
       "wasm": "target/wasm32-unknown-unknown/release/bigmap_data.wasm",
-      "build": "cargo build --target wasm32-unknown-unknown --package bigmap --release"
+      "build": "./build"
     },
     "bigmap_ui": {
       "type": "custom",

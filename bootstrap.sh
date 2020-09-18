@@ -16,20 +16,6 @@ rm -rf canisters
 dfx canister create --all
 dfx build
 
-cd vendor/rust-cdk/
-cargo build --release -p ic_cdk_optimizer
-cd -
-
-function wasm_optimize() {
-  T=$(mktemp)
-  ./vendor/rust-cdk/target/release/ic_cdk_optimizer -o $T "$1"
-  mv $T "$1"
-}
-
-wasm_optimize target/wasm32-unknown-unknown/release/bigmap_index.wasm
-wasm_optimize target/wasm32-unknown-unknown/release/bigmap_data.wasm
-wasm_optimize target/wasm32-unknown-unknown/release/bigmap_search.wasm
-
 echo "Installing canisters"
 dfx canister install bigmap --mode=reinstall
 
@@ -38,4 +24,3 @@ dfx canister install bigmap --mode=reinstall
 ./bigmap-cli --maintenance
 
 ./bigmap-cli --put-and-fts-index bigsearch-works "BigSearch written in Rust works!"
-

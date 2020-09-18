@@ -5,7 +5,9 @@ const { TextDecoder, TextEncoder } = require("util");
 const { Crypto } = require("node-webcrypto-ossl");
 const fs = require("fs");
 const path = require("path");
-const { defaults, networks } = require("../dfx.json");
+const execSync = require('child_process').execSync;
+const topLevelPath = execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trimEnd();
+const { defaults, networks } = require(path.join(topLevelPath, "dfx.json"));
 global.btoa = require('btoa')
 const {
   generateKeyPair,
@@ -29,12 +31,7 @@ global.crypto = new Crypto();
 
 const networkName = process.env["DFX_NETWORK"] || "local";
 const DEFAULT_HOST = networkName === 'local' ? `http://${defaults.start.address}:${defaults.start.port}` : networks[networkName].providers[0];
-const outputRoot = path.join(
-  __dirname,
-  '..',
-  ".dfx",
-  networkName
-);
+const outputRoot = path.join(topLevelPath, ".dfx", networkName);
 
 const credentials = { name: process.env['DFX_CREDS_USER'], password: process.env['DFX_CREDS_PASS'] };
 // Exports
@@ -127,6 +124,10 @@ async function bigMapPut(encodedKey, encodedValue) {
   return res;
 }
 
+async function bigMapPutSync(encodedKey) {
+  return await bigMapPut(encodedKey);
+}
+
 async function bigMapAppend(encodedKey, encodedValue) {
 
   let res = bigMap.append(encodedKey, encodedValue);
@@ -158,6 +159,10 @@ async function bigMapGet(encodedKey) {
   return res;
 }
 
+async function bigMapGetSync(encodedKey) {
+  return await bigMapGet(encodedKey);
+}
+
 async function bigMapList(encodedKeyPrefix) {
   let res = bigMap.list(encodedKeyPrefix);
 
@@ -168,5 +173,40 @@ async function bigMapList(encodedKeyPrefix) {
   return res;
 }
 
+async function bigMapInit() {
+  let data_wasm = path.join(
+    __dirname,
+    '..',
+    "/target/wasm32-unknown-unknown/release/bigmap_data.wasm"
+  )
+  let wasm_binary = fs.readFileSync(data_wasm);
+  let wasm_binary_array = Array.from(wasm_binary);
+  await bigMap.set_data_bucket_canister_wasm_binary(wasm_binary_array);
+  await bigMap.maintenance();
+}
 
-module.exports = { getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapAppend, bigMapDelete, bigMapGet, bigMapList, getBigMapDataActor, strToArr, arrToStr };
+async function bigMapInitWithSearch() {
+  let data_wasm = path.join(
+    __dirname,
+    '..',
+    "/target/wasm32-unknown-unknown/release/bigmap_data.wasm"
+  )
+  let search_wasm = path.join(
+    __dirname,
+    '..',
+    "/target/wasm32-unknown-unknown/release/bigmap_search.wasm"
+  )
+  let wasm_binary1 = fs.readFileSync(data_wasm);
+  let wasm_binary_array1 = Array.from(wasm_binary1);
+  await bigMap.set_data_bucket_canister_wasm_binary(wasm_binary_array1);
+  let wasm_binary2 = fs.readFileSync(search_wasm);
+  let wasm_binary_array2 = Array.from(wasm_binary2);
+  await bigMap.set_search_canister_wasm_binary(wasm_binary_array2);
+  await bigMap.maintenance();
+}
+
+module.exports = {
+  getCanister, getCanisterId, getBigMapActor, bigMapPut, bigMapPutSync,
+  bigMapAppend, bigMapDelete, bigMapGet, bigMapGetSync, bigMapList,
+  bigMapInit, bigMapInitWithSearch, getBigMapDataActor, strToArr, arrToStr
+};
