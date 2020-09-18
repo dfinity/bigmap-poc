@@ -31,7 +31,7 @@ async fn batch_put(batch: Vec<(Key, Val)>) -> u64 {
         bigmap_idx.put(key, value).await;
         1
     } else {
-        println!("BigMap Data: put batch of {} entryies", batch.len());
+        println!("BigMap Data: put batch of {} entries", batch.len());
 
         bigmap_idx.batch_put(&batch).await
     }
