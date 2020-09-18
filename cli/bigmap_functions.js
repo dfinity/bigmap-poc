@@ -182,7 +182,6 @@ async function bigMapInit() {
   let wasm_binary = fs.readFileSync(data_wasm);
   let wasm_binary_array = Array.from(wasm_binary);
   await bigMap.set_data_bucket_canister_wasm_binary(wasm_binary_array);
-  await bigMap.maintenance();
 }
 
 async function bigMapInitWithSearch() {
@@ -202,7 +201,6 @@ async function bigMapInitWithSearch() {
   let wasm_binary2 = fs.readFileSync(search_wasm);
   let wasm_binary_array2 = Array.from(wasm_binary2);
   await bigMap.set_search_canister_wasm_binary(wasm_binary_array2);
-  await bigMap.maintenance();
 }
 
 module.exports = {

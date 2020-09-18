@@ -42,7 +42,7 @@ dfx build
 dfx canister create bigmap
 dfx canister install bigmap
 ./bigmap-cli --set-data-bucket-wasm-binary target/wasm32-unknown-unknown/release/bigmap_data.wasm
-./bigmap-cli --maintenance
+./bigmap-cli --set-search-wasm-binary target/wasm32-unknown-unknown/release/bigmap_search.wasm
 ```
 
 ## Test

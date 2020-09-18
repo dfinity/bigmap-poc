@@ -650,12 +650,18 @@ impl BigmapIdx {
         }
     }
 
-    pub fn set_data_bucket_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
+    pub async fn set_data_bucket_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
         self.data_bucket_canister_wasm_binary = wasm_binary;
+        if let Err(err) = self.ensure_at_least_one_data_canister().await {
+            println!("Error adding canisters: {}", err);
+        }
     }
 
-    pub fn set_search_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
+    pub async fn set_search_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
         self.search_canister_wasm_binary = wasm_binary;
+        if let Err(err) = self.ensure_at_least_one_search_canister().await {
+            println!("Error adding canisters: {}", err);
+        }
     }
 
     fn print_canister_utilization(&self, can_id: &CanisterId, used_bytes: u64) {

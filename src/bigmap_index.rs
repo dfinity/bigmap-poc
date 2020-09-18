@@ -160,25 +160,29 @@ fn initialize() {
 }
 
 #[update]
-fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
+async fn set_data_bucket_canister_wasm_binary(wasm_binary: Vec<u8>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
     println!(
         "BigMap Index: set_data_bucket_canister_wasm_binary ({} bytes)",
         wasm_binary.len()
     );
 
-    bigmap_idx.set_data_bucket_canister_wasm_binary(wasm_binary)
+    bigmap_idx
+        .set_data_bucket_canister_wasm_binary(wasm_binary)
+        .await
 }
 
 #[update]
-fn set_search_canister_wasm_binary(wasm_binary: Vec<u8>) {
+async fn set_search_canister_wasm_binary(wasm_binary: Vec<u8>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
     println!(
         "BigMap Index: set_search_canister_wasm_binary ({} bytes)",
         wasm_binary.len()
     );
 
-    bigmap_idx.set_search_canister_wasm_binary(wasm_binary)
+    bigmap_idx
+        .set_search_canister_wasm_binary(wasm_binary)
+        .await
 }
 
 #[update]
