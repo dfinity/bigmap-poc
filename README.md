@@ -8,6 +8,12 @@ This is the Rust implementation of BigMap. There is also a Motoko-based implemen
 
 ## Prerequisites
 
+### Dependencies
+
+* Rust compiler 1.45+ (and cargo)
+* cmake (optional but recommended)
+* IC SDK (DFX) 0.6.6+
+
 ### IC SDK
 To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.6 or higher
 
