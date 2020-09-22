@@ -5,11 +5,25 @@ set -e
 BASEDIR=$(cd "$(dirname "$0")"; pwd)
 cd "$BASEDIR"
 
-function wasm_optimize() {
-  T=$(mktemp)
-  ./vendor/rust-cdk/target/debug/ic_cdk_optimizer -o $T "$1"
-  mv $T "$1"
-}
+if type cmake >/dev/null; then
+  function wasm_optimizer_prepare() {
+    # Building ic_cdk_optimizer requires cmake
+    cd "$BASEDIR/vendor/rust-cdk/"
+    cargo build -p ic_cdk_optimizer
+    cd - > /dev/null
+  }
+  function wasm_optimize() {
+    echo "Reducing Wasm size '$1'"
+    T=$(mktemp)
+    ./vendor/rust-cdk/target/debug/ic_cdk_optimizer -o $T "$1"
+    mv $T "$1"
+  }
+else
+  function wasm_optimizer_prepare() {
+    echo "Cmake is not installed. Please install it to reduce wasm binary size before uploading."
+  };
+  function wasm_optimize() { :; }
+fi
 
 #
 # Search if some files updated and only rebuild if some files in /src changed.
@@ -21,10 +35,6 @@ target/wasm32-unknown-unknown/release/bigmap_index.wasm
 target/wasm32-unknown-unknown/release/bigmap_data.wasm
 target/wasm32-unknown-unknown/release/bigmap_search.wasm
 )
-
-# Allow only a single build execution at a time
-exec 200>/tmp/bigmap-rs-build.lock
-flock -x 200
 
 REBUILD=false
 for target in ${TARGETS[@]};
@@ -38,24 +48,21 @@ if $REBUILD; then
   if type cargo > /dev/null; then
     rustup target add wasm32-unknown-unknown
 
-    cd vendor/rust-cdk/
-    cargo build -p ic_cdk_optimizer
-    cd -
+    cargo build --target wasm32-unknown-unknown --release
 
-    cargo build --target wasm32-unknown-unknown --package bigmap --release
+    wasm_optimizer_prepare
 
-    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_index.wasm
-    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_data.wasm
-    wasm_optimize target/wasm32-unknown-unknown/release/bigmap_search.wasm
+    for target in ${TARGETS[@]};
+    do
+      wasm_optimize "$target"
+    done
     echo "All targets finished building"
   else
     echo "Rust `cargo` not installed. Please run:"
     echo "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
   fi
 else
-  echo "No rebuilding is necessary"
+  echo "All targets are up to date."
 fi
-
-exec 200>&-
 
 exit 0
