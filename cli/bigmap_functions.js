@@ -78,7 +78,6 @@ const getCanisterId = (canisterName) => {
 
 // Big Map
 const bigMap = getCanister("bigmap");
-const DATA_CANISTER_IDS = [];
 const DATA_CANISTER_ACTORS = new Map(); // A map of CanisterId => DataCanisterActor
 
 const bigMapDataCanisterIdToActor = async (canisterId) => {
