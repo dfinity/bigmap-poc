@@ -15,6 +15,7 @@ const {
   makeActorFactory,
   makeAuthTransform,
   makeNonceTransform,
+  makeExpiryTransform,
   Principal,
 } = require("@dfinity/agent");
 
@@ -49,6 +50,7 @@ const getCanister = (
   }
   const agent = new HttpAgent(config);
   agent.addTransform(makeNonceTransform());
+  agent.addTransform(makeExpiryTransform(5 * 60 * 1000));
   agent.addTransform(makeAuthTransform(keypair));
 
   return makeActorFactory(candid)({ canisterId, agent });
@@ -107,6 +109,7 @@ const getBigMapDataActor = (canisterId) => {
   }
   const agent = new HttpAgent(config);
   agent.addTransform(makeNonceTransform());
+  agent.addTransform(makeExpiryTransform(5 * 60 * 1000));
   agent.addTransform(makeAuthTransform(keypair));
 
   return makeActorFactory(candid)({ canisterId, agent });
