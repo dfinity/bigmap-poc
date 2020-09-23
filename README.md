@@ -12,13 +12,13 @@ This is the Rust implementation of BigMap. There is also a Motoko-based implemen
 
 * Rust compiler 1.45+ (and cargo)
 * cmake (optional but recommended)
-* IC SDK (DFX) 0.6.6+
+* IC SDK (DFX) 0.6.9+
 
 ### IC SDK
-To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.6 or higher
+To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.9 or higher
 
 ```bash
-DFX_VERSION=0.6.6 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+DFX_VERSION=0.6.9 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 ```
 
 Rust CDK is included with Big Map through `git subtree`, so it does not have to be separately downloaded and installed.
