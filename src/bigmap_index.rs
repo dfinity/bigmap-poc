@@ -226,7 +226,7 @@ async fn remove_from_fts_index(key: Key) {
 }
 
 #[query]
-async fn search(query: String) -> Vec<(Key, Val)> {
+async fn search(query: String) -> (u64, Vec<(Key, Val)>) {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
     bigmap_idx.search(&query).await

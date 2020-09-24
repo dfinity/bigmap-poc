@@ -29,7 +29,7 @@ service : {
 
     "put_and_fts_index": (key: vec nat8, value: text) -> (nat64);
     "remove_from_fts_index": (key: vec nat8, document: text) -> ();
-    "search": (query_string: text) -> (vec KeyValue) query;
+    "search": (query_string: text) -> (record {nat64; vec KeyValue}) query;
     "batch_put_and_fts_index": (doc_vec: vec KeyString) -> (nat64);
 
     "maintenance": () -> (text);

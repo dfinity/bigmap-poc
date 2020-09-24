@@ -16,7 +16,7 @@ declare module 'ic:canisters/bigmap' {
      */
     get: (arr: number[]) => Promise<number[][]>;
     status: () => Promise<string>;
-    search: (query: string) => Promise<[[number[], number[]]]>;
+    search: (query: string) => Promise<[BigNumber, [[number[], number[]]]]>;
   }
   const BigMap: BigMap;
   export default BigMap;
@@ -28,4 +28,9 @@ declare module 'ic:canisters/bigmap_ui';
 interface SearchResultItem {
   key: string;
   value: string;
+}
+
+interface SearchResults {
+  entries_count: number;
+  entries: SearchResultItem[];
 }

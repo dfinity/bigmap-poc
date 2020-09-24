@@ -6,7 +6,7 @@ echo "Bootstraping BigMap..."
 # Support bootstrapping from any folder
 BASEDIR=$(cd "$(dirname "$0")"; pwd)
 
-# "$BASEDIR/../bootstrap.sh" "$@"
+"$BASEDIR/../bootstrap.sh" "$@"
 
 if [[ "$1" == "tungsten" ]]; then
   echo "Bootstraping on the Tungsten network"

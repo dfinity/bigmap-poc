@@ -133,7 +133,9 @@ async function remove_from_fts_index(key) {
 
 async function search(search_query) {
   let results = await bigmap_fn.getBigMapActor().search(search_query.join(' '));
-  let results_str = results.map(e => { return { key: arrToStr(e[0]), value: arrToStr(e[1]) } });
+  let results_count = results[0];
+  let results_str = results[1].map(e => { return { key: arrToStr(e[0]), value: arrToStr(e[1]) } });
+  console.log(`Found ${results_count} hits`);
   console.log(JSON.stringify(results_str, null, 2));
   return results_str;
 }

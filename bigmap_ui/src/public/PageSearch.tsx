@@ -5,7 +5,7 @@ import { bigMapSearch } from '../utils';
 
 interface Search {
   query: string;
-  results: SearchResultItem[]
+  results: SearchResults | null
 }
 
 class PageOverview extends React.Component<{}, Search> {
@@ -13,7 +13,7 @@ class PageOverview extends React.Component<{}, Search> {
     super(props);
     this.state = {
       query: '',
-      results: []
+      results: null
     }
     this.handleQueryChange = this.handleQueryChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -31,6 +31,26 @@ class PageOverview extends React.Component<{}, Search> {
     this.setState({ results: await bigMapSearch(this.state.query) });
   };
 
+  private renderSearchResults() {
+    if (this.state.results) {
+      return this.state.results.entries.map((item, index) => <tr key={index}><td>{item.key}</td><td>{item.value}</td></tr>);
+    } else {
+      return <tr key="0"></tr>;
+    }
+  }
+
+  private renderSearchHits() {
+    if (this.state.results) {
+      if (this.state.results.entries_count < 20) {
+        return <p><br />{this.state.results.entries_count} hits</p>;
+      } else {
+        return <p><br />About {this.state.results.entries_count} hits</p>;
+      }
+    } else {
+      return <br />;
+    }
+  }
+
   render() {
     return (
       <Container>
@@ -39,13 +59,11 @@ class PageOverview extends React.Component<{}, Search> {
           <Button variant="info" type="submit">Search</Button>
         </Form>
 
-        <h3 className="header p-3">Search results</h3><br />
+        {this.renderSearchHits()}
 
         <Table striped bordered hover>
           <tbody>
-            {
-              this.state.results.map((item, index) => <tr key={index}><td>{item.key}</td><td>{item.value}</td></tr>)
-            }
+            {this.renderSearchResults()}
           </tbody>
         </Table>
       </Container>
