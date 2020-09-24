@@ -767,18 +767,20 @@ impl BigmapIdx {
         }
     }
 
-    pub async fn search(&self, search_query: &String) -> Vec<(Key, Val)> {
+    pub async fn search(&self, search_query: &String) -> (u64, Vec<(Key, Val)>) {
         if self.search_canisters.is_empty() {
-            return Vec::new();
+            return (0, Vec::new());
         }
 
-        let mut result = Vec::new();
+        let mut results = Vec::new();
+        let mut results_len = 0;
 
         for can_id in self.search_canisters.iter() {
-            for key in self
+            let results_per_canister = self
                 .qcall_s_can_search_keys_by_query(can_id, search_query)
-                .await
-            {
+                .await;
+            results_len += results_per_canister.len() as u64;
+            for key in results_per_canister {
                 match self.get(&key).await {
                     Some(value) => {
                         println!(
@@ -787,9 +789,9 @@ impl BigmapIdx {
                             String::from_utf8_lossy(&key),
                             String::from_utf8_lossy(&value)
                         );
-                        result.push((key, value));
-                        if result.len() >= 20 {
-                            return result;
+                        results.push((key, value));
+                        if results.len() >= 20 {
+                            return (results_len, results);
                         }
                     }
                     None => continue,
@@ -797,7 +799,7 @@ impl BigmapIdx {
             }
         }
 
-        result
+        (results_len, results)
     }
 }
 

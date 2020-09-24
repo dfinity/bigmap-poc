@@ -84,19 +84,22 @@ export async function getBigMapStatus(): Promise<string> {
   }
 }
 
-export async function bigMapSearch(query: string): Promise<SearchResultItem[]> {
+export async function bigMapSearch(query: string): Promise<SearchResults | null> {
 
   console.time("BigMap search");
-  const results = await BigMap.search(query);
+  const search_raw = await BigMap.search(query);
   console.timeEnd("BigMap search");
 
-  let results_str = results.map(e => { return <SearchResultItem>{ key: arrToStr(e[0]), value: arrToStr(e[1]) } });
+  let results: SearchResults = {
+    entries_count: search_raw[0].toNumber(),
+    entries: search_raw[1].map(e => { return <SearchResultItem>{ key: arrToStr(e[0]), value: arrToStr(e[1]) } })
+  };
 
-  if (results_str) {
-    console.log("results string", results_str);
-    return results_str;
+  if (results.entries) {
+    console.log("BigMap Search results", results);
+    return results;
   } else {
-    console.error("BigMap search failed");
-    return [<SearchResultItem>{ key: "ERROR", value: "ERROR" }];
+    console.error("BigMap Search failed");
+    return null;
   }
 }
