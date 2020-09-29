@@ -148,7 +148,7 @@ async function put_and_fts_index_file(filename) {
     let value = data[key];
     doc_vec.push([strToArr(key), String(value)]);
   }
-  var batch_size = 300; // We have to send data in relatively small batches
+  var batch_size = 500; // We have to send data in relatively small batches
   let inserted_entries = 0;
   for (i = 0; i < doc_vec.length; i += batch_size) {
     console.log(`BigMap put_and_fts_index_file batch [${i}..${i + batch_size}]`);

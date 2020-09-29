@@ -253,7 +253,7 @@ impl BigmapIdx {
     }
 
     pub async fn ensure_at_least_one_data_canister(&mut self) -> Result<(), String> {
-        if self.hash_ring.is_empty() {
+        while self.hash_ring.len() < 8 {
             if self.creating_data_canister {
                 return Err(
                     "Already creating data canister, concurrent calls are not allowed".to_string(),
@@ -273,7 +273,7 @@ impl BigmapIdx {
                 }
             }
             self.creating_data_canister = false;
-        };
+        }
         Ok(())
     }
 
