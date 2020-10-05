@@ -341,7 +341,7 @@ impl BigmapIdx {
             }
         }
 
-        result.iter().cloned().collect()
+        result.into_iter().collect()
     }
 
     pub async fn maintenance(&mut self) -> String {
