@@ -372,8 +372,7 @@ impl BigmapIdx {
         self.is_maintenance_active = true;
         self.used_bytes_total = 0;
 
-        for i in 0..self.idx.len() {
-            let can_id = self.idx[i].clone();
+        for (i, can_id) in self.idx.clone().iter().enumerate() {
             let can_ptr = CanisterPtr { 0: i as u32 };
             let used_bytes = self.qcall_canister_used_bytes(&can_id).await as u64;
             self.used_bytes_total += used_bytes;
