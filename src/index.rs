@@ -150,14 +150,10 @@ impl BigmapIdx {
         for (key, value) in batch.into_iter() {
             match self.lookup_put(&key) {
                 Some(can_id) => {
-                    if batches.contains_key(&can_id) {
-                        batches
-                            .get_mut(&can_id)
-                            .unwrap()
-                            .push((key.clone(), value.clone()));
-                    } else {
-                        batches.insert(can_id, vec![(key.clone(), value.clone())]);
-                    };
+                    let entry = batches
+                        .entry(can_id)
+                        .or_insert(vec![(key.clone(), value.clone())]);
+                    entry.push((key.clone(), value.clone()));
                 }
                 None => {
                     println!(
