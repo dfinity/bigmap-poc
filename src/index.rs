@@ -358,10 +358,8 @@ impl BigmapIdx {
             })
             .unwrap();
         }
-        self.is_maintenance_active = true;
 
         if let Err(_) = self.ensure_at_least_one_data_canister().await {
-            self.is_maintenance_active = false;
             return serde_json_wasm::to_string(&Status {
                 status: "Unknown",
                 message: "Error trying to ensure at least one data canister",
@@ -371,6 +369,7 @@ impl BigmapIdx {
 
         println!("BigMap Index: starting maintenance");
 
+        self.is_maintenance_active = true;
         self.used_bytes_total = 0;
 
         for i in 0..self.idx.len() {
