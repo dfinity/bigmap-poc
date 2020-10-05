@@ -322,10 +322,7 @@ impl BigmapIdx {
     // Find the data bucket canister into which the object with the provided key should go
     pub fn lookup_put(&self, key: &Key) -> Option<CanisterId> {
         let key_sha256 = calc_sha256(key);
-        let (_, ring_node) = match self.hash_ring.get_idx_node_for_key(&key_sha256) {
-            Some(v) => v,
-            None => return None,
-        };
+        let (_, ring_node) = self.hash_ring.get_idx_node_for_key(&key_sha256)?;
 
         // println!("BigMap Index: lookup_put @key {}", String::from_utf8_lossy(key));
         Some(self.can_ptr_to_canister_id(ring_node))
