@@ -428,28 +428,27 @@ impl BigmapIdx {
                         // Finished rebalancing this canister
                         self.now_rebalancing_src_dst = None;
                         break;
-                    } else {
-                        let put_count = self
-                            .ucall_dcan_put_relocation_batch(&dst_canister, &batch)
-                            .await;
-                        if batch.len() as u64 != put_count {
-                            println!(
-                                "BigMap Index: Not all elements were moved from {} to {}",
-                                src_canister, dst_canister
-                            )
-                        } else {
-                            println!(
-                                "BigMap Index: Moved {} elements from {} to {}",
-                                batch.len(),
-                                src_canister,
-                                dst_canister
-                            )
-                        }
-                        let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
-
-                        self.ucall_dcan_delete_entries(&src_canister, &batch_sha2)
-                            .await;
                     }
+                    let put_count = self
+                        .ucall_dcan_put_relocation_batch(&dst_canister, &batch)
+                        .await;
+                    if batch.len() as u64 != put_count {
+                        println!(
+                            "BigMap Index: Not all elements were moved from {} to {}",
+                            src_canister, dst_canister
+                        )
+                    } else {
+                        println!(
+                            "BigMap Index: Moved {} elements from {} to {}",
+                            batch.len(),
+                            src_canister,
+                            dst_canister
+                        )
+                    }
+                    let batch_sha2 = batch.iter().map(|e| e.0.clone()).collect();
+
+                    self.ucall_dcan_delete_entries(&src_canister, &batch_sha2)
+                        .await;
                 }
             }
         }
