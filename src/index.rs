@@ -216,29 +216,18 @@ impl BigmapIdx {
     }
 
     pub async fn add_canisters(&mut self, can_ids: Vec<CanisterId>) {
-        // let mut new_can_util_vec = Vec::new();
-
         for can_id in can_ids {
-            for can_id_existing in &self.idx {
-                if &can_id == can_id_existing {
-                    println!(
-                        "BigMap Index: Skipping already existing Data CanisterId {}",
-                        can_id
-                    );
-                }
-            }
-            for can_id_existing in &self.canister_available_queue {
-                if &can_id == can_id_existing {
-                    println!(
-                        "BigMap Index: Skipping already existing Data CanisterId {}",
-                        can_id
-                    );
-                }
+            if self.idx.contains(&can_id) || self.canister_available_queue.contains(&can_id) {
+                println!(
+                    "BigMap Index: Skipping already existing Data CanisterId {}",
+                    can_id
+                );
+                continue;
             }
 
             println!("BigMap Index: Created Data CanisterId {}", can_id);
 
-            // Add all canisters to the available queue
+            // Add the canister to the available queue
             self.canister_available_queue.push_back(can_id);
         }
 
