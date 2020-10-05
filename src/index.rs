@@ -600,25 +600,21 @@ impl BigmapIdx {
     }
 
     async fn create_search_canister(&mut self) -> Result<CanisterId, String> {
-        match subnet_create_new_canister().await {
-            Ok(new_can_id) => {
-                println!("BigMap Index: Created new CanisterId {}", new_can_id);
-                match subnet_install_canister_code(
-                    new_can_id.clone(),
-                    self.search_canister_wasm_binary.clone(),
-                )
-                .await
-                {
-                    Ok(_) => println!("BigMap Index: Code install successful to {}", new_can_id),
-                    Err(err) => println!(
-                        "CanisterId {}: code install failed with error {}",
-                        new_can_id, err
-                    ),
-                };
-                Ok(new_can_id)
-            }
-            Err(err) => Err(err),
-        }
+        let new_can_id = subnet_create_new_canister().await?;
+        println!("BigMap Index: Created new CanisterId {}", new_can_id);
+        match subnet_install_canister_code(
+            new_can_id.clone(),
+            self.search_canister_wasm_binary.clone(),
+        )
+        .await
+        {
+            Ok(_) => println!("BigMap Index: Code install successful to {}", new_can_id),
+            Err(err) => println!(
+                "CanisterId {}: code install failed with error {}",
+                new_can_id, err
+            ),
+        };
+        Ok(new_can_id)
     }
 
     pub async fn set_data_bucket_canister_wasm_binary(&mut self, wasm_binary: Vec<u8>) {
