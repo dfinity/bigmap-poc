@@ -9,7 +9,7 @@ use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 use std::hash::BuildHasherDefault;
 use wyhash::WyHash;
 
-// CanisterPtr allows us to have u64 instead of a full CanisterId
+// CanisterPtr allows us to have u32 instead of a full CanisterId
 // in various parts of the BigMap Index
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct CanisterPtr(u32);
