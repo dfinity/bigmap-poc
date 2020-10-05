@@ -299,8 +299,7 @@ impl BigmapIdx {
             return Some(can_id);
         }
 
-        if let Some(can_src_dst_ptr) = self.now_rebalancing_src_dst {
-            let (rebalance_src_ptr, rebalance_dst_ptr) = can_src_dst_ptr;
+        if let Some((rebalance_src_ptr, rebalance_dst_ptr)) = self.now_rebalancing_src_dst {
             if can_ptr == &rebalance_src_ptr {
                 // The destination canister doesn't have the key but it's currently rebalancing.
                 // The key may not have been moved yet from the source canister
