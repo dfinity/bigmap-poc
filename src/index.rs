@@ -291,10 +291,7 @@ impl BigmapIdx {
     // query all candidates and return the correct CanisterId
     pub async fn lookup_get(&self, key: &Key) -> Option<CanisterId> {
         let key_sha256 = calc_sha256(key);
-        let (_, can_ptr) = match self.hash_ring.get_idx_node_for_key(&key_sha256) {
-            Some(v) => v,
-            None => return None,
-        };
+        let (_, can_ptr) = self.hash_ring.get_idx_node_for_key(&key_sha256)?;
         // println!("BigMap Index: lookup_get @key {}", String::from_utf8_lossy(key));
 
         let can_id = self.can_ptr_to_canister_id(can_ptr);
