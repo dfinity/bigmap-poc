@@ -55,28 +55,25 @@ impl DataBucket {
         self.used_bytes += key.len();
         self.used_bytes += value.len();
         self.used_bytes += 32; // for the Sha256 of the key (=32 bytes)
-        let value_len;
 
-        if append {
-            match &self.entries.get_key_value(&key_sha2) {
-                Some((_, (_, val_old))) => {
-                    let value_new = [&val_old[..], &value[..]].concat();
-                    value_len = value_new.len();
-                    self.entries.insert(key_sha2, (key.clone(), value_new));
-                }
-                None => {
-                    value_len = value.len();
-                    self.entries.insert(key_sha2, (key.clone(), value.clone()));
-                }
+        let new_pair = match self.entries.remove(&key_sha2) {
+            Some((key_old, mut val_old)) => {
+                let new_value = if append {
+                    val_old.extend_from_slice(value);
+                    val_old
+                } else {
+                    // previous value is getting overwritten, update the accounting
+                    self.used_bytes -= key_old.len() + val_old.len() + 32;
+                    value.clone()
+                };
+                (key.clone(), new_value)
             }
-        } else {
-            if let Some((_, (k, v))) = self.entries.get_key_value(&key_sha2) {
-                // previous value is getting overwritten, update the accounting
-                self.used_bytes -= k.len() + v.len() + 32;
-            }
-            value_len = value.len();
-            self.entries.insert(key_sha2, (key.clone(), value.clone()));
-        }
+            None => (key.clone(), value.clone()),
+        };
+
+        let value_len = new_pair.0.len();
+        self.entries.insert(key_sha2, new_pair);
+
         Ok(value_len as u64)
     }
 
