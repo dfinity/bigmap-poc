@@ -640,7 +640,7 @@ impl BigmapIdx {
     }
 
     // Returns a randomly generated and unused key
-    pub async fn get_random_key(&self) -> String {
+    pub async fn get_random_key(&self) -> Option<String> {
         let time_bytes = ic_cdk::time().to_be_bytes();
         let mut rand_key = calc_sha256(&time_bytes.to_vec());
         for i in 0..100u32 {
@@ -648,7 +648,7 @@ impl BigmapIdx {
             let rand_key_hash = calc_sha256(&rand_key);
             let (_, can_ptr) = match self.hash_ring.get_idx_node_for_key(&rand_key_hash) {
                 Some(v) => v,
-                None => return hex::encode(rand_key),
+                None => return Some(hex::encode(rand_key)),
             };
 
             let can_id = self.can_ptr_to_canister_id(can_ptr);
@@ -663,13 +663,13 @@ impl BigmapIdx {
                     "get_random_key: after {} attempts found {} which maps to {}",
                     i, result, can_id
                 );
-                return result;
+                return Some(result);
             }
 
             rand_key = rand_key_hash;
         }
         println!("get_random_key: failed to find an unused key in the range");
-        "".to_string()
+        None
     }
 
     //

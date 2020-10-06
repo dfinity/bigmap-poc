@@ -121,7 +121,7 @@ async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
 }
 
 #[query]
-async fn get_random_key() -> String {
+async fn get_random_key() -> Option<String> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
     bigmap_idx.get_random_key().await
