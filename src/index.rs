@@ -3,6 +3,7 @@ use crate::{
     CanisterId, Key, Sha256Digest, Sha2Vec, Val,
 };
 use bytesize::ByteSize;
+use futures::future::join_all;
 #[cfg(target_arch = "wasm32")]
 use ic_cdk::println;
 use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
@@ -145,7 +146,6 @@ impl BigmapIdx {
     }
 
     pub async fn batch_put(&self, batch: &Vec<(Key, Val)>) -> u64 {
-        let mut result = 0;
         let mut batches: DetHashMap<CanisterId, Vec<(Key, Val)>> = DetHashMap::default();
         for (key, value) in batch.into_iter() {
             match self.lookup_put(&key) {
@@ -163,17 +163,28 @@ impl BigmapIdx {
                 }
             }
         }
+
+        let mut futures = Vec::new();
+        let mut ids = Vec::new();
         for (can_id, batch) in batches.into_iter() {
             let can_id: ic_cdk::CanisterId = can_id.0.into();
-            let batch_result: u64 = ic_cdk::call(can_id.clone(), "batch_put", Some(batch))
-                .await
-                .expect(&format!(
-                    "BigMap index: put call to CanisterId {} failed",
-                    can_id
-                ));
-            result += batch_result;
+            ids.push(can_id.clone());
+            futures.push(ic_cdk::call(can_id.clone(), "batch_put", Some(batch)));
         }
-        result
+
+        let results = join_all(futures).await;
+
+        results
+            .into_iter()
+            .enumerate()
+            .map(|(i, res)| {
+                let len: u64 = res.expect(&format!(
+                    "BigMap index: put call to CanisterId {} failed",
+                    ids[i]
+                ));
+                len
+            })
+            .sum()
     }
 
     pub async fn append(&mut self, key: &Key, value: &Val) -> u64 {
