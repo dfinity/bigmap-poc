@@ -159,20 +159,15 @@ impl<T: Hash + Clone, S: BuildHasher> HashRing<T, S> {
     /// Get the Option<(key,node)> responsible for `key`.
     /// Returns `None` if the ring is empty
     pub fn get_key_node<U: Hash>(&self, key: &U) -> Option<(u64, &T)> {
-        match self.get_idx_node_for_key(key) {
-            Some((idx, node)) => Some((self.ring[idx].key, node)),
-            None => None,
-        }
+        self.get_idx_node_for_key(key)
+            .map(|(idx, node)| (self.ring[idx].key, node))
     }
 
     /// Get the node responsible for `key`. Returns an `Option` that will
     /// contain the `node` if the hash ring is not empty or `None` if it was
     /// empty.
     pub fn get<U: Hash>(&self, key: &U) -> Option<&T> {
-        match self.get_idx_node_for_key(key) {
-            Some((_, node)) => Some(node),
-            None => None,
-        }
+        self.get_idx_node_for_key(key).map(|(_, node)| node)
     }
 
     /// Get the Option<(key,node)> at position `idx`.
@@ -187,10 +182,7 @@ impl<T: Hash + Clone, S: BuildHasher> HashRing<T, S> {
     /// Get the Option<node> at position `idx + 1`.
     /// Returns `None` if `idx + 1` is out of bounds
     pub fn get_next_key_node_at_idx(&self, idx: usize) -> Option<(u64, &T)> {
-        match self.get_key_node_at_idx(idx + 1) {
-            Some(e) => Some(e),
-            None => None,
-        }
+        self.get_key_node_at_idx(idx + 1)
     }
 
     /// Get the Option<node> at position `idx - 1`.
@@ -200,10 +192,7 @@ impl<T: Hash + Clone, S: BuildHasher> HashRing<T, S> {
             return None;
         }
 
-        match self.get_key_node_at_idx(idx - 1) {
-            Some(e) => Some(e),
-            None => None,
-        }
+        self.get_key_node_at_idx(idx - 1)
     }
 }
 
