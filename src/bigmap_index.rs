@@ -96,10 +96,9 @@ async fn add_data_buckets(can_vec: Vec<String>) {
 async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
     let bigmap_idx = storage::get::<BigmapIdx>();
 
-    match bigmap_idx.lookup_put(&key) {
-        Some(can_id) => Some(format!("{}", can_id)),
-        None => None,
-    }
+    bigmap_idx
+        .lookup_put(&key)
+        .map(|can_id| format!("{}", can_id))
 }
 
 #[query]
