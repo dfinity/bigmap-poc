@@ -219,7 +219,7 @@ impl DataBucket {
     }
 
     // Returns a randomly generated and unused key that matches this data canister
-    pub fn get_random_key(&self, seed: Option<String>) -> String {
+    pub fn get_random_key(&self, seed: Option<String>) -> Option<String> {
         // // Once replica & dfx both support raw_rand, we can try seeding from raw_rand
         // let rand_key = match subnet_raw_rand().await {
         //     Ok(result) => result,
@@ -249,19 +249,23 @@ impl DataBucket {
                 //         _i
                 //     );
                 // }
-                return rand_key;
+                return Some(rand_key);
             }
             rand_key = hex::encode(rand_key_hash);
         }
 
         println!("get_random_key: failed to find an unused key in the range");
-        "".to_string()
+        None
     }
 
     // Generates and inserts num_entries into the data bucket, each with entry_size_bytes
     // Returns a vector of the inserted keys
-    pub fn seed_random_data(&mut self, num_entries: u32, entry_size_bytes: u32) -> Vec<String> {
-        let mut key = self.get_random_key(None);
+    pub fn seed_random_data(
+        &mut self,
+        num_entries: u32,
+        entry_size_bytes: u32,
+    ) -> Option<Vec<String>> {
+        let mut key = self.get_random_key(None)?;
         let mut result = Vec::new();
 
         for _ in 0..num_entries {
@@ -273,13 +277,15 @@ impl DataBucket {
             .expect("Put should never fail");
 
             result.push(key.clone());
-            key = self.get_random_key(Some(key));
-            if key.is_empty() {
-                println!("seed_random_data: failed to find a suitable random key");
-                break;
-            }
+            key = match self.get_random_key(Some(key)) {
+                Some(key) => key,
+                None => {
+                    println!("seed_random_data: failed to find a suitable random key");
+                    break;
+                }
+            };
         }
-        result
+        Some(result)
     }
 }
 

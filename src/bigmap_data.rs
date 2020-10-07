@@ -192,14 +192,14 @@ fn delete_entries(keys_sha2: Vec<Vec<u8>>) {
 }
 
 #[query]
-fn get_random_key() -> String {
+fn get_random_key() -> Option<String> {
     let bm_data = storage::get::<DataBucket>();
 
     bm_data.get_random_key(None)
 }
 
 #[update]
-fn seed_random_data(num_entries: u32, entry_size_bytes: u32) -> Vec<String> {
+fn seed_random_data(num_entries: u32, entry_size_bytes: u32) -> Option<Vec<String>> {
     let bm_data = storage::get_mut::<DataBucket>();
 
     bm_data.seed_random_data(num_entries, entry_size_bytes)
