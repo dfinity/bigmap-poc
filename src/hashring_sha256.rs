@@ -150,10 +150,10 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
     /// Returns an `Option` that will contain the `node` if it was in the hash
     /// ring or `None` if it was not present.
     pub fn remove_node(&mut self, node: &T) -> Option<T> {
-        match self.ring.iter().position(|n| n.node == *node) {
-            Some(index) => Some(self.ring.remove(index).node),
-            None => None,
-        }
+        self.ring
+            .iter()
+            .position(|n| n.node == *node)
+            .map(|index| self.ring.remove(index).node)
     }
 
     /// Get the Option<(idx,node)> responsible for `key`.
@@ -207,20 +207,15 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
     /// Get the Option<(key,node)> responsible for `key`.
     /// Returns `None` if the ring is empty
     pub fn get_key_node(&self, key: &Sha256Digest) -> Option<(Sha256Digest, &T)> {
-        match self.get_idx_node_for_key(key) {
-            Some((idx, node)) => Some((self.ring[idx].key, node)),
-            None => None,
-        }
+        self.get_idx_node_for_key(key)
+            .map(|(idx, node)| (self.ring[idx].key, node))
     }
 
     /// Get the node responsible for `key`. Returns an `Option` that will
     /// contain the `node` if the hash ring is not empty or `None` if it was
     /// empty.
     pub fn get(&self, key: &Sha256Digest) -> Option<&T> {
-        match self.get_idx_node_for_key(key) {
-            Some((_, node)) => Some(node),
-            None => None,
-        }
+        self.get_idx_node_for_key(key).map(|(_, node)| node)
     }
 
     /// Get the Option<(key,node)> at position `idx`.
@@ -235,10 +230,7 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
     /// Get the Option<node> at position `idx + 1`.
     /// Returns `None` if `idx + 1` is out of bounds
     pub fn get_next_key_node_at_idx(&self, idx: usize) -> Option<(Sha256Digest, &T)> {
-        match self.get_key_node_at_idx(idx + 1) {
-            Some(e) => Some(e),
-            None => None,
-        }
+        self.get_key_node_at_idx(idx + 1)
     }
 
     /// Get the Option<node> at position `idx - 1`.
@@ -248,10 +240,7 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
             return None;
         }
 
-        match self.get_key_node_at_idx(idx - 1) {
-            Some(e) => Some(e),
-            None => None,
-        }
+        self.get_key_node_at_idx(idx - 1)
     }
 }
 
