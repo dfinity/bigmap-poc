@@ -467,10 +467,15 @@ impl BigmapIdx {
         // FIXME: Check the utilization of the Search canisters, split if necessary
         // FIXME: Remove and/or update the indexes in the Search canisters
 
-        for can_id in self.search_canisters.iter() {
-            let used_bytes = self.qcall_canister_used_bytes(can_id).await as u32;
-            self.used_bytes_total += used_bytes as u64;
-        }
+        self.used_bytes_total = join_all(
+            self.search_canisters
+                .iter()
+                .map(|can_id| self.qcall_canister_used_bytes(can_id)),
+        )
+        .await
+        .iter()
+        .map(|val| *val as u64)
+        .sum();
 
         println!("Total capacity used {}", ByteSize(self.used_bytes_total));
 
