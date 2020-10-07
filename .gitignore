@@ -5,3 +5,4 @@ canisters/
 target/*
 
 node_modules/
+vendor
