@@ -105,18 +105,15 @@ async fn lookup_data_bucket_for_put(key: Key) -> Option<String> {
 async fn lookup_data_bucket_for_get(key: Key) -> Option<String> {
     let bigmap_idx = storage::get_mut::<BigmapIdx>();
 
-    match bigmap_idx.lookup_get(&key).await {
-        Some(can_id) => {
-            let can_id = format!("{}", can_id);
-            println!(
-                "BigMap Index: lookup_data_bucket_for_get key {} => {}",
-                String::from_utf8_lossy(&key),
-                can_id
-            );
-            Some(can_id)
-        }
-        None => None,
-    }
+    bigmap_idx.lookup_get(&key).await.map(|can_id| {
+        let can_id = format!("{}", can_id);
+        println!(
+            "BigMap Index: lookup_data_bucket_for_get key {} => {}",
+            String::from_utf8_lossy(&key),
+            can_id
+        );
+        can_id
+    })
 }
 
 #[query]
