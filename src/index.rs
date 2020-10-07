@@ -745,9 +745,12 @@ impl BigmapIdx {
             return;
         }
 
-        for can_id in self.search_canisters.iter() {
-            self.ucall_s_can_remove_from_search_index(can_id, key).await
-        }
+        join_all(
+            self.search_canisters
+                .iter()
+                .map(|can_id| self.ucall_s_can_remove_from_search_index(can_id, key)),
+        )
+        .await;
     }
 
     pub async fn search(&self, search_query: &String) -> (u64, Vec<(Key, Val)>) {
