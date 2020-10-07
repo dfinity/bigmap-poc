@@ -114,8 +114,8 @@ impl<T: Clone + PartialEq + std::fmt::Debug> HashRing<T> {
         } else {
             let mut max_gap_idx = 0;
             let mut max_gap_val = biguint_from_slice256(self.ring[max_gap_idx].key.as_slice());
-            for (i, node) in self.ring[1..].iter().enumerate() {
-                let i = i + 1; // because we skipped the first element of self.ring
+            // we skip the first element of self.ring
+            for (i, node) in self.ring.iter().enumerate().skip(1) {
                 let gap = biguint_from_slice256(node.key.as_slice())
                     - biguint_from_slice256(self.ring[i - 1].key.as_slice());
                 if gap > max_gap_val {
