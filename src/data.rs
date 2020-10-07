@@ -192,7 +192,7 @@ impl DataBucket {
 
     pub fn holds_key(&self, key: &Key) -> bool {
         let key_sha2 = calc_sha256(&key);
-        self.entries.get(&key_sha2).is_some()
+        self.entries.contains_key(&key_sha2)
     }
 
     pub fn used_bytes(&self) -> usize {
