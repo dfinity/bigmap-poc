@@ -37,7 +37,8 @@ rustup target add wasm32-unknown-unknown
 
 ## Build and install canisters
 
-Simply run `./bootstrap.sh`, or 
+1. Start the local replica by executing `dfx start`.
+2. Run `./bootstrap.sh`, or 
 
 ```bash
 git clone git@github.com:dfinity/big-map-rs.git
