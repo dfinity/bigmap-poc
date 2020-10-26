@@ -1,0 +1,8 @@
+graph LR;
+  A(User Agent) --> i
+	subgraph ic [Internet Computer]
+		i(BigMap Index)-->d1(BigMap Data Bucket);
+		i(BigMap Index)-->d2(BigMap Data Bucket);
+		dots(...)
+		i(BigMap Index)-->d3(BigMap Data Bucket);
+	end

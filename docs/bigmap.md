@@ -1,3 +1,24 @@
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Internet Computer Architecture](#internet-computer-architecture)
+  - [ICP, Data Centers and Nodes](#icp-data-centers-and-nodes)
+  - [Software Canisters](#software-canisters)
+  - [Subnets](#subnets)
+  - [Subnet Types](#subnet-types)
+  - [System and Bucket Subnets](#system-and-bucket-subnets)
+  - [Privacy-Hardened Subnets](#privacy-hardened-subnets)
+  - [Subnet Management](#subnet-management)
+- [BigMap](#bigmap)
+  - [Communicate through the BigMap Index](#communicate-through-the-bigmap-index)
+  - [Communicate directly with the Data Bucket canisters](#communicate-directly-with-the-data-bucket-canisters)
+- [Current status](#current-status)
+  - [Scalability](#scalability)
+  - [BigSearch](#bigsearch)
+- [Future work](#future-work)
+  - [Forking](#forking)
+  - [Upgrading](#upgrading)
+
 # Internet Computer Architecture
 ## ICP, Data Centers and Nodes
 
@@ -50,17 +71,7 @@ The purpose of BigMap is to provide a scalable data storage layer for modern app
 
 In this document we describe the Rust implementation of BigMap. The user of BigMap is represented with a `User Agent`. The User Agent must be able to communicate with BigMap using a compatible protocol, and may be either a canister, a JavaScript library running in a browser, or a library written in Rust or some other language running in some traditional application.
 
-
-```mermaid
-graph LR;
-  A(User Agent) --> i
-	subgraph ic [Internet Computer]
-		i(BigMap Index)-->d1(BigMap Data Bucket);
-		i(BigMap Index)-->d2(BigMap Data Bucket);
-		dots(...)
-		i(BigMap Index)-->d3(BigMap Data Bucket);
-	end
-```
+![Alt text](./bigmap-architecture.svg)
 *BigMap architecture*
 
 There are two modes in which a `User Agent` may use BigMap:
