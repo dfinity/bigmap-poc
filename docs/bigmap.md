@@ -71,7 +71,7 @@ The purpose of BigMap is to provide a scalable data storage layer for modern app
 
 In this document we describe the Rust implementation of BigMap. The user of BigMap is represented with a `User Agent`. The User Agent must be able to communicate with BigMap using a compatible protocol, and may be either a canister, a JavaScript library running in a browser, or a library written in Rust or some other language running in some traditional application.
 
-![Alt text](./bigmap-architecture.svg)
+![](./bigmap-architecture.svg)<br>
 *BigMap architecture*
 
 There are two modes in which a `User Agent` may use BigMap:
@@ -84,31 +84,19 @@ In the following sections we describe these two ways.
 
 This communication mode is preferable for applications which try to have the simplest integration possible, since they don't have to know anything about the BigMap implementation.
 
-```mermaid
-sequenceDiagram
-    User Agent            ->> BigMap Index:           Get "entry X"
-    BigMap Index          ->> BigMap Data Bucket[i]:  Get "entry X"
-    BigMap Data Bucket[i] ->> BigMap Index:           Respond with user's data ("entry X" => "value X")
-    BigMap Index          ->> User Agent:             Respond with user's data ("entry X" => "value X")
-```
-*BigMap via Index: Sequence diagram for Get data*
+![](./bigmap-relayed-by-index-get-data.svg)<br>
+*BigMap relayed by Index: Sequence diagram for Get data*
 
-```mermaid
-sequenceDiagram
-    User Agent            ->> BigMap Index:           Put "entry X" => "value X"
-    BigMap Index          ->> BigMap Data Bucket[i]:  Put "entry X" => "value X"
-    BigMap Data Bucket[i] ->> BigMap Index:           ACK
-    BigMap Index          ->> User Agent:             ACK
-```
-*BigMap via Index: Sequence diagram for Put data*
+![](./bigmap-relayed-by-index-put-data.svg)<br>
+*BigMap relayed by Index: Sequence diagram for Put data*
 
 The *pros* of this implementation:
-- Simple integration
+- Simple integration,
 - Lower latency for small data objects, especially if the latency within the Internet Computer is much smaller than the latency between the `User Agent` and the Internet Computer - which may be the case when the `User Agent` is on a mobile network.
 
 The *cons* of this implementation:
-- Higher cost per request, since all data needs to be routed through the Index canister
-- Higher latency for large data objects, since the Index canister needs to receive (decode) from data and then again send (encode), which may take many cycles for large objects
+- Higher cost per request, since all data needs to be routed through the Index canister,
+- Higher latency for large data objects, since the Index canister needs to receive (decode) from data and then again send (encode), which may take many cycles for large objects.
 
 FIXME: sample code
 
@@ -117,22 +105,17 @@ FIXME: sample code
 This communication mode is preferable for applications which operate with large data volumes and have low latency Internet connection.
 The `User Agent` asks the *BigMap Index* for the location of desired "entry X", and the BigMap Index responds with the *Data Bucket* id, to which "entry X" maps. The desired "entry X" may be in target *Data Bucket*, or may be not, depending on whether the data item has already been written to BigMap.
 
-```mermaid
-sequenceDiagram
-    User Agent            ->> BigMap Index:           Get location of "entry X"
-    BigMap Index          ->> User Agent:             "entry X" maps to Data Bucket[i]
-    User Agent            ->> BigMap Data Bucket[i]:  Get "entry X"
-    BigMap Data Bucket[i] ->> User Agent:             Respond with user's data ("entry X")
-```
-*BigMap via Index: Sequence diagram for Get data*
+![](./bigmap-direct-get.svg)<br>
+*BigMap direct: Sequence diagram for Get data*
+
+![](./bigmap-direct-put.svg)<br>
+*BigMap direct: Sequence diagram for Put data*
 
 The *pros* of this implementation:
-- Simple integration
-- Lower latency for small data objects
+- Lower latency for large data objects.
 
 The *cons* of this implementation:
-- Higher cost per request, since all data needs to be routed through the Index canister
-- Higher latency for large data objects, since the Index canister needs to receive (decode) from data  and then again send (encode), which may take many cycles for large objects
+- Higher complexity on the `User Agent` side.
 
 FIXME: sample code
 
@@ -140,11 +123,10 @@ FIXME: sample code
 ## Scalability
 - Current design scalability up to 160 PB, a redesign implementing sharding of the index canister would allow Exabytes capacity, but no need for this at the moment
 - Growing BigMap implemented with regular messages sent between canisters
-- Two ways to make growing faster and cheaper: 1) Canister forking, or 2) Big Messages between canisters
+- Two ways to make BigMap growing faster and cheaper: 1) Canister forking, or 2) Big Messages between canisters
 
 ## BigSearch
 - Implemented as an Inverted Index (same as Lucene, Elastic Search, etc) with Roaring Bitmaps.
-- 
 
 # Future work
 
