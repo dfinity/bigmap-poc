@@ -84,10 +84,10 @@ In the following sections we describe these two ways.
 
 This communication mode is preferable for applications which try to have the simplest integration possible, since they don't have to know anything about the BigMap implementation.
 
-![](./images/bigmap-relayed-by-index-get-data.svg)<br>
+![](./images/bigmap-relayed-by-index-get.svg)<br>
 *BigMap relayed by Index: Sequence diagram for Get data*
 
-![](./images/bigmap-relayed-by-index-put-data.svg)<br>
+![](./images/bigmap-relayed-by-index-put.svg)<br>
 *BigMap relayed by Index: Sequence diagram for Put data*
 
 The *pros* of this implementation:
