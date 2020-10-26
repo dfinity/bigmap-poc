@@ -69,7 +69,7 @@ A key purpose of the Internet Computer is to simplify the development of enterpr
 
 The purpose of BigMap is to provide a scalable data storage layer for modern applications and to allow applications to store vast quantities of user media objects, and to serve requests to billions of users.
 
-In this document we describe the Rust implementation of BigMap. The user of BigMap is represented with a `User Agent`. The User Agent must be able to communicate with BigMap using a compatible protocol, and may be either a canister, a JavaScript library running in a browser, or a library written in Rust or some other language running in some traditional application.
+In this document we describe the Rust implementation of BigMap. In the rest of this document, BigMap user is abstracted with a `User Agent`. The User Agent must be able to communicate with BigMap using a compatible protocol, and may be either a canister, a JavaScript library running in a browser, or a library written in Rust or some other language running in some traditional application.
 
 ![](./images/bigmap-architecture.svg)<br>
 *BigMap architecture*
@@ -78,27 +78,60 @@ There are two modes in which a `User Agent` may use BigMap:
 1. Communicate through the BigMap Index
 2. Communicate directly with the Data Bucket canisters
 
-In the following sections we describe these two ways.
+In the following sections we describe these two options.
 
 ## Communicate through the BigMap Index
 
-This communication mode is preferable for applications which try to have the simplest integration possible, since they don't have to know anything about the BigMap implementation.
+This communication mode is preferable for applications which try to have the simplest integration possible, since `User Agent` only needs to know about the BigMap Index. It does not have to know that there are data canisters, and does not have to communicate directly with data canisters.
 
 ![](./images/bigmap-relayed-by-index-get.svg)<br>
-*BigMap relayed by Index: Sequence diagram for Get data*
+*BigMap relayed by Index: Sequence diagram for Get data*.
 
 ![](./images/bigmap-relayed-by-index-put.svg)<br>
-*BigMap relayed by Index: Sequence diagram for Put data*
+*BigMap relayed by Index: Sequence diagram for Put data*.
 
 The *pros* of this implementation:
 - Simple integration,
-- Lower latency for small data objects, especially if the latency within the Internet Computer is much smaller than the latency between the `User Agent` and the Internet Computer - which may be the case when the `User Agent` is on a mobile network.
+- Lower latency for small data objects, particularly if the latency between the `User Agent` and the Internet Computer is much higher than the latency between the BigMap canisters - which may be the case for example when the `User Agent` is on a mobile network.
 
 The *cons* of this implementation:
 - Higher cost per request, since all data needs to be routed through the Index canister,
 - Higher latency for large data objects, since the Index canister needs to receive (decode) from data and then again send (encode), which may take many cycles for large objects.
 
-FIXME: sample code
+Here is an illustration of the JavaScript code which can be used to access BigMap in this mode (taken from our CanCan implementation):
+```javascript
+async function bigMapGet(keyAsBytes) {
+  let res = bigMap.get(keyAsBytes);
+
+  if (!res) {
+    const key = arrToStr(keyAsBytes).substr(0, 100);
+    console.error(`BigMap: Error getting key "${key}"`);
+  }
+  return res;
+}
+
+async function bigMapGetSync(keyAsBytes) {
+  return await bigMapGet(keyAsBytes);
+}
+```
+
+And here is the related Put implementation:
+```javascript
+async function bigMapPut(keyAsBytes, valueAsBytes) {
+
+  let res = bigMap.put(keyAsBytes, encodedValue);
+
+  if (!res) {
+    const key = arrToStr(keyAsBytes).substr(0, 100);
+    console.error(`BigMap: Error putting key "${key}"`);
+  }
+  return res;
+}
+
+async function bigMapPutSync(keyAsBytes) {
+  return await bigMapPut(keyAsBytes);
+}
+```
 
 ## Communicate directly with the Data Bucket canisters
 
@@ -106,10 +139,10 @@ This communication mode is preferable for applications which operate with large 
 The `User Agent` asks the *BigMap Index* for the location of desired "entry X", and the BigMap Index responds with the *Data Bucket* id, to which "entry X" maps. The desired "entry X" may be in target *Data Bucket*, or may be not, depending on whether the data item has already been written to BigMap.
 
 ![](./images/bigmap-direct-get.svg)<br>
-*BigMap direct: Sequence diagram for Get data*
+*BigMap direct: Sequence diagram for Get data*.
 
 ![](./images/bigmap-direct-put.svg)<br>
-*BigMap direct: Sequence diagram for Put data*
+*BigMap direct: Sequence diagram for Put data*.
 
 The *pros* of this implementation:
 - Lower latency for large data objects.
