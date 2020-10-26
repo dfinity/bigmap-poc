@@ -13,6 +13,7 @@ This is the Rust implementation of BigMap. There is also a Motoko-based implemen
 * Rust compiler 1.45+ (and cargo)
 * cmake (optional but recommended)
 * IC SDK (DFX) 0.6.9+
+* Nodejs v12
 
 ### IC SDK
 To integrate BigMap with the Internet Computer applications, it's necessary to have the DFX version 0.6.9 or higher
@@ -35,6 +36,31 @@ rustup override set stable
 rustup target add wasm32-unknown-unknown
 ```
 
+## Mac specific
+
+On MacOS Catalina it's necessary to perform particular steps in order to install nodejs.
+You may need to follow these steps if you get the following error:
+```
+gyp: No Xcode or CLT version detected!
+```
+
+A solution which seems to work for many people is to run the following command in a terminal:
+```
+xcode-select --install
+```
+
+If that doesn't work, check the complete instructions at
+https://github.com/nodejs/node-gyp/blob/master/macOS_Catalina.md
+
+Additional discussions and instructions are available at:
+https://github.com/nodejs/node-gyp/issues/1927#issuecomment-544499926
+and
+https://github.com/nodejs/node-gyp/issues/1927#issuecomment-544507444
+
+## DFX replica start
+
+FIXME
+
 ## Build and install canisters
 
 Simply run `./bootstrap.sh`, or 
@@ -44,9 +70,9 @@ git clone git@github.com:dfinity/big-map-rs.git
 cd big-map-rs
 
 npm install
+dfx canister create --all
 dfx build
-dfx canister create bigmap
-dfx canister install bigmap
+dfx canister install bigmap --mode=reinstall
 ./bigmap-cli --set-data-bucket-wasm-binary target/wasm32-unknown-unknown/release/bigmap_data.wasm
 ./bigmap-cli --set-search-wasm-binary target/wasm32-unknown-unknown/release/bigmap_search.wasm
 ```
