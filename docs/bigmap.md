@@ -71,7 +71,7 @@ The purpose of BigMap is to provide a scalable data storage layer for modern app
 
 In this document we describe the Rust implementation of BigMap. The user of BigMap is represented with a `User Agent`. The User Agent must be able to communicate with BigMap using a compatible protocol, and may be either a canister, a JavaScript library running in a browser, or a library written in Rust or some other language running in some traditional application.
 
-![](./bigmap-architecture.svg)<br>
+![](./images/bigmap-architecture.svg)<br>
 *BigMap architecture*
 
 There are two modes in which a `User Agent` may use BigMap:
@@ -84,10 +84,10 @@ In the following sections we describe these two ways.
 
 This communication mode is preferable for applications which try to have the simplest integration possible, since they don't have to know anything about the BigMap implementation.
 
-![](./bigmap-relayed-by-index-get-data.svg)<br>
+![](./images/bigmap-relayed-by-index-get-data.svg)<br>
 *BigMap relayed by Index: Sequence diagram for Get data*
 
-![](./bigmap-relayed-by-index-put-data.svg)<br>
+![](./images/bigmap-relayed-by-index-put-data.svg)<br>
 *BigMap relayed by Index: Sequence diagram for Put data*
 
 The *pros* of this implementation:
@@ -105,10 +105,10 @@ FIXME: sample code
 This communication mode is preferable for applications which operate with large data volumes and have low latency Internet connection.
 The `User Agent` asks the *BigMap Index* for the location of desired "entry X", and the BigMap Index responds with the *Data Bucket* id, to which "entry X" maps. The desired "entry X" may be in target *Data Bucket*, or may be not, depending on whether the data item has already been written to BigMap.
 
-![](./bigmap-direct-get.svg)<br>
+![](./images/bigmap-direct-get.svg)<br>
 *BigMap direct: Sequence diagram for Get data*
 
-![](./bigmap-direct-put.svg)<br>
+![](./images/bigmap-direct-put.svg)<br>
 *BigMap direct: Sequence diagram for Put data*
 
 The *pros* of this implementation:
