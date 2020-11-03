@@ -17,6 +17,9 @@
   - [BigSearch](#bigsearch)
 - [Future work](#future-work)
   - [Forking](#forking)
+  - [Big Messages](#big-messages)
+  - [Query call caching](#query-call-caching)
+  - [Cloning hot canisters across subnets to handle popular applications](#cloning-hot-canisters-across-subnets-to-handle-popular-applications)
   - [Upgrading](#upgrading)
 
 # Internet Computer Architecture
@@ -74,9 +77,19 @@ In this document we describe the Rust implementation of BigMap. In the rest of t
 ![](./images/bigmap-architecture.svg)<br>
 *BigMap architecture*
 
-There are two modes in which a `User Agent` may use BigMap:
-1. Communicate through the BigMap Index
-2. Communicate directly with the Data Bucket canisters
+There are two major parts of the BigMap architecture: 1) Index canister, and 2) Data Bucket canisters. In the current implementation there is only one Index canister and there can be a large number of Data Bucket canisters, to which the Index canister has pointers.
+
+The *Index* canister is implemented as a [Hash Ring](https://en.wikipedia.org/wiki/Consistent_hashing) for which the code is in [this Rust file](../src/hashring_sha256.rs). The implementation is based using a Rust vector with Sha256 hashing of keys and Canister Ids.
+
+![](./images/hashring.svg)<br>
+*Hash Ring with Sha256 hashing. Sha256 hashes are shortened to 8 characters to simplify the illustration. The full hash (32 bytes) is used in the implementation.*
+
+In the illustration, the entry's hash is `b6cdd8c1`, and the Hash Ring does not have that exact value. To determine the Data Bucket CanisterId that handles the particular entry is: the Hash Ring is searched for the *first hash which is larger or equal to the entry's hash*. Since the Hash Ring holds `34f444af` as the first entry, that entry is skipped since it's less than `b6cdd8c1`). After that, the Hash Ring holds `bda57583` -- which is the first hash larger or equal to the entry's hash `b6cdd8c1`, and therefore it's determined that `CanId1` handles the entry. Note that Hash Ring is maintained in a sorted order and due to this it is possible to perform Hash Ring lookups with binary search. Therefore, Hash Ring lookups take approximately `log(N)` time for `N` entries (Data Bucket canisters).
+
+Beside the Index canister, there is a variable number of Data Bucket canisters. BigMap starts with a single Data Bucket canister and these canisters are added one at a time as the capacity of a Data Bucket canister is exhausted. The ultimate objective of the `User Agent` is to get data from or to store data at a Data Bucket canister. It can achieve this in two ways:
+
+1. By communicating through the BigMap Index, or
+2. By communicating directly with the Data Bucket canisters, and using the BigMap Index only for lookups.
 
 In the following sections we describe these two options.
 
@@ -98,7 +111,8 @@ The *cons* of this implementation:
 - Higher cost per request, since all data needs to be routed through the Index canister,
 - Higher latency for large data objects, since the Index canister needs to receive (decode) from data and then again send (encode), which may take many cycles for large objects.
 
-Here is an illustration of the JavaScript code which can be used to access BigMap in this mode (taken from our CanCan implementation):
+Here is an illustration of the JavaScript code which can be used to access BigMap in this mode, taken from our CanCan implementation. The code illustrates the BigMap Get and Put functionality in JavaScript:
+
 ```javascript
 async function bigMapGet(keyAsBytes) {
   let res = bigMap.get(keyAsBytes);
@@ -113,13 +127,10 @@ async function bigMapGet(keyAsBytes) {
 async function bigMapGetSync(keyAsBytes) {
   return await bigMapGet(keyAsBytes);
 }
-```
 
-And here is the related Put implementation:
-```javascript
 async function bigMapPut(keyAsBytes, valueAsBytes) {
 
-  let res = bigMap.put(keyAsBytes, encodedValue);
+  let res = bigMap.put(keyAsBytes, valueAsBytes);
 
   if (!res) {
     const key = arrToStr(keyAsBytes).substr(0, 100);
@@ -136,7 +147,7 @@ async function bigMapPutSync(keyAsBytes) {
 ## Communicate directly with the Data Bucket canisters
 
 This communication mode is preferable for applications which operate with large data volumes and have low latency Internet connection.
-The `User Agent` asks the *BigMap Index* for the location of desired "entry X", and the BigMap Index responds with the *Data Bucket* id, to which "entry X" maps. The desired "entry X" may be in target *Data Bucket*, or may be not, depending on whether the data item has already been written to BigMap.
+The `User Agent` asks the *BigMap Index* for the location of desired "entry X". BigMap Index responds with the *Data Bucket* id to which "entry X" maps. The desired "entry X" may be in target *Data Bucket*, or may be not, depending on whether the data item has already been written to BigMap.
 
 ![](./images/bigmap-direct-get.svg)<br>
 *BigMap direct: Sequence diagram for Get data*.
@@ -150,19 +161,83 @@ The *pros* of this implementation:
 The *cons* of this implementation:
 - Higher complexity on the `User Agent` side.
 
-FIXME: sample code
+```javascript
+const getBigMapDataActor = (canisterId) => {	
+  const host = DEFAULT_HOST;	
+  const keypair = generateKeyPair();	
+  const canisterName = "bigmap_data";	
+  const candid = eval(getCandid(canisterName));	
+  const principal = Principal.selfAuthenticating(keypair.publicKey);	
+  const config = { fetch, host, principal };	
+  if (credentials.name && credentials.password) {	
+    config.credentials = credentials;	
+  }	
+  const agent = new HttpAgent(config);	
+  agent.addTransform(makeNonceTransform());	
+  agent.addTransform(makeExpiryTransform(5 * 60 * 1000));	
+  agent.addTransform(makeAuthTransform(keypair));	
+
+  return makeActorFactory(candid)({ canisterId, agent });	
+};	
+
+async function bigMapPut(keyAsBytes, valueAsBytes) {	
+  const key = arrToStr(keyAsBytes).substr(0, 100);	
+  // console.time(`BigMap Data Can put ${key}`);	
+  let data_canister_id = String(await bigMap.lookup_data_bucket_for_put(keyAsBytes));	
+  let dataCanister = getBigMapDataActor(data_canister_id);	
+  let res = dataCanister.put(keyAsBytes, valueAsBytes);	
+  // console.timeEnd(`BigMap Data Can put ${key}`);	
+
+  if (!res) {	
+    console.error(`BigMap Data Can ${data_canister_id}: Error putting key "${key}"`);	
+  }	
+  return res;	
+}
+
+async function bigMapGet(keyAsBytes) {	
+  const key = arrToStr(keyAsBytes).substr(0, 100);	
+  let data_canister_id = String(await bigMap.lookup_data_bucket_for_get(keyAsBytes));	
+  let dataCanister = getBigMapDataActor(data_canister_id);	
+  let res = dataCanister.get(keyAsBytes);	
+
+  if (!res) {	
+    console.error(`BigMap Data Can ${data_canister_id}: Error getting key "${key}"`);	
+  }	
+  return res;	
+}
+```
 
 # Current status
 ## Scalability
-- Current design scalability up to 160 PB, a redesign implementing sharding of the index canister would allow Exabytes capacity, but no need for this at the moment
-- Growing BigMap implemented with regular messages sent between canisters
-- Two ways to make BigMap growing faster and cheaper: 1) Canister forking, or 2) Big Messages between canisters
+
+With the current design, the BigMap Index is the authoritative source for the data distribution. Just as any other Wasm canister, BigMap Index can be up to 4GiB in size. If we assume that up to 1GiB is spent for other purposes (various metadata), we're left with 3GiB for the BigMap Data Canister IDs. Given that these IDs are 32 bytes each, and the Sha256 is also 32 bytes, this means that a single canister for the BigMap index can address up to 3GiB / (32+32) ≅ 46 million Data Canisters ≅ 46 M * 3GiB ≅ **140 PiB**.
+
+Although this should be sufficient for most workloads, the scalability of BigMap can be further increased in a few ways.
+For instance, it would be possible to split the Hash Ring across multiple BigMap Index canisters, each handling a particular range of the Hash Ring. By this, the capacity of BigMap would effectively grow proportionally to the number of BigMap Index range canisters. For instance, if Hash Ring is split and stored in 4 BigMap Index range canisters, the BigMap deployment would have the total capacity of 4 * 140 PiB ≅ 560 PiB.
+
+Another way would be to change the BigMap Index from the authoritative to the non-authoritative source of metadata (data distribution), and to instead move the authority of the data distribution to the Data Canisters themselves. In this case the capacity of the BigMap deployment becomes effectively unbounded. BigMap Index would cache the Data Canister IDs which *should* have the data, and the application would then talk directly to the Data Canisters and ask them for the data. Data Canisters could potentially redirect access to other Data Canisters for which the BigMap Index does not have information, and the requests can be served by Data Canisters which have not been provided by the BigMap Index. This would be more similar to the more conventional Distributed Hash Table implementations.
+
+- TBD: Growing BigMap currently implemented with regular messages sent between canisters. Growing (adding data buckets) may take a long time.
 
 ## BigSearch
-- Implemented as an Inverted Index (same as Lucene, Elastic Search, etc) with Roaring Bitmaps.
+- TBD: Implemented as an Inverted Index (same as Lucene, Elastic Search, etc) with Roaring Bitmaps.
 
 # Future work
 
+- TBD: Two ways to make BigMap growing faster and cheaper: 1) Canister forking, or 2) Big Messages between canisters
+
 ## Forking
 
+## Big Messages
+
+## Query call caching
+
+- TBD: Replicas can cache query results
+
+## Cloning hot canisters across subnets to handle popular applications
+
+- TBD: Some applications may be extremely popular and their canisters can be hotspots that should distributed across multiple canisters. We need to describe how this can be done. Essentially, application canister can be replicated across subnets and users are hashed and routed to different applications canisters (and correspondingly different subnets). This reduces the load on each particular canister and each particular subnet.
+
 ## Upgrading
+
+- TBD: BigMap upgrading is currently not supported.
