@@ -6,17 +6,30 @@ set -e
 BASEDIR=$(cd "$(dirname "$0")"; pwd)
 cd "$BASEDIR"
 
-if [[ "$1" == "tungsten" ]]; then
-  echo "Bootstraping on the Tungsten network"
-  NETWORK="--network tungsten"
+if [[ "$1" == "sodium" ]]; then
+  echo "Bootstraping on the Sodium network"
+  NETWORK="--network sodium"
   if [[ -z "$DFX_CREDS_USER" || -z "$DFX_CREDS_PASS" || -z "$DFX_NETWORK" ]]; then
     echo "Please make sure you set the following environment variables:"
     echo "export DFX_CREDS_USER={username}"
     echo "export DFX_CREDS_PASS={password}"
-    echo "export DFX_NETWORK=tungsten"
+    echo "export DFX_NETWORK={network}"
+    exit 1
   fi
 else
-  echo "Bootstraping on the local instance"
+  if [[ "$1" == "sodium-test" ]]; then
+    echo "Bootstraping on the Sodium-test network"
+    NETWORK="--network sodium-test"
+    if [[ -z "$DFX_CREDS_USER" || -z "$DFX_CREDS_PASS" || -z "$DFX_NETWORK" ]]; then
+      echo "Please make sure you set the following environment variables:"
+      echo "export DFX_CREDS_USER={username}"
+      echo "export DFX_CREDS_PASS={password}"
+      echo "export DFX_NETWORK={network}"
+      exit 1
+    fi
+  else
+    echo "Bootstraping on the local instance"
+  fi
 fi
 
 echo "Install dependencies"

@@ -27,9 +27,15 @@
     }
   },
   "networks": {
-    "tungsten": {
+    "sodium": {
       "providers": [
         "https://gw.dfinity.network"
+      ],
+      "type": "persistent"
+    },
+    "sodium-test": {
+      "providers": [
+        "https://test-gw.dfinity.network"
       ],
       "type": "persistent"
     },
