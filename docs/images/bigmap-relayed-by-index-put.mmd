@@ -1,0 +1,5 @@
+sequenceDiagram
+    User Agent            ->> BigMap Index:           Put "entry X" => "value X"
+    BigMap Index          ->> BigMap Data Bucket[i]:  Put "entry X" => "value X"
+    BigMap Data Bucket[i] ->> BigMap Index:           ACK
+    BigMap Index          ->> User Agent:             ACK

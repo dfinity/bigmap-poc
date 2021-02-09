@@ -1,0 +1,5 @@
+sequenceDiagram
+    User Agent            ->> BigMap Index:           Get "entry X"
+    BigMap Index          ->> BigMap Data Bucket[i]:  Get "entry X"
+    BigMap Data Bucket[i] ->> BigMap Index:           Respond with user's data ("entry X" => "value X")
+    BigMap Index          ->> User Agent:             Respond with user's data ("entry X" => "value X")
