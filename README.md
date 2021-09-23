@@ -1,10 +1,6 @@
-[![Rust](https://github.com/dfinity/bigmap-rs/workflows/Rust/badge.svg)](https://github.com/dfinity/bigmap-rs/actions)
+# Proof of concept demo of BigMap
 
-# BigMap
-
-BigMap is a simple, approachable library for building infinitely scalable key-value storage on the Internet Computer.
-
-This is the Rust implementation of BigMap. There is also a Motoko-based implementation here: https://github.com/dfinity/motoko-bigmap
+The idea of BigMap is to enable infinitely scalable key-value storage on the Internet Computer.  This repository contains a proof of concept of this idea that the DFINITY foundation worked on in the past.  It is currently broken and it is also not supported.  The repository is open-sourced to serve as an inspiration for developers.
 
 ## Prerequisites
 
