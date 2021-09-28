@@ -15,7 +15,7 @@
     "bigmap",
     "cli"
   ],
-  "author": "Saša Tomić <sasa.tomic@dfinity.org>",
+  "author": "DFINITY",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/dfinity/bigmap-rs/issues"
