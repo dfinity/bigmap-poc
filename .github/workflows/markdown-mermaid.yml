@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
       with:
         fetch-depth: 2
     - name: get changed files
@@ -26,7 +26,7 @@ jobs:
         echo ${{ steps.getfile.outputs.files }}
 
     - name: compile mermaid
-      uses: neenjaw/compile-mermaid-markdown-action@0.2.3
+      uses: neenjaw/compile-mermaid-markdown-action@e1b6221471a7e224f84ad0939d05c92ce085a056 # 0.2.3
       with:
         files: ${{ steps.getfile.outputs.files }}
         output: 'output'
@@ -40,7 +40,7 @@ jobs:
 
     - name: Create Pull Request
       id: cpr
-      uses: peter-evans/create-pull-request@v2
+      uses: peter-evans/create-pull-request@4d3b0a48efaa29be1a91dbe756c93798daf406d5 # v2.8.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: Add compiled mermaid
