@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
     - name: Build native mode
       run: |
         echo y | DFX_VERSION=0.6.9 bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
